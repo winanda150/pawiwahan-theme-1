@@ -1,0 +1,2179 @@
+/* Global Styles */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* notification screen styles */
+.notification-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgb(0, 0, 0);
+    display: none;
+    z-index: 1002;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.warning-content {
+    max-width: 900px;
+}
+
+/* Loading Screen Styles */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid black;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-screen p {
+    color: black;
+    font-size: 18px;
+    font-family: Arial, sans-serif;
+    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* Container Cover Styles */
+.container-cover {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    background-color: black;
+    overflow: hidden;
+}
+
+.container-cover,
+.container-cover:focus,
+.container-cover:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
+.container-cover img:nth-child(1) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    object-fit: cover;
+    object-position: top;
+    z-index: 2;
+    animation: fadeInOut1 10s infinite;
+    will-change: opacity;
+}
+
+.container-cover img:nth-child(2) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    object-fit: cover;
+    object-position: top;
+    z-index: 1;
+    animation: fadeInOut2 10s infinite;
+    will-change: opacity;
+}
+
+@keyframes fadeInOut1 {
+
+    0%,
+    48% {
+        opacity: 1;
+    }
+
+    48%,
+    50% {
+        opacity: 0;
+    }
+
+    50%,
+    98% {
+        opacity: 0;
+    }
+
+    98%,
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInOut2 {
+
+    0%,
+    48% {
+        opacity: 0;
+    }
+
+    48%,
+    50% {
+        opacity: 1;
+    }
+
+    50%,
+    98% {
+        opacity: 1;
+    }
+
+    98%,
+    100% {
+        opacity: 0;
+    }
+}
+
+.container-cover .content-cover {
+    position: absolute;
+    bottom: 20%;
+    text-align: center;
+    z-index: 3;
+}
+
+@font-face {
+    font-family: 'Storytelling Regular';
+    src: url('Elemen/Font/Storytelling%20Regular.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+.content-cover h1 {
+    color: white;
+    font-size: 55px;
+    margin: -10px;
+    font-family: 'Storytelling Regular', cursive;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.content-cover .tanggal {
+    color: white;
+    font-size: 18px;
+    margin: 10px;
+    font-family: Arial, sans-serif;
+}
+
+.content-cover .Kepada {
+    color: white;
+    font-size: 16px;
+    margin: 10px;
+    font-family: Arial, sans-serif;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.content-cover .nama-tamu {
+    color: white;
+    font-size: 20px;
+    margin: 10px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.content-cover button[type="button"] {
+    border: 1px solid rgb(97, 150, 104);
+    border-radius: 30px;
+    background: rgb(97, 150, 104);
+    color: white;
+    padding: 8px 40px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+}
+
+.container-cover button[type="button"]:active {
+    background: rgb(79, 122, 84);
+    border: 1px solid rgb(79, 122, 84);
+}
+
+/* Wave Animation Styles */
+.container-cover .wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: url('Elemen/Elemen%20Pendukung/wave.png');
+    background-size: 1000px 100px;
+}
+
+.container-cover .wave.wave1 {
+    animation: animate 30s linear infinite;
+    z-index: 1000;
+    opacity: 1;
+    animation-delay: 0s;
+    bottom: -30px;
+    will-change: background-position;
+}
+
+.container-cover .wave.wave2 {
+    animation: animate2 15s linear infinite;
+    z-index: 999;
+    opacity: 0.5;
+    animation-delay: -5s;
+    bottom: -20px;
+    will-change: background-position;
+}
+
+.container-cover .wave.wave3 {
+    animation: animate 30s linear infinite;
+    z-index: 998;
+    opacity: 0.2;
+    animation-delay: -2s;
+    bottom: -15px;
+    will-change: background-position;
+}
+
+.container-cover .wave.wave4 {
+    animation: animate2 5s linear infinite;
+    z-index: 997;
+    opacity: 0.7;
+    animation-delay: -5s;
+    bottom: -10px;
+    will-change: background-position;
+}
+
+@keyframes animate {
+    0% {
+        background-position-x: 0;
+    }
+
+    100% {
+        background-position-x: 1000px;
+    }
+}
+
+@keyframes animate2 {
+    0% {
+        background-position-x: 0;
+    }
+
+    100% {
+        background-position-x: -1000px;
+    }
+}
+
+/* Invitation Section Styles */
+#invitation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    background-color: rgb(253, 248, 231);
+}
+
+@font-face {
+    font-family: 'Brigitte Eigner';
+    src: url('Elemen/Font/Brigitte%20Eigner.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+#invitation h1 {
+    font-family: 'Brigitte Eigner', cursive;
+    margin-top: 40px;
+    font-size: 75px;
+    color: rgb(201, 162, 39);
+}
+
+#invitation .ucapan1 {
+    margin-top: -50px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 1200px;
+    padding-left: 20px;
+    padding-right: 20px;
+    color: #333;
+}
+
+.foto-pasangan {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    gap: 280px;
+    background-color: rgb(253, 248, 231);
+    padding-top: 10px;
+    padding-bottom: 30px;
+}
+
+.pasangan-laki-laki {
+    margin-left: -30px;
+}
+
+.pasangan-perempuan {
+    margin-top: -20px;
+    margin-right: 30px;
+}
+
+.pasangan-laki-laki .mempelai-laki-laki,
+.pasangan-perempuan .mempelai-perempuan {
+    width: 280px;
+    height: 280px;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    z-index: 8;
+}
+
+.pasangan-laki-laki,
+.pasangan-perempuan {
+    max-width: 380px;
+}
+
+@font-face {
+    font-family: 'Greenlight Script';
+    src: url('Elemen/Font/Greenlight%20Script.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+.foto-pasangan h2 {
+    font-family: 'Greenlight Script', cursive;
+    font-size: 30px;
+    color: rgb(201, 162, 39);
+}
+
+.foto-pasangan p {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: #333;
+}
+
+/* Balinese Mantra Section Styles */
+.balinese-mantra {
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.5;
+    background-color: #cfcdcd;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+.mantra-text {
+    flex-direction: column;
+    color: #333;
+    max-width: 1000px;
+    font-style: italic;
+}
+
+.mantra-text img {
+    margin-top: 15px;
+    width: 80px;
+    height: auto;
+    -webkit-user-drag: none;
+    margin-bottom: 5px;
+    user-select: none;
+    -moz-user-select: none;
+    transform: rotate(10deg);
+}
+
+.mantra,
+.translation-text {
+    font-size: 16px;
+}
+
+.mantra-kitab {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Event Details Section Styles */
+.detail-acara {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    box-sizing: border-box;
+    background-color: rgb(253, 248, 231);
+    padding-bottom: 40px;
+}
+
+.detail-acara,
+.detail-acara:focus,
+.detail-acara:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
+.acara-detail {
+    max-width: 1100px;
+}
+
+.detail-acara .text-acara {
+    font-family: 'Greenlight Script', cursive;
+    font-size: 40px;
+    color: rgb(201, 162, 39);
+    margin-top: 50px;
+}
+
+.acara-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+    margin-top: -18px;
+}
+
+.acara-pawiwahan,
+.acara-resepsi {
+    border-radius: 10px;
+    width: 500px;
+    height: auto;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.acara-pawiwahan img,
+.acara-resepsi img {
+    width: 100%;
+    height: 400px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    object-fit: cover;
+}
+
+.acara-pawiwahan img {
+    object-position: calc(50%) calc(65%);
+}
+
+.acara-resepsi img {
+    object-position: calc(50%) calc(20%);
+}
+
+.pawiwahan-text,
+.resepsi-text {
+    justify-self: center;
+    font-size: 16px;
+    max-width: 420px;
+    color: #333;
+}
+
+.acara-pawiwahan button[type="button"],
+.acara-resepsi button[type="button"] {
+    border: 1px solid rgb(97, 150, 104);
+    border-radius: 30px;
+    background: rgb(97, 150, 104);
+    color: white;
+    padding: 8px 40px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.acara-pawiwahan button[type="button"]:active,
+.acara-resepsi button[type="button"]:active {
+    background: rgb(79, 122, 84);
+    border: 1px solid rgb(79, 122, 84);
+}
+
+.time-acara {
+    margin-top: 40px;
+    font-size: 16px;
+    color: #333;
+}
+
+.time-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 50px;
+}
+
+.time-item {
+    background: rgb(97, 150, 104);
+    color: white;
+    border-radius: 10px;
+    padding-left: 30px;
+    padding-right: 30px;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+.time-number {
+    margin-top: 20px;
+    font-size: 25px;
+}
+
+.time-label {
+    margin-top: -20px;
+    font-size: 15px;
+    margin-bottom: 15px;
+}
+
+.penutup-acara {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    max-width: 900px;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.nama-orang-tua {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    margin-top: -10px;
+    gap: 230px;
+}
+
+/* Photo Gallery Section Styles */
+.photo-gallery {
+    padding: 20px;
+    text-align: center;
+    background-color: #cfcdcd;
+    padding-bottom: 40px;
+}
+
+.photo-gallery,
+.photo-gallery:focus,
+.photo-gallery:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
+.photo-gallery p {
+    margin-top: 40px;
+    font-family: 'Times New Roman';
+    font-weight: normal;
+    color: rgb(201, 162, 39);
+    letter-spacing: 5px;
+    font-size: 16px;
+    margin-bottom: -15px;
+}
+
+.photo-gallery h2 {
+    font-family: 'Times New Roman';
+    font-weight: normal;
+    color: black;
+    font-size: 38px;
+    margin-bottom: 30px;
+}
+
+.photo-gallery .gallery-flexbox {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.photo-gallery .gallery-flexbox img {
+    width: 100%;
+    max-width: 350px;
+    height: auto;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease;
+}
+
+.photo-gallery .gallery-flexbox img:hover {
+    transform: scale(1.03);
+}
+
+.gallery-info {
+    max-width: 95%;
+    max-height: 85%;
+    border-radius: 10px;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+}
+
+.close-gallery {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    top: 18px;
+    right: 0px;
+    cursor: pointer;
+    color: #cfcdcd;
+}
+
+.close-gallery,
+.close-gallery:focus,
+.close-gallery:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
+/* Wedding Wishes Section Styles */
+.Wedding-Wish {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(253, 248, 231);
+    padding-bottom: 40px;
+}
+
+.Wedding-Wish h2, .Wedding-Wish p {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.Wedding-Wish h2 {
+    font-family: 'Greenlight Script', cursive;
+    margin-top: 38px;
+    font-size: 40px;
+    color: rgb(201, 162, 39);
+}
+
+.Wedding-Wish .ucapan2 {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.komentar-box {
+    display: flex;
+    flex-direction: column;
+    width: 700px;
+    border: 2px solid rgb(201, 162, 39);
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.komentar-box #comment-count {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    padding-bottom: 15px;
+    color: #333;
+    user-select: none;
+    -moz-user-select: none;
+    border-bottom: 2px solid rgb(201, 162, 39);
+}
+
+#wish-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 20px;
+}
+
+#wish-form input[type="text"] {
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+#wish-form textarea {
+    resize: none;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+/* Scrollbar styling for textarea */
+#wish-form textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+#wish-form textarea::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#wish-form textarea::-webkit-scrollbar-thumb {
+    background: rgb(201, 162, 39);
+    border-radius: 4px;
+}
+
+#wish-form textarea::-webkit-scrollbar-thumb:hover {
+    background: rgb(180, 145, 35);
+}
+
+#wish-form input[type="text"]:focus,
+#wish-form textarea:focus {
+    border-color: rgb(201, 162, 39);
+    outline: none;
+}
+
+#wish-form p {
+    display: flex;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+    align-self: flex-start;
+}
+
+.radio-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#wish-form input[type="radio"] {
+    margin-left: 1px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.radio-group label {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+#wish-form input[type="radio"][value="Hadir"] {
+    accent-color: rgb(97, 150, 104);
+}
+
+#wish-form input[type="radio"][value="Tidak Hadir"] {
+    accent-color: rgb(255, 0, 0);
+}
+
+#wish-form button[type="submit"] {
+    align-self: flex-start;
+    padding: 8px 30px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border-radius: 5px;
+    background: rgb(97, 150, 104);
+    color: white;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    transition: all 0.3s ease;
+}
+
+#wish-form button[type="submit"]:active {
+    background: rgb(79, 122, 84);
+}
+
+.wedding-box {
+    display: flex;
+    border-top: 2px solid rgb(201, 162, 39);
+    flex-direction: column;
+}
+
+.wish-list .wish-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+}
+
+.wish-avatar img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+.wish-list .wish-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.wish-info .wish-name-row {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+}
+
+.wish-info .wish-name {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    width: 100%;
+    text-align: left;
+    word-break: break-all;
+}
+
+.wish-header .wish-kehadiran {
+    border-radius: 5px;
+    padding: 3px 10px;
+    background-color: rgb(97, 150, 104);
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+.wish-info .wish-time {
+    margin-top: -5px;
+    font-family: Arial, sans-serif;
+    align-self: flex-start;
+    font-size: 10px;
+    color: #333;
+}
+
+.wedding-box .wish-body {
+    margin-top: -20px;
+    padding-left: 15px;
+    padding-right: 15px;
+    align-self: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.wish-body .wish-message {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    text-align: left;
+    width: 100%;
+    word-break: break-all;
+}
+
+.wedding-box .wish-footer {
+    align-self: flex-start;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-top: -20px;
+}
+
+.wish-footer p {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+}
+
+.wish-footer p:hover {
+    text-decoration: underline;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 2px solid rgb(201, 162, 39);
+    gap: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.pagination button {
+    padding: 8px 15px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    border-radius: 5px;
+    background: rgb(97, 150, 104);
+    color: white;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    transition: all 0.3s ease;
+}
+
+.pagination button:active {
+    background: rgb(79, 122, 84);
+}
+
+/* Responsive Media Quey Style */
+
+/* Peringatan ukuran layar tidak rekomendasi */
+@media only screen and (max-width: 319px) {
+    .notification-screen {
+        display: block;
+        overflow-y: auto;
+    }
+}
+
+/* Mobile Posisi Portrait */
+@media only screen and (min-width: 320px) and (max-height: 568px) and (orientation: portrait) {
+    .container-cover .wave {
+        display: none;
+    }
+
+    #invitation h1 {
+        font-size: 60px;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .foto-pasangan {
+        flex-direction: column;
+        gap: 20px;
+        padding-left: 30px;
+    }
+
+    .foto-pasangan .mempelai-laki-laki,
+    .foto-pasangan .mempelai-perempuan {
+        width: 250px;
+        height: 250px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 20px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 280px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        font-size: 14px;
+        max-width: 220px;
+    }
+
+    .acara-box {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 250px;
+    }
+
+    .jalan {
+        font-size: 14px;
+        max-width: 280px;
+    }
+
+    .detail-acara .text-acara {
+        font-size: 32px;
+    }
+
+    .time-item {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .time-label {
+        font-size: 12px;
+    }
+
+    .time-number {
+        font-size: 24px;
+    }
+
+    .time-box {
+        gap: 10px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        font-size: 16px;
+        max-width: 300px;
+    }
+
+    .nama-orang-tua {
+        gap: 30px;
+    }
+
+    .photo-gallery p {
+        font-size: 12px;
+    }
+
+    .photo-gallery h2 {
+        font-size: 30px;
+    }
+}
+
+@media only screen and (min-width: 360px) and (max-height: 800px) and (orientation: portrait) {
+    #invitation h1 {
+        margin-top: 20px;
+        font-size: 63px;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .container-cover img:nth-child(1) {
+        object-position: calc(50% - 28px) top;
+    }
+
+    .foto-pasangan {
+        flex-direction: column;
+        gap: 20px;
+        padding-left: 30px;
+    }
+
+    .pasangan-laki-laki p,
+    .pasangan-perempuan p {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 270px;
+        height: 270px;
+    }
+
+    .jalan {
+        font-size: 15px;
+        max-width: 330px;
+    }
+
+    /* acara */
+    .detail-acara .text-acara {
+        font-size: 35px;
+    }
+
+    .acara-box {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 330px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 300px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 280px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 20px;
+    }
+
+    .time-item {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        font-size: 15px;
+        max-width: 280px;
+    }
+
+    .time-label {
+        font-size: 14px;
+    }
+
+    .time-number {
+        font-size: 22px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 330px;
+    }
+
+    .nama-orang-tua {
+        gap: 80px;
+        font-size: 14px;
+    }
+
+    .photo-gallery p {
+        font-size: 14px;
+    }
+
+    .photo-gallery h2 {
+        font-size: 32px;
+    }
+}
+
+@media only screen and (min-width: 390px) and (max-height: 852px) and (orientation: portrait) {
+    #invitation h1 {
+        margin-top: 20px;
+        font-size: 63px;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .container-cover img:nth-child(1) {
+        object-position: calc(50% - 28px) top;
+    }
+
+    .foto-pasangan {
+        flex-direction: column;
+        gap: 20px;
+        padding-left: 30px;
+    }
+
+    .pasangan-laki-laki p,
+    .pasangan-perempuan p {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 250px;
+        height: 250px;
+    }
+
+    .jalan {
+        font-size: 15px;
+        max-width: 350px;
+    }
+
+    .detail-acara .text-acara {
+        font-size: 35px;
+    }
+
+    .acara-box {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 350px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 300px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 280px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 20px;
+    }
+
+    .time-item {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        font-size: 15px;
+    }
+
+    .time-label {
+        font-size: 14px;
+    }
+
+    .time-number {
+        font-size: 22px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 350px;
+    }
+
+    .nama-orang-tua {
+        gap: 90px;
+        font-size: 14px;
+    }
+
+    .photo-gallery p {
+        font-size: 14px;
+    }
+
+    .photo-gallery h2 {
+        font-size: 32px;
+    }
+}
+
+@media only screen and (min-width: 420px) and (max-height: 900px) and (orientation: portrait) {
+    .foto-pasangan {
+        flex-direction: column;
+        gap: 20px;
+        padding-left: 30px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 280px;
+        height: 280px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 0px;
+    }
+
+    .jalan {
+        font-size: 15px;
+        max-width: 350px;
+    }
+
+    .acara-box {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 370px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 20px;
+    }
+
+    .time-item {
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        font-size: 16px;
+        max-width: 300px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 400px;
+    }
+
+    .nama-orang-tua {
+        gap: 100px;
+        font-size: 14px;
+    }
+
+    .photo-gallery p {
+        font-size: 14px;
+    }
+
+    .photo-gallery h2 {
+        font-size: 32px;
+    }
+}
+
+/* Mobile Posisi Landscape */
+@media only screen and (min-width: 568px) and (max-height: 320px) and (orientation: landscape) {
+    .container-cover .wave {
+        display: none;
+    }
+
+    .container-cover .content-cover {
+        bottom: 10%;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .foto-pasangan {
+        flex-direction: row;
+        gap: 20px;
+        padding-left: 45px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 200px;
+        height: 200px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 0px;
+    }
+
+    .jalan {
+        font-size: 14px;
+        max-width: 240px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .acara-box {
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 253px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 250px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 200px;
+        font-size: 14px;
+    }
+
+    .pawiwahan-text button[type="button"],
+    .resepsi-text button[type="button"] {
+        padding: 6px 20px;
+        font-size: 12px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 15px;
+    }
+
+    .time-item {
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 490px;
+    }
+
+    .nama-orang-tua {
+        gap: 180px;
+        font-size: 12px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 800px) and (max-height: 360px) and (orientation: landscape) {
+    .container-cover .wave {
+        display: none;
+    }
+
+    .container-cover .content-cover {
+        bottom: 10%;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .foto-pasangan {
+        flex-direction: row;
+        gap: 140px;
+        padding-left: 45px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 200px;
+        height: 200px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 0px;
+    }
+
+    .jalan {
+        font-size: 14px;
+        max-width: 240px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 90px;
+        padding-right: 90px;
+    }
+
+    .mantra, .translation-text {
+        font-size: 17px;
+    }
+
+    .acara-box {
+        flex-direction: row;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 320px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 280px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 250px;
+        font-size: 15px;
+    }
+
+    .pawiwahan-text button[type="button"],
+    .resepsi-text button[type="button"] {
+        padding: 8px 30px;
+        font-size: 13px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 30px;
+    }
+
+    .time-item {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 650px;
+    }
+
+    .nama-orang-tua {
+        gap: 250px;
+        font-size: 14px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 852px) and (max-height: 390px) and (orientation: landscape) {
+    .container-cover .wave {
+        display: none;
+    }
+
+    .container-cover .content-cover {
+        bottom: 10%;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+
+    .foto-pasangan {
+        padding-top: 20px;
+        flex-direction: row;
+        gap: 140px;
+        padding-left: 45px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 200px;
+        height: 200px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 0px;
+    }
+
+    .jalan {
+        font-size: 14px;
+        max-width: 240px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 70px;
+        padding-right: 70px;
+    }
+
+    .mantra, .translation-text {
+        font-size: 17px;
+    }
+
+    .acara-box {
+        flex-direction: row;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 320px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 280px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 250px;
+        font-size: 15px;
+    }
+
+    .pawiwahan-text button[type="button"],
+    .resepsi-text button[type="button"] {
+        padding: 8px 30px;
+        font-size: 13px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 30px;
+    }
+
+    .time-item {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 650px;
+    }
+
+    .nama-orang-tua {
+        gap: 250px;
+        font-size: 14px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 900px) and (max-height: 420px) and (orientation: landscape) {
+    .container-cover .wave {
+        display: none;
+    }
+
+    .container-cover .content-cover {
+        bottom: 10%;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -40px;
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+
+    .foto-pasangan {
+        padding-top: 20px;
+        flex-direction: row;
+        gap: 140px;
+        padding-left: 45px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 200px;
+        height: 200px;
+    }
+
+    .pasangan-perempuan {
+        margin-top: 0px;
+    }
+
+    .jalan {
+        font-size: 14px;
+        max-width: 240px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 70px;
+        padding-right: 70px;
+    }
+
+    .mantra, .translation-text {
+        font-size: 17px;
+    }
+
+    .acara-box {
+        flex-direction: row;
+        gap: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        max-width: 320px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 280px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 250px;
+        font-size: 15px;
+    }
+
+    .pawiwahan-text button[type="button"],
+    .resepsi-text button[type="button"] {
+        padding: 8px 30px;
+        font-size: 13px;
+    }
+
+    .time-box {
+        margin-top: -10px;
+        gap: 30px;
+    }
+
+    .time-item {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .penutup-acara {
+        margin-top: 5px;
+        max-width: 650px;
+    }
+
+    .nama-orang-tua {
+        gap: 250px;
+        font-size: 14px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+/* Tablet Posisi Potrait */
+@media only screen and (min-width: 768px) and (max-height: 1024px) and (orientation: portrait) {
+    .content-cover {
+        bottom: 15%;
+    }
+
+    .content-cover h1 {
+        font-size: 78px;
+    }
+
+    .content-cover .tanggal {
+        font-size: 20px;
+    }
+
+    .content-cover .Kepada {
+        font-size: 20px;
+    }
+
+    .content-cover .nama-tamu {
+        font-size: 25px;
+    }
+
+    .content-cover button[type="button"] {
+        padding: 10px 50px;
+        font-size: 16px;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -45px;
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    #invitation h1 {
+        margin-top: 30px;
+        font-size: 70px;
+    }
+
+    .foto-pasangan {
+        gap: 40px;
+        padding-left: 15px;
+        flex-direction: row;
+    }
+
+    .pasangan-laki-laki,
+    .pasangan-perempuan {
+        max-width: 350px;
+    }
+
+    .mantra-text {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 250px;
+        height: 250px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        width: 335px;
+    }
+
+    .acara-box {
+        gap: 40px;
+    }
+
+    .time-box {
+        gap: 30px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 300px;
+    }
+
+    .penutup-acara {
+        margin-top: 10px;
+        max-width: 660px;
+    }
+
+    .nama-orang-tua {
+        gap: 300px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 230px;
+        font-size: 15px;
+    }
+
+    .acara-pawiwahan button[type="button"],
+    .acara-resepsi button[type="button"] {
+        padding: 8px 30px;
+        font-size: 13px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 800px) and (max-height: 1280px) and (orientation: portrait) {
+    .container-cover {
+        height: 100%;
+    }
+
+    .content-cover {
+        bottom: 15%;
+    }
+
+    .content-cover h1 {
+        font-size: 78px;
+    }
+
+    .content-cover .tanggal {
+        font-size: 20px;
+    }
+
+    .content-cover .Kepada {
+        font-size: 20px;
+    }
+
+    .content-cover .nama-tamu {
+        font-size: 25px;
+    }
+
+    .content-cover button[type="button"] {
+        padding: 10px 50px;
+        font-size: 16px;
+    }
+
+    #invitation h1 {
+        margin-top: 40px;
+        font-size: 70px;
+    }
+
+    #invitation .ucapan1 {
+        margin-top: -45px;
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .foto-pasangan {
+        gap: 60px;
+        padding-left: 20px;
+        flex-direction: row;
+    }
+
+    .pasangan-perempuan {
+        margin-right: 20px;
+    }
+
+    .jalan {
+        font-size: 16px;
+        max-width: 300px;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 260px;
+        height: 260px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        width: 350px;
+    }
+
+    .acara-box {
+        gap: 40px;
+    }
+
+    .acara-pawiwahan img,
+    .acara-resepsi img {
+        height: 320px;
+    }
+
+    .pawiwahan-text,
+    .resepsi-text {
+        max-width: 250px;
+        font-size: 15px;
+    }
+
+    .time-box {
+        gap: 30px;
+    }
+
+    .penutup-acara {
+        margin-top: 10px;
+        max-width: 700px;
+    }
+
+    .nama-orang-tua {
+        gap: 320px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 884px) and (max-height: 1104px) and (orientation: portrait) {
+    #invitation .ucapan1 {
+        margin-top: -48px;
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .foto-pasangan {
+        gap: 100px;
+        padding-left: 0px;
+        flex-direction: row;
+    }
+
+    .pasangan-laki-laki .mempelai-laki-laki,
+    .pasangan-perempuan .mempelai-perempuan {
+        width: 260px;
+        height: 260px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .acara-pawiwahan,
+    .acara-resepsi {
+        width: 400px;
+    }
+
+    .acara-box {
+        gap: 40px;
+    }
+
+    .time-box {
+        gap: 40px;
+    }
+
+    .penutup-acara {
+        max-width: 750px;
+    }
+
+    .nama-orang-tua {
+        gap: 350px;
+    }
+    
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+@media only screen and (min-width: 1114px) and (max-height: 705px) {
+    .container-cover .content-cover {
+        bottom: 20%;
+    }
+
+    .foto-pasangan {
+        gap: 200px;
+        padding-left: 0px;
+        flex-direction: row;
+    }
+
+    .jalan {
+        font-size: 18px;
+        max-width: 400px;
+    }
+
+    .balinese-mantra .mantra-text {
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+
+    .time-box {
+        gap: 50px;
+    }
+
+    .nama-orang-tua {
+        gap: 400px;
+    }
+
+    .photo-gallery .gallery-flexbox {
+        flex-wrap: nowrap;
+    }
+}
+
+/* Komentar box fix - menggunakan hanya min-width lebar layar dan max height agar stabil saat keyboard muncul */
+/* default setting max width 480px untuk memastikan tampilan tetap baik pada layar kecil */
+/* Media query ini ditempatkan di akhir agar mengoverride rule sebelumnya */
+@media only screen and (min-width: 320px) and (max-width: 480px) and (max-height: 568px) {
+    .Wedding-Wish h2 {
+        font-size: 32px;
+    }
+
+    .Wedding-Wish .ucapan2 {
+        font-size: 14px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .wish-header .wish-info .wish-name {
+        font-size: 12px;
+    }
+
+    .komentar-box {
+        width: 280px;
+    }
+
+    .pagination {
+        gap: 10px;
+    }
+
+    .pagination button {
+        padding: 8px 4px;
+        font-size: 10px;
+    }
+
+    .pagination #page-info {
+        font-size: 11px;
+    }
+}
+
+@media only screen and (min-width: 360px) and (max-width: 480px) and (max-height: 800px) {
+    .Wedding-Wish h2 {
+        font-size: 32px;
+    }
+
+    .Wedding-Wish .ucapan2 {
+        font-size: 14px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .wish-header .wish-info .wish-name {
+        font-size: 13px;
+    }
+
+    .komentar-box {
+        width: 320px;
+    }
+
+    .pagination {
+        gap: 10px;
+    }
+
+    .pagination button {
+        padding: 8px 4px;
+        font-size: 10px;
+    }
+
+    .pagination #page-info {
+        font-size: 14px;
+    }
+}
+
+@media only screen and (min-width: 390px) and (max-width: 480px) and (max-height: 852px) {
+    .Wedding-Wish h2 {
+        font-size: 32px;
+    }
+
+    .Wedding-Wish .ucapan2 {
+        font-size: 14px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .wish-header .wish-info .wish-name {
+        font-size: 14px;
+    }
+
+    .komentar-box {
+        width: 350px;
+    }
+
+    .pagination {
+        gap: 10px;
+    }
+
+    .pagination button {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+}
+
+@media only screen and (min-width: 420px) and (max-width: 480px) and (max-height: 900px) {
+    .Wedding-Wish h2 {
+        font-size: 32px;
+    }
+
+    .Wedding-Wish .ucapan2 {
+        font-size: 14px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .wish-header .wish-info .wish-name {
+        font-size: 14px;
+    }
+
+    .komentar-box {
+        width: 380px;
+    }
+
+    .pagination {
+        gap: 10px;
+    }
+
+    .pagination button {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+}
