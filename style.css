@@ -1009,6 +1009,8 @@ body {
     align-items: center;
     border-top: 2px solid rgb(216, 215, 215);
     gap: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -2951,4 +2953,5 @@ body {
         padding: 10px 27px;
         font-size: 14px;
     }
+
 }
