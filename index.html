@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undangan Pawiwahan | Edi & Winda</title>
+    <link rel="icon" href="Elemen/Elemen%20Pendukung/Icon.ico" type="image/x-icon">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <audio id="bg-music" src="Elemen/Elemen%20Pendukung/Music.mp3" preload="auto" loop></audio>
+    <button id="music-control" class="music-control" aria-label="Kontrol Musik">
+        <i class="bi bi-volume-mute-fill"></i>
+    </button>
+    <span id="music-status-text" class="music-status-text">Music Off</span>
+
+    <section id="cover" class="cover">
+        <div class="cover-bg">
+            <img src="Elemen/Photo%20Gallery/Cover1.webp" alt="Cover 1" class="bg-image img-1">
+            <img src="Elemen/Photo%20Gallery/Cover2.webp" alt="Cover 2" class="bg-image img-2">
+        </div>
+        <div id="particles-container" class="particles-container"></div>
+        <div class="cover-content">
+            <h1 class="cinzel-font">Edi & Winda</h1>
+            <p class="event-date">Jumat, 30 Januari 2026</p>
+            <p class="recipient-text">Kepada Bapak/Ibu/Saudara/i,</p>
+            <h3 id="guest-name" class="guest-name"></h3>
+            <button class="open-btn" id="btn-open">Buka Undangan</button>
+        </div>
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+        <div class="wave wave4"></div>
+    </section>
+
+    <!-- Section Isi Undangan (Target Scroll) -->
+    <section id="main-content" class="mempelai-section">
+        <div class="container text-center">
+            <div class="opening-greeting">
+                <h2 class="cinzel-font">Om Swastyastu</h2>
+                <p>Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi Wasa/Tuhan Yang Maha Esa kami bermaksud
+                    mengundang Bapak/Ibu/Saudara/i pada Upacara Manusa Yadnya Pawiwahan (Pernikahan) Putra dan Putri
+                    kami.</p>
+            </div>
+
+            <div class="couple-container mt-5">
+                <!-- Mempelai Pria -->
+                <div class="mempelai-card">
+                    <div class="mempelai-img-wrapper">
+                        <img src="Elemen/Foto%20Pasangan/Foto%20Mempelai%20Pria.jpg" alt="Edi" class="mempelai-img">
+                    </div>
+                    <h3 class="cinzel-font name">I Putu Edi Pratama</h3>
+                    <div class="parents">
+                        <p class="intro">Putra pertama dari pasangan</p>
+                        <div class="parent-names">
+                            <strong>Bapak I Made Mudita</strong>
+                            <span class="parent-divider">&</span>
+                            <strong>Ibu Putu Novita Dewi</strong>
+                        </div>
+                    </div>
+                    <p class="address">Jl. Siulan No 52, Penatih Dangin Puri, Kec. Denpasar Timur</p>
+                </div>
+
+                <div class="divider cinzel-font">&</div>
+
+                <!-- Mempelai Wanita -->
+                <div class="mempelai-card">
+                    <div class="mempelai-img-wrapper">
+                        <img src="Elemen/Foto%20Pasangan/Foto%20Mempelai%20Wanita.jpg" alt="Winda" class="mempelai-img">
+                    </div>
+                    <h3 class="cinzel-font name">Winda Aprilia Dewi</h3>
+                    <div class="parents">
+                        <p class="intro">Putri kedua dari pasangan</p>
+                        <div class="parent-names">
+                            <strong>Bapak Fatur R</strong>
+                            <span class="parent-divider">&</span>
+                            <strong>Ibu Asri Yanti</strong>
+                        </div>
+                    </div>
+                    <p class="address">Jl. Pidada 9, Ubung, Kec. Denpasar Barat</p>
+                </div>
+            </div>
+
+            <div class="mantra-box mt-5">
+                <i class="bi bi-brightness-high mantra-icon"></i>
+                <p class="mantra-sanskrit">"Iyam nari patiloka-m aganyastam, <br> prapasya jatam jayanate putran."</p>
+                <hr class="mantra-divider">
+                <p class="mantra-translation">"Wahai wanita, engkau telah datang ke rumah suamimu untuk menjadi ratu
+                    rumah tangga dan melahirkan putra-putra yang jaya."</p>
+                <p class="mantra-source cinzel-font">- Atharvaveda XIV. 1. 43 -</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="event-details" class="event-section">
+        <div class="container text-center">
+            <h2 class="cinzel-font section-title">Rangkaian Acara</h2>
+            <div class="event-grid mt-5">
+                <!-- Acara 1: Pawiwahan -->
+                <div class="event-card">
+                    <div class="event-arch">
+                        <i class="bi bi-flower1 event-icon-top"></i>
+                        <h3 class="cinzel-font">Pawiwahan</h3>
+                        <div class="event-info">
+                            <div class="info-item">
+                                <p>Jumat, 30 Januari 2026</p>
+                            </div>
+                            <div class="info-item">
+                                <p>08.00 WITA - Selesai</p>
+                            </div>
+                            <div class="info-item">
+                                <p><span class="info-label">Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
+                                    Puri, Denpasar Timur</p>
+                            </div>
+                        </div>
+                        <div class="event-buttons">
+                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Pawiwahan+Edi+dan+Winda&dates=20260130T000000Z/20260130T040000Z&details=Upacara+Manusa+Yadnya+Pawiwahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
+                                target="_blank" class="btn-event"><i class="bi bi-calendar-plus"></i> Simpan
+                                Kalender</a>
+                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
+                                class="btn-event outline"><i class="bi bi-geo-alt-fill"></i> Lihat Lokasi</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acara 2: Resepsi -->
+                <div class="event-card">
+                    <div class="event-arch">
+                        <i class="bi bi-stars event-icon-top"></i>
+                        <h3 class="cinzel-font">Resepsi</h3>
+                        <div class="event-info">
+                            <div class="info-item">
+                                <p>Jumat, 30 Januari 2026</p>
+                            </div>
+                            <div class="info-item">
+                                <p>18.00 WITA - Selesai</p>
+                            </div>
+                            <div class="info-item">
+                                <p><span class="info-label">Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
+                                    Puri, Denpasar Timur</p>
+                            </div>
+                        </div>
+                        <div class="event-buttons">
+                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Resepsi+Edi+dan+Winda&dates=20260130T100000Z/20260130T140000Z&details=Resepsi+Pernikahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
+                                target="_blank" class="btn-event"><i class="bi bi-calendar-plus"></i> Simpan
+                                Kalender</a>
+                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
+                                class="btn-event outline"><i class="bi bi-geo-alt-fill"></i> Lihat Lokasi</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Countdown Section -->
+            <div id="countdown" class="countdown-container mt-5">
+                <div class="countdown-box">
+                    <span id="days">00</span>
+                    <p>Hari</p>
+                </div>
+                <div class="countdown-box">
+                    <span id="hours">00</span>
+                    <p>Jam</p>
+                </div>
+                <div class="countdown-box">
+                    <span id="minutes">00</span>
+                    <p>Menit</p>
+                </div>
+                <div class="countdown-box">
+                    <span id="seconds">00</span>
+                    <p>Detik</p>
+                </div>
+            </div>
+
+            <div class="closing-text mt-5">
+                <p>Merupakan suatu kebahagiaan dan kehormatan bagi kami, apabila Bapak/Ibu/Saudara/i, berkenan hadir
+                    untuk memberikan doa restu. Atas kehadiran dan doa restunya kami ucapkan terima kasih.</p>
+            </div>
+
+            <div class="family-section mt-5">
+                <p class="cinzel-font">Kami Yang Berbahagia<br>Keluarga</p>
+                <div class="family-names mt-5">
+                    <div class="family-side">
+                        <strong>Bapak I Made Mudita</strong>
+                        <span class="family-amp">&</span>
+                        <strong>Ibu Putu Novita Dewi</strong>
+                    </div>
+                    <div class="family-side">
+                        <strong>Bapak Fatur R</strong>
+                        <span class="family-amp">&</span>
+                        <strong>Ibu Asri Eka Yanti</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Galeri -->
+    <section id="gallery" class="gallery-section">
+        <div class="container text-center">
+            <h2 class="cinzel-font section-title">Momen Bahagia</h2>
+
+            <div class="gallery-grid mt-5">
+                <!-- 4 Landscape & 10 Portrait -->
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto1.webp" alt="Momen 1"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto2.webp" alt="Momen 2"
+                        loading="lazy"></div>
+                <div class="gallery-item landscape"><img src="Elemen/Photo%20Gallery/Cover2.webp" alt="Momen 3"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto12.webp" alt="Momen 4"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto6.webp" alt="Momen 5"
+                        loading="lazy"></div>
+                <div class="gallery-item landscape"><img src="Elemen/Photo%20Gallery/Foto3.webp" alt="Momen 6"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto4.webp" alt="Momen 7"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto8.webp" alt="Momen 8"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto10.webp" alt="Momen 9"
+                        loading="lazy"></div>
+                <div class="gallery-item landscape"><img src="Elemen/Photo%20Gallery/Foto5.webp" alt="Momen 10"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait momen11"><img src="Elemen/Photo%20Gallery/Foto11.webp" alt="Momen 11"
+                        loading="lazy"></div>
+                <div class="gallery-item portrait"><img src="Elemen/Photo%20Gallery/Foto9.webp" alt="Momen 12"
+                        loading="lazy"></div>
+                <div class="gallery-item landscape momen13"><img src="Elemen/Photo%20Gallery/Foto7.webp" alt="Momen 13"
+                        loading="lazy"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Attendance (Hybrid RSVP & Guestbook) -->
+    <section id="attendance" class="attendance-section">
+        <div class="container">
+            <h2 class="cinzel-font section-title text-center">Konfirmasi & Doa Restu</h2>
+            <div class="attendance-wrapper mt-5">
+                <!-- Kolom Form (Kiri) -->
+                <div class="attendance-form-container">
+                    <div class="attendance-card">
+                        <div id="reply-mode-indicator" class="reply-mode-bar">
+                            <span>Membalas ucapan: <strong id="replying-to-name">Nama Tamu</strong></span>
+                            <button type="button" id="cancel-reply" class="btn-close" style="border:none; background:none; color:#dc3545; cursor:pointer; font-weight:bold;">✕</button>
+                        </div>
+                        <form id="hybrid-form">
+                            <div class="form-group">
+                                <label for="att-name">Nama Lengkap</label>
+                                <input type="text" id="att-name" placeholder="Masukkan nama Anda" required
+                                    pattern="[A-Za-z\s]+" title="Nama hanya boleh berisi huruf dan spasi" maxlength="20">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="att-status">Kehadiran</label>
+                                    <select id="att-status" required>
+                                        <option value="" disabled selected>Pilih Konfirmasi</option>
+                                        <option value="Hadir">Hadir</option>
+                                        <option value="Tidak Hadir">Tidak Hadir</option>
+                                    </select>
+                                </div>
+                                <div class="form-group flex-1" id="count-group">
+                                    <label for="att-count">Jumlah Tamu</label>
+                                    <select id="att-count">
+                                        <option value="1">1 Orang</option>
+                                        <option value="2">2 Orang</option>
+                                        <option value="3">3 Orang</option>
+                                        <option value="4">4 Orang</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="att-message">Ucapan & Doa Restu</label>
+                                <textarea id="att-message" placeholder="Tuliskan ucapan manis Anda..." rows="4" required
+                                    maxlength="500"></textarea>
+                                <small id="char-counter"
+                                    style="display: block; text-align: right; color: #999; margin-top: 5px;">0 /
+                                    500</small>
+                            </div>
+                            <button type="submit" class="btn-event w-100">Kirim Kehadiran & Ucapan</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Kolom Feed Ucapan (Kanan) -->
+                <div class="attendance-list-container">
+                    <div class="feed-header">
+                        <span id="message-counter">0</span> Komentar<span id="guest-stats-wrapper" style="display: none;"> • <span id="guest-counter">0</span> Tamu Hadir</span>
+                    </div>
+                    <div id="guestbook-list" class="guestbook-list">
+                        <!-- Pesan akan dimuat di sini -->
+                    </div>
+                    <!-- Navigasi Pesan -->
+                    <div id="pagination-controls" class="pagination-controls" style="display: none; justify-content: space-between; align-items: center; margin-top: 15px; padding-bottom: 0;">
+                        <button id="btn-prev-gb" class="btn-event outline" style="padding: 8px 15px; font-size: 0.75rem;" disabled><i class="bi bi-chevron-left"></i> Sebelumnya</button>
+                        <button id="btn-next-gb" class="btn-event outline" style="padding: 8px 15px; font-size: 0.75rem;">Berikutnya <i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lightbox untuk Galeri -->
+    <div id="lightbox" class="lightbox">
+        <div id="lightbox-counter" class="lightbox-counter"></div>
+        <div class="lightbox-toolbar">
+            <button id="btn-fullscreen" class="toolbar-btn" title="Layar Penuh" aria-label="Layar Penuh"><i
+                    class="bi bi-arrows-fullscreen"></i></button>
+            <button id="btn-zoom" class="toolbar-btn" title="Zoom Foto" aria-label="Zoom Foto"><i
+                    class="bi bi-zoom-in"></i></button>
+            <button id="btn-download" class="toolbar-btn" title="Simpan Foto" aria-label="Unduh Foto"><i
+                    class="bi bi-download"></i></button>
+            <button id="btn-close" class="toolbar-btn" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="lightbox-loader" id="lightbox-loader">
+            <div class="spinner"></div>
+            <p class="loader-text">Loading...</p>
+        </div>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev">&lt;</button>
+        <img class="lightbox-img" id="lightbox-img" src="" alt="Preview Foto">
+        <button class="lightbox-nav lightbox-next" id="lightbox-next">&gt;</button>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="custom-confirm-modal" class="custom-modal">
+        <div class="modal-content-confirm">
+            <div class="modal-header-confirm">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <h3 class="cinzel-font">Hapus Ucapan?</h3>
+            <p>Apakah Anda yakin ingin menghapus ucapan ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="modal-actions-confirm">
+                <button id="btn-cancel-confirm" class="btn-event outline">Batal</button>
+                <button id="btn-delete-confirm" class="btn-event">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
