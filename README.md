@@ -18,12 +18,6 @@
   <img src="https://img.shields.io/badge/Responsive-Mobile--First-success?style=for-the-badge" alt="Responsive" />
 </p>
 
----
-
-[🌐 Live Demo](https://winanda150.github.io/pawiwahan-theme-1/) • [✨ Fitur Utama](#-fitur-unggulan) • [📁 Struktur Proyek](#-struktur-direktori--aset) • [🚀 Cara Menjalankan](#-panduan-instalasi--menjalankan-lokal) • [⚙️ Panduan Kustomisasi](#%EF%B8%8F-panduan-kustomisasi--konfigurasi) • [👑 Mode Mempelai](#-fitur-khusus-mode-mempelai-admin)
-
----
-
 </div>
 
 ## 📖 Tentang Proyek
@@ -242,6 +236,94 @@ Untuk mengganti password dengan yang baru:
    generateHash("PasswordBaruAnda").then(console.log);
    ```
 2. Salin kode hash yang dihasilkan lalu tempelkan ke variabel `MEMPELAI_HASH` di [`script.js`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/script.js#L1056).
+
+---
+
+## 🛡️ Aturan Keamanan Firestore (Security Rules)
+
+Untuk menjaga integritas data buku tamu dari akses ilegal atau injeksi data yang tidak valid, gunakan rekomendasi konfigurasi **Firebase Firestore Security Rules** berikut:
+
+```javascript
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // 1. Koleksi messages (Pesan Utama & Balasan)
+    // ==========================================
+    match /messages/{messageId} {
+      allow read: if true;
+      
+      // CREATE: Ucapan baru oleh tamu (likes & replyCount wajib mulai dari 0)
+      allow create: if request.resource.data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt'])
+                    && request.resource.data.name is string 
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 50
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() <= 500
+                    && request.resource.data.status in ['Hadir', 'Tidak Hadir']
+                    && request.resource.data.count is int
+                    && request.resource.data.count >= 0
+                    && request.resource.data.count <= 10
+                    && request.resource.data.likes == 0
+                    && request.resource.data.replyCount == 0
+                    && (!('isPinned' in request.resource.data) || request.resource.data.isPinned is bool)
+                    && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp)
+                    && request.resource.data.timestamp == request.time;
+      
+      // UPDATE: Mengizinkan perubahan Suka, Jumlah Balasan, dan Pin / Unpin
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'likes', 'isPinned', 'pinnedAt'])
+                    && (!('likes' in request.resource.data) || (request.resource.data.likes is int && request.resource.data.likes >= 0))
+                    && (!('replyCount' in request.resource.data) || (request.resource.data.replyCount is int && request.resource.data.replyCount >= 0))
+                    && (!('isPinned' in request.resource.data) || request.resource.data.isPinned is bool)
+                    && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp);
+      
+      // DELETE: Penghapusan oleh Mode Mempelai
+      allow delete: if true;
+
+      // SUB-KOLEKSI: Balasan Pesan (Replies)
+      match /replies/{replyId} {
+        allow read: if true;
+        
+        // CREATE Balasan
+        allow create: if request.resource.data.keys().hasOnly(['name', 'message', 'replyTo', 'isMempelaiReply', 'timestamp', 'likes', 'adminKey'])
+                      && request.resource.data.name is string
+                      && request.resource.data.name.size() > 0
+                      && request.resource.data.name.size() <= 50
+                      && request.resource.data.message is string
+                      && request.resource.data.message.size() <= 500
+                      && request.resource.data.replyTo is string
+                      && request.resource.data.replyTo.size() <= 50
+                      && request.resource.data.isMempelaiReply is bool
+                      && request.resource.data.likes == 0
+                      && request.resource.data.timestamp == request.time
+                      && (
+                        request.resource.data.isMempelaiReply == false ||
+                        (request.resource.data.isMempelaiReply == true && request.resource.data.adminKey == 'mempelai123')
+                      );
+
+        // UPDATE Balasan: Mengizinkan Suka & Penghapusan adminKey otomatis
+        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'adminKey'])
+                      && (!('likes' in request.resource.data) || (request.resource.data.likes is int && request.resource.data.likes >= 0));
+        
+        // DELETE Balasan
+        allow delete: if true;
+      }
+    }
+
+    // ==========================================
+    // 2. Koleksi metadata (Total Statistik Tamu)
+    // ==========================================
+    match /metadata/totals {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['totalGuests'])
+                   && request.resource.data.totalGuests is int 
+                   && request.resource.data.totalGuests >= 0;
+    }
+  }
+}
+```
 
 ---
 
