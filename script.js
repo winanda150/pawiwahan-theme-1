@@ -54,7 +54,7 @@ let serverTimeOffset = 0;
 async function syncTimeWithServer() {
     try {
         const start = Date.now();
-        const response = await fetch(window.location.href, { 
+        const response = await fetch(window.location.href, {
             method: 'HEAD',
             cache: 'no-store' // Memastikan header Date yang diambil adalah waktu server saat ini
         });
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (guestParam && guestParam.trim() !== "") {
             guestNameElement.textContent = guestParam;
         } else {
-            guestNameElement.textContent = "Tamu Undangan"; 
+            guestNameElement.textContent = "Tamu Undangan";
         }
 
         // Jalankan saat pertama dimuat dan setiap kali jendela di-resize
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const currentWidth = window.innerWidth;
         const isOpened = cover.classList.contains('opened');
-        
+
         // Deteksi apakah ini perubahan orientasi nyata (lebar berubah) 
         // atau sekadar UI browser (address bar) yang muncul/hilang (lebar tetap).
         const isRotation = currentWidth !== lastWidth;
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         adjustGuestNameSize();
-        
+
         // Jika terjadi rotasi (lebar berubah), perbarui pengaturan AOS sesuai breakpoint baru
         if (isRotation) {
             initAOS();
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isOpened) {
             window.scrollTo(0, 0);
         }
-        
+
         lastWidth = currentWidth;
     };
 
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnOpen.addEventListener('click', () => {
             // Putar Musik
             music.play().catch(error => console.log("Musik tertunda oleh kebijakan browser:", error));
-            
+
             // Konfigurasi Media Session
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
@@ -236,12 +236,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 navigator.mediaSession.setActionHandler('play', () => music.play());
                 navigator.mediaSession.setActionHandler('pause', () => music.pause());
             }
-            
+
             // Tampilkan tombol kontrol musik setelah undangan dibuka
             if (musicControl) {
                 musicControl.classList.add('visible');
             }
-            
+
             // Mulai membuat partikel emas saat tombol diklik
             if (particlesContainer && particlesContainer.innerHTML === "") {
                 const particleCount = 40; // Sedikit dikurangi agar lebih ringan di mobile
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 for (let i = 0; i < particleCount; i++) {
                     const particle = document.createElement('div');
                     particle.className = 'particle';
-                    
+
                     const size = Math.random() * 4 + 2 + 'px';
                     const left = Math.random() * 100 + '%';
                     const duration = Math.random() * 8 + 8 + 's';
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     particle.style.left = left;
                     particle.style.animation = `fall ${duration} linear infinite`;
                     particle.style.animationDelay = delay;
-                    
+
                     fragment.appendChild(particle);
                 }
                 particlesContainer.appendChild(fragment);
@@ -283,9 +283,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const nextSection = document.getElementById('main-content');
                 if (nextSection) {
-                    nextSection.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
+                    nextSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
                     });
                 }
             }, 600); // Tambah delay agar transisi cover selesai lebih dulu sebelum refresh AOS & scroll
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Jalankan sekali di awal agar tidak ada jeda 1 detik saat halaman dimuat
     updateCountdown();
-    
+
     // Jalankan interval setiap detik
     countdownInterval = setInterval(updateCountdown, 1000);
 
@@ -370,15 +370,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initImageRetry = (img) => {
         let retries = 0;
         const maxRetries = 10; // Jumlah maksimal percobaan ulang (10 kali)
-        
+
         img.addEventListener('error', function handleError() {
             // Mendapatkan URL asli tanpa parameter retry/timestamp sebelumnya
             const currentSrc = this.src.split(/[?&]retry=/)[0].split(/[?&]t=/)[0];
-            
+
             if (retries < maxRetries) {
                 retries++;
                 console.warn(`[Retry] Gagal memuat: ${currentSrc}. Mencoba lagi (${retries}/${maxRetries})...`);
-                
+
                 setTimeout(() => {
                     const separator = currentSrc.includes('?') ? '&' : '?';
                     // Tambahkan query parameter unik untuk memaksa browser mengambil data baru dari server (bypass cache)
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Ambil semua elemen gambar galeri yang ada di HTML
     const allGalleryImages = Array.from(document.querySelectorAll('.gallery-item img'));
-    
+
     let isZoomed = false;
     let currentScale = 1;
     let initialPinchDistance = 0;
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         resetZoom();
         const isNext = direction === 'next';
         const isPrev = direction === 'prev';
-        
+
         // Pilih kelas transisi berdasarkan arah (slide atau fade default)
         const outClass = isNext ? 'slide-next-out' : (isPrev ? 'slide-prev-out' : 'changing');
         const inClass = isNext ? 'slide-next-in' : (isPrev ? 'slide-prev-in' : null);
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (index < 0) index = galleryImages.length - 1;
             if (index >= galleryImages.length) index = 0;
             currentIndex = index;
-            
+
             // Siapkan posisi gambar baru (masih transparan)
             if (isNext || isPrev) {
                 lightboxImg.classList.remove(outClass);
@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             const currentDistance = getDistance(e.touches);
             const scaleFactor = currentDistance / initialPinchDistance;
-            
+
             // Batas zoom minimal 1x dan maksimal 4x
             currentScale = Math.min(Math.max(initialScale * scaleFactor, 1), 4);
             isZoomed = currentScale > 1.05;
@@ -702,7 +702,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         img.addEventListener('click', () => {
             // Pastikan data gambar paling update sebelum membuka lightbox
             refreshVisibleImages();
-            
+
             currentIndex = galleryImages.indexOf(img);
             updateLightboxImage(currentIndex);
             lightbox.classList.add('show');
@@ -769,7 +769,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(err => console.log("Gagal keluar fullscreen:", err));
         }
-        
+
         lightbox.classList.remove('show');
         // Kembalikan scroll jika cover sudah terbuka
         if (document.body.classList.contains('allow-scroll')) {
@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Filter input nama agar tidak mengandung karakter khusus atau angka secara real-time
     const nameInput = document.getElementById('att-name');
     if (nameInput) {
-        nameInput.addEventListener('input', function() {
+        nameInput.addEventListener('input', function () {
             this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
         });
     }
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const messageInput = document.getElementById('att-message');
     const charCounter = document.getElementById('char-counter');
     if (messageInput && charCounter) {
-        messageInput.addEventListener('input', function() {
+        messageInput.addEventListener('input', function () {
             const length = this.value.length;
             charCounter.textContent = `${length} / 500`;
             if (length >= 500) {
@@ -826,7 +826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
+
         const icon = type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill';
         toast.innerHTML = `<i class="bi bi-${icon}" style="margin-right: 12px; font-size: 1.2rem; color: ${type === 'success' ? '#28a745' : '#dc3545'}"></i> ${message}`;
 
@@ -854,7 +854,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // PROSES BALASAN (Sub-collection)
                     const docRef = doc(db, "messages", replyingToId);
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
-                    
+
                     // 1. Siapkan data balasan
                     const replyData = {
                         name: document.getElementById('att-name').value,
@@ -881,14 +881,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
 
                     showToast('Balasan Anda telah terkirim.');
-                    
+
                     // Reset Mode Balas
                     replyingToId = null;
                     document.getElementById('reply-mode-indicator').style.display = 'none';
                 } else {
                     // PROSES UCAPAN BARU
                     const guestCount = document.getElementById('att-status').value === 'Hadir' ? Number(document.getElementById('att-count').value) : 0;
-                    
+
                     const newDoc = await addDoc(collection(db, "messages"), {
                         name: document.getElementById('att-name').value,
                         status: document.getElementById('att-status').value,
@@ -901,8 +901,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     // Jalankan update metadata di background agar tidak memblokir UI sukses
                     if (guestCount > 0) {
-                        setDoc(doc(db, "metadata", "totals"), { 
-                            totalGuests: increment(guestCount) 
+                        setDoc(doc(db, "metadata", "totals"), {
+                            totalGuests: increment(guestCount)
                         }, { merge: true }).catch(err => console.error("Metadata update failed:", err));
                     }
 
@@ -913,7 +913,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!isMempelai) {
                     localStorage.setItem('last_gb_submission', Date.now());
                 }
-                
+
                 submitBtn.innerText = 'Berhasil!';
                 hybridForm.reset();
                 if (charCounter) {
@@ -922,7 +922,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     charCounter.style.fontWeight = 'normal';
                 }
                 document.getElementById('att-message').placeholder = "Tuliskan ucapan manis Anda...";
-                
+
                 // Reset status kehadiran ke default "Pilih Konfirmasi" dan pastikan container muncul
                 const formRow = statusSelect?.closest('.form-row');
                 if (formRow) formRow.style.display = 'flex';
@@ -974,12 +974,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Logika Akses Khusus (Admin & Mempelai) ---
     let isMempelai = sessionStorage.getItem('isMempelai') === 'true';
-    
+
     // Fungsi untuk memantau total tamu secara real-time (Privat untuk Mempelai)
     function initGuestCounter() {
         const guestStatsWrapper = document.getElementById('guest-stats-wrapper');
         const guestCounter = document.getElementById('guest-counter');
-        
+
         if (isMempelai && guestStatsWrapper && guestCounter) {
             guestStatsWrapper.style.display = 'inline';
             // Pastikan listener Firestore hanya didaftarkan sekali
@@ -1031,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const docName = e.target.dataset.name;
 
             replyingToId = docId;
-            
+
             // Tampilkan indikator balas di form
             const indicator = document.getElementById('reply-mode-indicator');
             const nameSpan = document.getElementById('replying-to-name');
@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Scroll ke form
             document.querySelector('.attendance-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // Fokus ke textarea ucapan
             document.getElementById('att-message').placeholder = `Tulis balasan untuk ${docName}...`;
             document.getElementById('att-message').focus();
@@ -1074,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentLikes = parseInt(likeBtn.dataset.likes || '0', 10);
             const likeCountSpan = likeBtn.querySelector('.like-count');
             const likeIcon = likeBtn.querySelector('i');
-            
+
             // Gunakan key penyimpanan yang berbeda untuk ucapan utama dan balasan
             const storageKey = parentId ? 'liked_replies' : 'liked_messages';
             let likedItems = JSON.parse(localStorage.getItem(storageKey) || '[]');
@@ -1084,39 +1084,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             const spawnHearts = (el) => {
                 const rect = el.getBoundingClientRect();
                 const heartCount = 6; // Jumlah hati yang muncul
-                
+
                 for (let i = 0; i < heartCount; i++) {
                     const heart = document.createElement('i');
                     heart.className = 'bi bi-heart-fill floating-heart';
-                    
+
                     // Randomisasi properti untuk efek menyebar
                     const tx = (Math.random() - 0.5) * 80; // Sebaran horizontal dikurangi agar proporsional dengan jarak vertikal
                     const rot = (Math.random() - 0.5) * 45; // Rotasi
                     const duration = 0.6 + Math.random() * 0.4; // Durasi dipercepat karena jarak tempuh lebih pendek
                     const size = (8 + Math.random() * 6) + 'px'; // Ukuran diperkecil (8px - 14px) agar lebih kecil dari tombol
                     const opacity = 0.4 + Math.random() * 0.6; // Variasi transparansi antara 0.4 dan 1.0
-                    
+
                     heart.style.setProperty('--tx', `${tx}px`);
                     heart.style.setProperty('--rot', `${rot}deg`);
                     heart.style.setProperty('--op', opacity);
                     heart.style.setProperty('--duration', `${duration}s`);
                     heart.style.setProperty('--size', size);
-                    
+
                     // Posisi awal di tengah tombol
                     heart.style.left = `${rect.left + rect.width / 2}px`;
                     heart.style.top = `${rect.top + rect.height / 2}px`;
-                    
+
                     document.body.appendChild(heart);
-                    
+
                     // Hapus elemen dari DOM setelah animasi selesai
                     setTimeout(() => heart.remove(), duration * 1000);
                 }
             };
 
             likeBtn.disabled = true;
-            
+
             // Tentukan referensi dokumen (ucapan utama vs balasan)
-            const docRef = parentId 
+            const docRef = parentId
                 ? doc(db, "messages", parentId, "replies", docId)
                 : doc(db, "messages", docId);
 
@@ -1204,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Ambil data pesan dulu untuk tahu berapa tamu yang harus dikurangi
                     const msgRef = doc(db, "messages", docIdToDelete);
                     const msgSnap = await getDoc(msgRef);
-                    
+
                     if (msgSnap.exists()) {
                         const msgData = msgSnap.data();
                         if (msgData.status === 'Hadir' && msgData.count > 0) {
@@ -1236,17 +1236,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const btn = e.target.classList.contains('view-reply-btn') ? e.target : e.target.closest('.view-reply-btn');
             const docId = btn.dataset.id;
             const replyContent = document.getElementById(`reply-content-${docId}`);
-            
+
             if (replyContent) {
                 const isHidden = replyContent.style.display === 'none';
-                
+
                 if (isHidden) {
                     // Aktifkan Real-time listener untuk balasan jika belum ada
                     if (!replyUnsubscribers[docId]) {
                         replyContent.innerHTML = ''; // Bersihkan kontainer saat pertama kali dibuka
-                    const repliesRef = collection(db, "messages", docId, "replies");
-                    const qReplies = query(repliesRef, orderBy("timestamp", "asc"));
-                    
+                        const repliesRef = collection(db, "messages", docId, "replies");
+                        const qReplies = query(repliesRef, orderBy("timestamp", "asc"));
+
                         replyUnsubscribers[docId] = onSnapshot(qReplies, (snapshot) => {
                             const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
                             snapshot.docChanges().forEach((change) => {
@@ -1265,9 +1265,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
                                 const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
                                 const rFullDate = rData.timestamp ? `${rDateStr} pukul ${rTimeStr} Wita` : 'Baru saja';
-                                
+
                                 const mentionHTML = rData.replyTo && rData.replyTo !== btn.dataset.parentName
-                                    ? `<span class="reply-to-mention">${rData.replyTo}</span>` 
+                                    ? `<span class="reply-to-mention">${rData.replyTo}</span>`
                                     : '';
 
                                 const replyHTML = `
@@ -1301,7 +1301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     // OPTIMASI: Update komponen balasan secara spesifik (Cegah Flicker)
                                     const rNameEl = existingReply.querySelector('.gb-name');
                                     if (rNameEl) rNameEl.textContent = rData.name;
-                                    
+
                                     const rMsgContainer = existingReply.querySelector('.gb-message');
                                     const rMsgTextEl = rMsgContainer?.querySelector('.msg-text');
                                     if (rMsgTextEl) {
@@ -1311,7 +1311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         if (!rIsExpanded) rMsgTextEl.textContent = rPreviewText;
                                         if (rIsLong) rMsgTextEl.dataset.full = rMessage;
                                     }
-                                    
+
                                     const rLikeBtn = existingReply.querySelector('.like-btn');
                                     if (rLikeBtn) {
                                         rLikeBtn.dataset.likes = rLikes;
@@ -1341,8 +1341,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 replyContent.style.display = isHidden ? 'block' : 'none';
-                btn.innerHTML = isHidden 
-                    ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan` 
+                btn.innerHTML = isHidden
+                    ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan`
                     : `<i class="bi bi-arrow-return-right"></i> Lihat ${btn.dataset.count || 0} balasan lainnya`;
             }
         }
@@ -1352,11 +1352,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnPrevGb = document.getElementById('btn-prev-gb');
     const btnNextGb = document.getElementById('btn-next-gb');
 
-    let firstVisible = null;
-    let lastVisible = null;
     let unsubscribeGb = null;
     let aosRefreshTimer = null;
     let currentPage = 1;
+    const pageCursors = [null]; // Menyimpan document cursor untuk setiap halaman: pageCursors[1] = null, pageCursors[2] = doc10, dst.
 
     async function updateTotalCount() {
         try {
@@ -1374,194 +1373,224 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function loadGuestbook(q) {
-        if (unsubscribeGb) unsubscribeGb();
-        let isInitialLoad = true; 
+    function createMessageElement(docSnap, isInitial = false) {
+        const data = docSnap.data();
+        const docId = docSnap.id;
+        const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
 
-        // Tampilkan spinner hanya jika list benar-benar kosong (pemuatan pertama kali)
-        if (gbList.children.length === 0) {
-            gbList.innerHTML = `
-                <div id="gb-loading" class="text-center" style="padding: 40px 0;">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                    <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
+        const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
+        const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+        const date = data.timestamp ? `${dateStr} pukul ${timeStr} Wita` : 'Baru saja';
+
+        const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
+        const message = data.message || '';
+        const isLong = message.length > 200;
+        const previewText = isLong ? message.substring(0, 200) + '...' : message;
+        const likes = data.likes || 0;
+        const isAlreadyLiked = likedMessages.includes(docId);
+
+        const item = document.createElement('div');
+        item.id = `msg-${docId}`;
+        item.className = `guestbook-item ${isInitial ? 'fade-in-up' : ''}`;
+        item.innerHTML = `
+            <div class="gb-header-row">
+                <div class="gb-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="gb-info">
+                    <div class="gb-top-row">
+                        <span class="gb-name">${data.name}</span>
+                        <span class="status-badge ${statusClass}">${data.status}</span>
+                        <button class="delete-btn" data-id="${docId}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
+                    </div>
+                    <div class="gb-meta">
+                        <span class="gb-time">${date}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="gb-message"><span class="msg-text">${previewText}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
+            <div class="gb-actions">
+                <button class="reply-btn" data-id="${docId}" data-name="${data.name}">Balas</button>
+                <button class="like-btn" data-id="${docId}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
+                    <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
+                </button>
+            </div>
+            ${(data.replyCount > 0) ? `
+            <div class="reply-toggle-container">
+                <div id="reply-content-${docId}" class="gb-reply fade-in-text" style="display: none;"></div>
+                <button class="view-reply-btn" data-id="${docId}" data-count="${data.replyCount || 0}" data-parent-name="${data.name}">
+                    <i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya
+                </button>
+            </div>
+            ` : ''}
+        `;
+        if (isLong) item.querySelector('.msg-text').dataset.full = message;
+        return item;
+    }
+
+    function updateMessageElement(existingItem, docSnap) {
+        const data = docSnap.data();
+        const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
+        const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+        const date = data.timestamp ? `${dateStr} pukul ${timeStr} Wita` : 'Baru saja';
+
+        const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
+        const message = data.message || '';
+        const isLong = message.length > 200;
+        const previewText = isLong ? message.substring(0, 200) + '...' : message;
+        const likes = data.likes || 0;
+        const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
+        const isAlreadyLiked = likedMessages.includes(docSnap.id);
+
+        const nameEl = existingItem.querySelector('.gb-name');
+        if (nameEl) nameEl.textContent = data.name;
+
+        const badgeEl = existingItem.querySelector('.status-badge');
+        if (badgeEl) {
+            badgeEl.textContent = data.status;
+            badgeEl.className = `status-badge ${statusClass}`;
+        }
+
+        const timeEl = existingItem.querySelector('.gb-time');
+        if (timeEl) timeEl.textContent = date;
+
+        const msgContainer = existingItem.querySelector('.gb-message');
+        const msgTextEl = msgContainer?.querySelector('.msg-text');
+        if (msgTextEl) {
+            const readMoreBtn = msgContainer.querySelector('.read-more-btn');
+            const isExpanded = readMoreBtn && readMoreBtn.dataset.expanded === 'true';
+            if (!isExpanded) msgTextEl.textContent = previewText;
+            if (isLong) msgTextEl.dataset.full = message;
+        }
+
+        const likeBtn = existingItem.querySelector('.like-btn');
+        if (likeBtn) {
+            likeBtn.dataset.likes = likes;
+            likeBtn.setAttribute('aria-label', isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini');
+            const countSpan = likeBtn.querySelector('.like-count');
+            if (countSpan) {
+                countSpan.textContent = likes > 0 ? likes : '';
+                countSpan.classList.toggle('liked', isAlreadyLiked);
+            }
+            const icon = likeBtn.querySelector('i');
+            if (icon) icon.className = `bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
+        }
+
+        const viewReplyBtn = existingItem.querySelector('.view-reply-btn');
+        if (viewReplyBtn) {
+            viewReplyBtn.dataset.count = data.replyCount || 0;
+            const replyContent = existingItem.querySelector('.gb-reply');
+            const isVisible = replyContent && replyContent.style.display !== 'none';
+            viewReplyBtn.innerHTML = isVisible
+                ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan`
+                : `<i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya`;
+
+            if (data.replyCount === 0) {
+                existingItem.querySelector('.reply-toggle-container')?.remove();
+            }
+        } else if (data.replyCount > 0) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `
+                <div class="reply-toggle-container">
+                    <div id="reply-content-${docSnap.id}" class="gb-reply fade-in-text" style="display: none;"></div>
+                    <button class="view-reply-btn" data-id="${docSnap.id}" data-count="${data.replyCount || 0}" data-parent-name="${data.name}">
+                        <i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya
+                    </button>
                 </div>
             `;
+            const toggleContainer = tempDiv.firstElementChild;
+            if (toggleContainer) existingItem.appendChild(toggleContainer);
         }
+    }
+
+    function getQueryForPage(page) {
+        if (page === 1 || !pageCursors[page]) {
+            return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10));
+        }
+        return query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(pageCursors[page]), limit(10));
+    }
+
+    function loadGuestbook(page = 1) {
+        if (unsubscribeGb) unsubscribeGb();
+        currentPage = page;
+        let isInitialLoad = true;
+
+        // Reset list dan tampilkan spinner saat memuat halaman
+        gbList.innerHTML = `
+            <div id="gb-loading" class="text-center" style="padding: 40px 0;">
+                <div class="spinner" style="margin: 0 auto;"></div>
+                <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
+            </div>
+        `;
+
+        const q = getQueryForPage(currentPage);
 
         unsubscribeGb = onSnapshot(q, (snapshot) => {
             updateTotalCount();
-            
-            // Hapus spinner dan pesan kosong jika ada data baru masuk
-            const loadingSpinner = document.getElementById('gb-loading');
-            const emptyMessage = gbList.querySelector('.empty-msg');
-            
+
             if (snapshot.empty) {
-                if (loadingSpinner) loadingSpinner.remove();
-                if (!emptyMessage) {
-                    gbList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
-                }
+                gbList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
                 if (btnNextGb) btnNextGb.disabled = true;
+                if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
                 return;
             }
 
-            if (loadingSpinner) loadingSpinner.remove();
-            if (emptyMessage) emptyMessage.remove();
+            // Simpan cursor untuk halaman berikutnya (jika ada dokumen)
+            if (snapshot.docs.length > 0) {
+                pageCursors[currentPage + 1] = snapshot.docs[snapshot.docs.length - 1];
+            }
 
-            firstVisible = snapshot.docs[0];
-            lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-            const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
-
-            // Update status tombol navigasi
+            // Update status tombol navigasi (berikutnya aktif hanya jika ada 10 dokumen)
             if (btnNextGb) btnNextGb.disabled = snapshot.size < 10;
             if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
-            
-            snapshot.docChanges().forEach((change) => {
-                const doc = change.doc;
-                const data = doc.data();
-                const docId = doc.id;
-                const existingItem = document.getElementById(`msg-${docId}`);
-                
-                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-                const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-                const date = data.timestamp ? `${dateStr} pukul ${timeStr} Wita` : 'Baru saja';
 
-                const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
-                
-                const message = data.message || '';
-                const isLong = message.length > 200;
-                const previewText = isLong ? message.substring(0, 200) + '...' : message;
-                const likes = data.likes || 0;
-                const isAlreadyLiked = likedMessages.includes(doc.id);
+            if (isInitialLoad) {
+                // Bersihkan kontainer dan render hanya dokumen halaman yang aktif
+                gbList.innerHTML = '';
+                snapshot.docs.forEach((docSnap) => {
+                    const item = createMessageElement(docSnap, true);
+                    gbList.appendChild(item);
+                });
+                isInitialLoad = false;
+            } else {
+                // Real-time update untuk halaman saat ini
+                snapshot.docChanges().forEach((change) => {
+                    const docSnap = change.doc;
+                    const docId = docSnap.id;
+                    const existingItem = document.getElementById(`msg-${docId}`);
 
-                const itemHTML = `
-                    <div class="gb-header-row">
-                        <div class="gb-avatar">
-                            <i class="bi bi-person-circle"></i>
-                        </div>
-                        <div class="gb-info">
-                            <div class="gb-top-row">
-                                <span class="gb-name">${data.name}</span>
-                                <span class="status-badge ${statusClass}">${data.status}</span>
-                                <button class="delete-btn" data-id="${doc.id}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
-                            </div>
-                            <div class="gb-meta">
-                                <span class="gb-time">${date}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="gb-message"><span class="msg-text">${previewText}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
-                    <div class="gb-actions">
-                        <button class="reply-btn" data-id="${doc.id}" data-name="${data.name}">Balas</button>
-                        <button class="like-btn" data-id="${doc.id}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
-                            <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
-                        </button>
-                    </div>
-                    ${(data.replyCount > 0) ? `
-                    <div class="reply-toggle-container">
-                        <div id="reply-content-${doc.id}" class="gb-reply fade-in-text" style="display: none;"></div>
-                        <button class="view-reply-btn" data-id="${doc.id}" data-count="${data.replyCount || 0}" data-parent-name="${data.name}">
-                            <i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya
-                        </button>
-                    </div>
-                    ` : ''}
-                `;
-
-                if (change.type === "added") {
-                    const item = document.createElement('div');
-                    item.id = `msg-${docId}`;
-                    item.className = `guestbook-item ${isInitialLoad ? 'fade-in-up' : ''}`;
-                    item.innerHTML = itemHTML;
-                    if (isLong) item.querySelector('.msg-text').dataset.full = message;
-
-                    // Masukkan ke posisi yang benar berdasarkan index
-                    if (change.newIndex === 0) {
-                        gbList.prepend(item);
-                    } else {
-                        const referenceNode = gbList.children[change.newIndex];
-                        gbList.insertBefore(item, referenceNode);
-                    }
-                } else if (change.type === "modified" && existingItem) {
-                    // OPTIMASI: Update semua field utama secara spesifik
-                    const nameEl = existingItem.querySelector('.gb-name');
-                    if (nameEl) nameEl.textContent = data.name;
-
-                    const badgeEl = existingItem.querySelector('.status-badge');
-                    if (badgeEl) {
-                        badgeEl.textContent = data.status;
-                        badgeEl.className = `status-badge ${statusClass}`;
-                    }
-
-                    const timeEl = existingItem.querySelector('.gb-time');
-                    if (timeEl) timeEl.textContent = date;
-
-                    const msgContainer = existingItem.querySelector('.gb-message');
-                    const msgTextEl = msgContainer?.querySelector('.msg-text');
-                    if (msgTextEl) {
-                        const readMoreBtn = msgContainer.querySelector('.read-more-btn');
-                        const isExpanded = readMoreBtn && readMoreBtn.dataset.expanded === 'true';
-                        // Hanya update teks jika tidak sedang di-expand agar tidak 'loncat'
-                        if (!isExpanded) msgTextEl.textContent = previewText;
-                        if (isLong) msgTextEl.dataset.full = message;
-                    }
-
-                    // Update Tombol Like
-                    const likeBtn = existingItem.querySelector('.like-btn');
-                    if (likeBtn) {
-                        likeBtn.dataset.likes = likes;
-                        const countSpan = likeBtn.querySelector('.like-count');
-                        if (countSpan) {
-                            countSpan.textContent = likes > 0 ? likes : '';
-                            countSpan.classList.toggle('liked', isAlreadyLiked);
+                    if (change.type === "added") {
+                        if (!existingItem) {
+                            const item = createMessageElement(docSnap, false);
+                            if (change.newIndex === 0) {
+                                gbList.prepend(item);
+                            } else {
+                                const referenceNode = gbList.children[change.newIndex];
+                                gbList.insertBefore(item, referenceNode);
+                            }
+                            if (gbList.children.length > 10) {
+                                gbList.lastElementChild?.remove();
+                            }
                         }
-                        const icon = likeBtn.querySelector('i');
-                        if (icon) icon.className = `bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
-                    }
-
-                    // Update Kontrol Balasan
-                    const viewReplyBtn = existingItem.querySelector('.view-reply-btn');
-                    if (viewReplyBtn) {
-                        viewReplyBtn.dataset.count = data.replyCount || 0;
-                        const replyContent = existingItem.querySelector('.gb-reply');
-                        const isVisible = replyContent && replyContent.style.display !== 'none';
-                        viewReplyBtn.innerHTML = isVisible 
-                            ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan` 
-                            : `<i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya`;
-                        
-                        // Jika balasan dihapus semua hingga 0, hilangkan foldernya
-                        if (data.replyCount === 0) {
-                            existingItem.querySelector('.reply-toggle-container')?.remove();
+                    } else if (change.type === "modified" && existingItem) {
+                        updateMessageElement(existingItem, docSnap);
+                    } else if (change.type === "removed" && existingItem) {
+                        if (replyUnsubscribers[docId]) {
+                            replyUnsubscribers[docId]();
+                            delete replyUnsubscribers[docId];
                         }
-                    } else if (data.replyCount > 0) {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = itemHTML;
-                        const toggleContainer = tempDiv.querySelector('.reply-toggle-container');
-                        if (toggleContainer) existingItem.appendChild(toggleContainer);
+                        existingItem.remove();
                     }
-                } else if (change.type === "removed" && existingItem) {
-                    // Hentikan listener balasan jika pesan dihapus untuk cegah memory leak
-                    if (replyUnsubscribers[docId]) {
-                        replyUnsubscribers[docId]();
-                        delete replyUnsubscribers[docId];
-                    }
-                    existingItem.remove();
-                }
-            });
+                });
+            }
 
-            // Setelah render pertama selesai, set isInitialLoad ke false agar update selanjutnya tidak fade-in ulang
-            isInitialLoad = false;
-
-            // Gunakan AOS.refresh() karena layout tinggi halaman berubah.
-            // refreshHard() hanya perlu jika elemen yang baru di-render memiliki atribut [data-aos].
-            // Debounce dengan requestAnimationFrame agar lebih mulus.
             if (typeof AOS !== 'undefined') {
-                // Gunakan debounce agar AOS.refresh() tidak terpanggil berkali-kali 
-                // jika banyak data masuk secara bersamaan.
                 clearTimeout(aosRefreshTimer);
                 aosRefreshTimer = setTimeout(() => {
                     AOS.refresh();
-                }, 250); 
+                }, 250);
             }
         }, (error) => console.warn("Guestbook listener error:", error));
     }
@@ -1573,13 +1602,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         isGuestbookInitialized = true;
 
         if (gbList) {
-            loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10)));
+            loadGuestbook(1);
 
             if (btnNextGb && !btnNextGb.dataset.listenerAttached) {
                 btnNextGb.dataset.listenerAttached = "true";
                 btnNextGb.addEventListener('click', () => {
-                    currentPage++;
-                    loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(lastVisible), limit(10)));
+                    loadGuestbook(currentPage + 1);
+                    gbList.scrollTop = 0;
                 });
             }
 
@@ -1587,8 +1616,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btnPrevGb.dataset.listenerAttached = "true";
                 btnPrevGb.addEventListener('click', () => {
                     if (currentPage > 1) {
-                        currentPage--;
-                        loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), endBefore(firstVisible), limitToLast(10)));
+                        loadGuestbook(currentPage - 1);
+                        gbList.scrollTop = 0;
                     }
                 });
             }

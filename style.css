@@ -1968,6 +1968,7 @@ body:active {
 .footer-social a.social-instagram { color: #E1306C; }
 .footer-social a.social-facebook { color: #1877F2; }
 .footer-social a.social-whatsapp { color: #25D366; }
+.footer-social a.social-github { color: #24292e; }
 
 .footer-social a:hover {
     transform: translateY(-5px) scale(1.1);
@@ -1976,6 +1977,7 @@ body:active {
 .footer-social a.social-instagram:hover { color: #fd5949; }
 .footer-social a.social-facebook:hover { color: #145dbf; }
 .footer-social a.social-whatsapp:hover { color: #128C7E; }
+.footer-social a.social-github:hover { color: #000000; }
 
 .footer-copyright {
     font-size: 0.8rem;
