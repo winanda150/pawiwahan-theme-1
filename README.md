@@ -159,6 +159,7 @@ pawiwahan-theme-1/
 ├── 📱 site.webmanifest                  # Konfigurasi PWA (nama aplikasi, icon, tema warna)
 ├── 🗺️ sitemap.xml                       # Peta situs untuk pengindeksan mesin pencari (SEO)
 ├── 🤖 robots.txt                        # Pengaturan perayapan web crawler
+├── 🙈 .gitignore                        # Konfigurasi pengabaian file sementara Git (OS & IDE)
 └── 📘 README.md                         # Dokumentasi lengkap proyek
 ```
 
