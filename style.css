@@ -325,15 +325,34 @@ body:active {
     transition: margin-bottom 0.5s ease-in-out;
 }
 
-/* Wave Animation Styles */
+/* Responsive Wave Animation Styles */
+:root {
+    --wave-height: 100px;
+    --wave-width: 1000px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --wave-height: 75px;
+        --wave-width: 700px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --wave-height: 65px;
+        --wave-width: 550px;
+    }
+}
+
 .cover .wave {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 100px;
+    height: var(--wave-height);
     background: url('Elemen/Elemen%20Pendukung/wave.webp');
-    background-size: 1000px 100px;
+    background-size: var(--wave-width) var(--wave-height);
 }
 
 .cover .wave.wave1 {
@@ -341,7 +360,7 @@ body:active {
     z-index: 1000;
     opacity: 1;
     animation-delay: 0s;
-    bottom: -30px;
+    bottom: calc(var(--wave-height) * -0.3);
     will-change: background-position;
 }
 
@@ -350,7 +369,7 @@ body:active {
     z-index: 999;
     opacity: 0.5;
     animation-delay: -5s;
-    bottom: -20px;
+    bottom: calc(var(--wave-height) * -0.2);
     will-change: background-position;
 }
 
@@ -359,7 +378,7 @@ body:active {
     z-index: 998;
     opacity: 0.2;
     animation-delay: -2s;
-    bottom: -15px;
+    bottom: calc(var(--wave-height) * -0.15);
     will-change: background-position;
 }
 
@@ -368,7 +387,7 @@ body:active {
     z-index: 997;
     opacity: 0.7;
     animation-delay: -5s;
-    bottom: -10px;
+    bottom: calc(var(--wave-height) * -0.1);
     will-change: background-position;
 }
 
@@ -378,7 +397,7 @@ body:active {
     }
 
     100% {
-        background-position-x: 1000px;
+        background-position-x: var(--wave-width);
     }
 }
 
@@ -388,7 +407,7 @@ body:active {
     }
 
     100% {
-        background-position-x: -1000px;
+        background-position-x: calc(var(--wave-width) * -1);
     }
 }
 
