@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
@@ -1494,11 +1494,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             parentIdForReply = null;
         }
 
+        // 4. Klik Tombol Pin / Unpin Ucapan (Hanya Mempelai)
+        const pinBtn = e.target.closest('.pin-btn');
+        if (pinBtn) {
+            const docId = pinBtn.dataset.id;
+            const isCurrentlyPinned = pinBtn.dataset.pinned === 'true';
+
+            if (!isMempelai) {
+                showToast("Akses ditolak: Hanya mempelai yang memiliki izin untuk menyematkan ucapan.", "error");
+                return;
+            }
+
+            pinBtn.disabled = true;
+            try {
+                const msgRef = doc(db, "messages", docId);
+                if (isCurrentlyPinned) {
+                    await updateDoc(msgRef, {
+                        isPinned: false
+                    });
+                    showToast("Sematan ucapan dilepas.");
+                } else {
+                    await updateDoc(msgRef, {
+                        isPinned: true,
+                        pinnedAt: serverTimestamp()
+                    });
+                    showToast("Ucapan berhasil disematkan!");
+                }
+            } catch (error) {
+                console.error("Error toggling pin status:", error);
+                if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+                    showToast("Gagal: Izin ditolak. Pastikan Rules Firestore sudah dipublikasikan.", "error");
+                } else {
+                    showToast("Gagal mengubah status sematan.", "error");
+                }
+            } finally {
+                setTimeout(() => { pinBtn.disabled = false; }, 500);
+            }
+        }
+
         if (e.target.classList.contains('view-reply-btn') || e.target.closest('.view-reply-btn')) {
             const btn = e.target.classList.contains('view-reply-btn') ? e.target : e.target.closest('.view-reply-btn');
             const docId = btn.dataset.id;
             const parentName = btn.dataset.parentName || '';
-            const replyContent = document.getElementById(`reply-content-${docId}`);
+            const parentItem = btn.closest('.guestbook-item');
+            const replyContent = parentItem ? parentItem.querySelector('.gb-reply') : document.getElementById(`reply-content-${docId}`);
 
             if (replyContent) {
                 const isHidden = replyContent.style.display === 'none';
@@ -1573,6 +1612,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnNextGb = document.getElementById('btn-next-gb');
 
     let unsubscribeGb = null;
+    let unsubscribePinned = null;
+    const pinnedIds = new Set();
     let aosRefreshTimer = null;
     let currentPage = 1;
     const pageCursors = [null]; // Menyimpan document cursor untuk setiap halaman: pageCursors[1] = null, pageCursors[2] = doc10, dst.
@@ -1593,10 +1634,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function createMessageElement(docSnap, isInitial = false) {
+    function createMessageElement(docSnap, isInitial = false, isPinnedContainer = false) {
         const data = docSnap.data();
         const docId = docSnap.id;
         const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
+        const isPinned = data.isPinned === true;
 
         const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
         const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -1615,9 +1657,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const safePreview = escapeHTML(previewText);
 
         const item = document.createElement('div');
-        item.id = `msg-${docId}`;
-        item.className = `guestbook-item ${isInitial ? 'fade-in-up' : ''}`;
+        item.id = isPinnedContainer ? `pinned-msg-${docId}` : `msg-${docId}`;
+        item.dataset.id = docId;
+        item.className = `guestbook-item ${isPinned ? 'is-pinned ' : ''}${isInitial ? 'fade-in-up' : ''}`;
         item.innerHTML = `
+            ${isPinned ? `
+            <div class="gb-pinned-badge">
+                <i class="bi bi-pin-angle-fill"></i> Pesan Disematkan
+            </div>
+            ` : ''}
             <div class="gb-header-row">
                 <div class="gb-avatar">
                     <i class="bi bi-person-circle"></i>
@@ -1626,7 +1674,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="gb-top-row">
                         <span class="gb-name">${safeName}</span>
                         <span class="status-badge ${statusClass}">${safeStatus}</span>
-                        <button class="delete-btn" data-id="${docId}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
+                        <div class="gb-admin-actions">
+                            <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${docId}" data-pinned="${isPinned}" title="${isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan'}" aria-label="${isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan'}">
+                                <i class="bi ${isPinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'}"></i>
+                            </button>
+                            <button class="delete-btn" data-id="${docId}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
+                        </div>
                     </div>
                     <div class="gb-meta">
                         <span class="gb-time">${date}</span>
@@ -1655,6 +1708,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateMessageElement(existingItem, docSnap) {
         const data = docSnap.data();
+        const isPinned = data.isPinned === true;
         const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
         const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
@@ -1667,6 +1721,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         const likes = data.likes || 0;
         const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
         const isAlreadyLiked = likedMessages.includes(docSnap.id);
+
+        existingItem.classList.toggle('is-pinned', isPinned);
+
+        let pinnedBadge = existingItem.querySelector('.gb-pinned-badge');
+        if (isPinned) {
+            if (!pinnedBadge) {
+                pinnedBadge = document.createElement('div');
+                pinnedBadge.className = 'gb-pinned-badge';
+                pinnedBadge.innerHTML = '<i class="bi bi-pin-angle-fill"></i> Pesan Disematkan';
+                existingItem.prepend(pinnedBadge);
+            }
+        } else if (pinnedBadge) {
+            pinnedBadge.remove();
+        }
+
+        const pinBtn = existingItem.querySelector('.pin-btn');
+        if (pinBtn) {
+            pinBtn.dataset.pinned = isPinned;
+            pinBtn.classList.toggle('pinned', isPinned);
+            pinBtn.title = isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan';
+            pinBtn.setAttribute('aria-label', isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan');
+            const pinIcon = pinBtn.querySelector('i');
+            if (pinIcon) {
+                pinIcon.className = `bi ${isPinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'}`;
+            }
+        }
 
         const nameEl = existingItem.querySelector('.gb-name');
         if (nameEl) nameEl.textContent = data.name;
@@ -1729,6 +1809,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function initPinnedMessagesListener() {
+        if (unsubscribePinned) unsubscribePinned();
+        const pinnedContainer = document.getElementById('pinned-messages-list');
+        if (!pinnedContainer) return;
+
+        const qPinned = query(collection(db, "messages"), where("isPinned", "==", true));
+        unsubscribePinned = onSnapshot(qPinned, (snapshot) => {
+            pinnedIds.clear();
+            if (snapshot.empty) {
+                pinnedContainer.style.display = 'none';
+                pinnedContainer.innerHTML = '';
+                return;
+            }
+
+            // Urutkan ucapan yang disematkan berdasarkan pinnedAt atau timestamp terbaru
+            const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+                const timeA = a.data().pinnedAt?.toMillis?.() || a.data().timestamp?.toMillis?.() || 0;
+                const timeB = b.data().pinnedAt?.toMillis?.() || b.data().timestamp?.toMillis?.() || 0;
+                return timeB - timeA;
+            });
+
+            const currentPinnedIds = new Set();
+            sortedDocs.forEach(docSnap => {
+                pinnedIds.add(docSnap.id);
+                currentPinnedIds.add(docSnap.id);
+            });
+
+            // 1. Hapus elemen pin yang sudah tidak disematkan
+            pinnedContainer.querySelectorAll('.guestbook-item').forEach(el => {
+                const id = el.dataset.id;
+                if (!currentPinnedIds.has(id)) {
+                    el.remove();
+                }
+            });
+
+            // 2. Render atau perbarui elemen pin secara in-place (mencegah reset balasan yang terbuka)
+            sortedDocs.forEach((docSnap, index) => {
+                const docId = docSnap.id;
+                const existing = pinnedContainer.querySelector(`#pinned-msg-${docId}`);
+                if (existing) {
+                    updateMessageElement(existing, docSnap);
+                } else {
+                    const item = createMessageElement(docSnap, true, true);
+                    if (index === 0) {
+                        pinnedContainer.prepend(item);
+                    } else {
+                        const referenceNode = pinnedContainer.children[index];
+                        if (referenceNode) {
+                            pinnedContainer.insertBefore(item, referenceNode);
+                        } else {
+                            pinnedContainer.appendChild(item);
+                        }
+                    }
+                }
+            });
+
+            pinnedContainer.style.display = 'flex';
+
+            // 3. Pastikan tidak ada duplikat di daftar pesan reguler
+            sortedDocs.forEach(docSnap => {
+                const regItem = document.querySelector(`#regular-messages-list #msg-${docSnap.id}`);
+                if (regItem) regItem.remove();
+            });
+
+            if (typeof AOS !== 'undefined') {
+                clearTimeout(aosRefreshTimer);
+                aosRefreshTimer = setTimeout(() => {
+                    AOS.refresh();
+                }, 250);
+            }
+        }, (error) => {
+            console.warn("Pinned messages listener error:", error);
+        });
+    }
+
     function getQueryForPage(page) {
         if (page === 1 || !pageCursors[page]) {
             return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10));
@@ -1744,9 +1899,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         currentPage = page;
         let isInitialLoad = true;
+        const targetList = document.getElementById('regular-messages-list') || gbList;
 
         // Reset list dan tampilkan spinner saat memuat halaman
-        gbList.innerHTML = `
+        targetList.innerHTML = `
             <div id="gb-loading" class="text-center" style="padding: 40px 0;">
                 <div class="spinner" style="margin: 0 auto;"></div>
                 <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
@@ -1759,7 +1915,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateTotalCount();
 
             if (snapshot.empty) {
-                gbList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+                targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
                 if (btnNextGb) btnNextGb.disabled = true;
                 if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
                 return;
@@ -1775,11 +1931,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
 
             if (isInitialLoad) {
-                // Bersihkan kontainer dan render hanya dokumen halaman yang aktif
-                gbList.innerHTML = '';
+                // Bersihkan kontainer dan render hanya dokumen yang belum disematkan
+                targetList.innerHTML = '';
                 snapshot.docs.forEach((docSnap) => {
-                    const item = createMessageElement(docSnap, true);
-                    gbList.appendChild(item);
+                    if (docSnap.data().isPinned === true) return;
+                    const item = createMessageElement(docSnap, true, false);
+                    targetList.appendChild(item);
                 });
                 isInitialLoad = false;
             } else {
@@ -1787,23 +1944,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                 snapshot.docChanges().forEach((change) => {
                     const docSnap = change.doc;
                     const docId = docSnap.id;
-                    const existingItem = document.getElementById(`msg-${docId}`);
+                    const isDocPinned = docSnap.data().isPinned === true;
+                    const existingItem = targetList.querySelector(`#msg-${docId}`);
 
                     if (change.type === "added") {
-                        if (!existingItem) {
-                            const item = createMessageElement(docSnap, false);
+                        if (!existingItem && !isDocPinned) {
+                            const item = createMessageElement(docSnap, false, false);
                             if (change.newIndex === 0) {
-                                gbList.prepend(item);
+                                targetList.prepend(item);
                             } else {
-                                const referenceNode = gbList.children[change.newIndex];
-                                gbList.insertBefore(item, referenceNode);
+                                const referenceNode = targetList.children[change.newIndex];
+                                targetList.insertBefore(item, referenceNode);
                             }
-                            if (gbList.children.length > 10) {
-                                gbList.lastElementChild?.remove();
+                            if (targetList.children.length > 10) {
+                                targetList.lastElementChild?.remove();
                             }
                         }
-                    } else if (change.type === "modified" && existingItem) {
-                        updateMessageElement(existingItem, docSnap);
+                    } else if (change.type === "modified") {
+                        if (isDocPinned) {
+                            // Jika pesan baru saja disematkan -> Hapus dari daftar reguler
+                            if (existingItem) existingItem.remove();
+                        } else {
+                            // Jika pesan reguler diupdate atau baru saja dilepas dari sematan
+                            if (existingItem) {
+                                updateMessageElement(existingItem, docSnap);
+                            } else {
+                                const emptyMsg = targetList.querySelector('.empty-msg');
+                                if (emptyMsg) emptyMsg.remove();
+
+                                const item = createMessageElement(docSnap, false, false);
+                                if (change.newIndex === 0 || targetList.children.length === 0) {
+                                    targetList.prepend(item);
+                                } else {
+                                    const referenceNode = targetList.children[change.newIndex];
+                                    if (referenceNode) {
+                                        targetList.insertBefore(item, referenceNode);
+                                    } else {
+                                        targetList.appendChild(item);
+                                    }
+                                }
+                            }
+                        }
                     } else if (change.type === "removed" && existingItem) {
                         if (replyUnsubscribers[docId]) {
                             replyUnsubscribers[docId]();
@@ -1830,6 +2011,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         isGuestbookInitialized = true;
 
         if (gbList) {
+            initPinnedMessagesListener();
             loadGuestbook(1);
 
             if (btnNextGb && !btnNextGb.dataset.listenerAttached) {

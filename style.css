@@ -1300,6 +1300,48 @@ body:active {
     border-color: rgba(212, 175, 55, 0.3);
 }
 
+/* Tampilan Khusus Pesan yang Disematkan (Pinned Message) */
+.pinned-messages-list {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.guestbook-item.is-pinned {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.09) 0%, rgba(255, 255, 255, 0.98) 100%);
+    border: 1.5px solid rgba(212, 175, 55, 0.45);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.12);
+    position: relative;
+}
+
+.guestbook-item.is-pinned:hover {
+    border-color: rgba(212, 175, 55, 0.65);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.18);
+}
+
+.gb-pinned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #bfa100;
+    background: rgba(212, 175, 55, 0.14);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+    width: fit-content;
+}
+
+.gb-pinned-badge i {
+    font-size: 0.8rem;
+    color: #d4af37;
+    transform: rotate(15deg);
+}
+
 .gb-header-row {
     display: flex;
     gap: 15px;
@@ -1715,6 +1757,45 @@ body:active {
 
 .like-btn .like-count.liked {
     color: #e74c3c; /* Memberikan warna merah pada angka saat di-like */
+}
+
+.gb-admin-actions {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.mempelai-mode .gb-admin-actions {
+    display: inline-flex;
+}
+
+.pin-btn {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    font-size: 1.05rem;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s ease, color 0.2s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.pin-btn:hover {
+    transform: scale(1.15);
+    color: #bfa100;
+}
+
+.pin-btn.pinned {
+    color: #d4af37;
+}
+
+.pin-btn.pinned i {
+    transform: rotate(15deg);
 }
 
 .delete-btn {

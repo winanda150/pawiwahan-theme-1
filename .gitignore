@@ -1,0 +1,65 @@
+# ==========================================
+# 1. File Sampah Sistem Operasi (OS)
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+[Dd]esktop.ini
+
+# ==========================================
+# 2. File Konfigurasi Editor / IDE
+# ==========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# ==========================================
+# 3. File Rahasia & Environment Variables
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ==========================================
+# 4. Log Debug & Firebase CLI
+# ==========================================
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# 5. Dependensi & Output Build / Cache
+# ==========================================
+node_modules/
+dist/
+build/
+.cache/
+.temp/
+.tmp/
+
+# ==========================================
+# 6. File Desain Mentah & Backup (Opsional)
+# ==========================================
+*.psd
+*.ai
+*.sketch
+*.zip
+*.tar.gz
+*.rar
