@@ -301,7 +301,7 @@ service cloud.firestore {
                       && request.resource.data.timestamp == request.time
                       && (
                         request.resource.data.isMempelaiReply == false ||
-                        (request.resource.data.isMempelaiReply == true && request.resource.data.adminKey == 'mempelai123')
+                        (request.resource.data.isMempelaiReply == true && request.resource.data.adminKey == 'KATA_SANDI_RAHASIA_ANDA')
                       );
 
         // UPDATE Balasan: Mengizinkan Suka & Penghapusan adminKey otomatis
