@@ -1,8 +1,9 @@
-const CACHE_NAME = 'pawiwahan-v1';
+const CACHE_NAME = 'pawiwahan-v2';
 const ASSETS_TO_CACHE = [
     './index.html',
     './style.css',
     './script.js',
+    './site.webmanifest',
     './Elemen/Elemen%20Pendukung/Music.mp3',
     './Elemen/Elemen%20Pendukung/wave.png'
 ];

@@ -1,0 +1,16 @@
+{
+  "name": "Undangan Pawiwahan Edi & Winda",
+  "short_name": "Edi & Winda",
+  "description": "Undangan Upacara Manusa Yadnya Pawiwahan & Resepsi Pernikahan I Putu Edi Pratama & Winda Aprilia Dewi",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121316",
+  "theme_color": "#1a202c",
+  "icons": [
+    {
+      "src": "Elemen/Elemen%20Pendukung/Icon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

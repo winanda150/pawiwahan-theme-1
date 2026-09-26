@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+    <url>
+        <loc>https://winanda150.github.io/pawiwahan-theme-1/</loc>
+        <lastmod>2026-01-30</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+        <image:image>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp</image:loc>
+            <image:title>Undangan Pawiwahan Edi dan Winda</image:title>
+            <image:caption>Foto Pernikahan I Putu Edi Pratama dan Winda Aprilia Dewi</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Cover1.webp</image:loc>
+            <image:title>Cover Undangan Pawiwahan Edi dan Winda</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Foto%20Pasangan/Foto%20Mempelai%20Pria.jpg</image:loc>
+            <image:title>Mempelai Pria - I Putu Edi Pratama</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Foto%20Pasangan/Foto%20Mempelai%20Wanita.jpg</image:loc>
+            <image:title>Mempelai Wanita - Winda Aprilia Dewi</image:title>
+        </image:image>
+    </url>
+</urlset>
