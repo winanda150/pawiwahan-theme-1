@@ -99,21 +99,21 @@ Dibangun dengan arsitektur **Vanilla Web Technologies** tanpa ketergantungan fra
 Website ini dilengkapi dengan **Mode Mempelai Tersembunyi** yang aman untuk memudahkan pemilik acara memoderasi ucapan dari para tamu tanpa perlu dashboard terpisah yang rumit:
 
 ```mermaid
-graph LR
-    A[Klik 5x Judul 'Konfirmasi & Doa Restu'] --> B[Pop-up Modal Password]
-    B --> C{Verifikasi SHA-256}
-    C -- Valid --> D[Mode Mempelai Aktif]
-    C -- Gagal --> E[Shake Error Toast]
-    D --> F[Sematkan Ucapan Teratas / Pin]
-    D --> G[Hapus Pesan & Balasan Spam]
-    D --> H[Badge Verifikasi Resmi Mempelai]
-    D --> I[Lihat Statistik Total Tamu Real-Time]
+flowchart TD
+    A["Klik 5x Judul Konfirmasi & Doa Restu"] --> B["Pop-up Modal Password"]
+    B --> C{"Verifikasi SHA-256"}
+    C -->|Valid| D["Mode Mempelai Aktif"]
+    C -->|Gagal| E["Shake Error Toast"]
+    D --> F["Sematkan Ucapan Teratas (Pin)"]
+    D --> G["Hapus Pesan & Balasan Spam"]
+    D --> H["Badge Verifikasi Resmi Mempelai"]
+    D --> I["Lihat Statistik Total Tamu Real-Time"]
 ```
 
 ### Keunggulan Mode Mempelai:
 1. **Keamanan Kriptografi SHA-256:** Password diverifikasi menggunakan hashing satu arah (`Web Crypto API`), sehingga kata sandi asli tidak tersimpan dalam bentuk plain-text di kode sumber.
 2. **Sematkan Ucapan Favorit (*Pin Message*):** Tempatkan doa terindah dari keluarga atau tamu kehormatan di posisi paling atas dengan label khusus.
-3. **Lencana Resmi (*Verified Badge*):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (<i class="bi bi-patch-check-fill"></i>).
+3. **Lencana Resmi (*Verified Badge*):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (*Verified Badge*).
 4. **Moderasi Pesan (*Delete Action*):** Hapus ucapan atau balasan yang tidak sesuai dengan dialog konfirmasi khusus.
 5. **Live Guest Counter:** Memantau akumulasi total jumlah tamu yang menyatakan hadir secara real-time.
 
