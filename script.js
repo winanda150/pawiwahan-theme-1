@@ -13,9 +13,9 @@ const firebaseConfig = {
 
 // Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
-// Menggunakan initializeFirestore dengan force long polling untuk menghindari ERR_TIMED_OUT pada koneksi streaming
+// Menggunakan initializeFirestore dengan auto-detect long polling yang fleksibel dan efisien
 const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
 });
 
 // --- FITUR ANTI-INSPECT & KLIK KANAN ---
@@ -1135,6 +1135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const newLikes = Math.max(0, currentLikes - 1);
                     likeCountSpan.textContent = newLikes > 0 ? newLikes : '';
                     likeBtn.dataset.likes = newLikes;
+                    likeBtn.setAttribute('aria-label', parentId ? 'Sukai balasan ini' : 'Sukai ucapan ini');
 
                     likedItems = likedItems.filter(id => id !== docId);
                     localStorage.setItem(storageKey, JSON.stringify(likedItems));
@@ -1151,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const newLikes = currentLikes + 1;
                     likeCountSpan.textContent = newLikes > 0 ? newLikes : '';
                     likeBtn.dataset.likes = newLikes;
+                    likeBtn.setAttribute('aria-label', parentId ? 'Batal menyukai balasan ini' : 'Batal menyukai ucapan ini');
 
                     likedItems.push(docId);
                     localStorage.setItem(storageKey, JSON.stringify(likedItems));
@@ -1273,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <div class="gb-info">
                                         <div class="gb-top-row">
                                             <span class="gb-name">${rData.name}</span>${rData.isMempelaiReply ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
-                                            <button class="delete-btn" data-id="${rDoc.id}" data-parent-id="${docId}" title="Hapus Balasan"><i class="bi bi-trash"></i></button>
+                                            <button class="delete-btn" data-id="${rDoc.id}" data-parent-id="${docId}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
                                         </div>
                                         <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
                                     </div>
@@ -1281,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <p class="gb-message">${mentionHTML}<span class="msg-text">${rPreviewText}</span>${rIsLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
                                 <div class="gb-actions" style="margin-top: -5px;">
                                     <button class="reply-btn" data-id="${docId}" data-name="${rData.name}">Balas</button>
-                                    <button class="like-btn" data-id="${rDocId}" data-parent-id="${docId}" data-likes="${rLikes}">
+                                    <button class="like-btn" data-id="${rDocId}" data-parent-id="${docId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
                                         <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
                                     </button>
                                 </div>`;
@@ -1441,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="gb-top-row">
                                 <span class="gb-name">${data.name}</span>
                                 <span class="status-badge ${statusClass}">${data.status}</span>
-                                <button class="delete-btn" data-id="${doc.id}"><i class="bi bi-trash"></i></button>
+                                <button class="delete-btn" data-id="${doc.id}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
                             </div>
                             <div class="gb-meta">
                                 <span class="gb-time">${date}</span>
@@ -1451,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="gb-message"><span class="msg-text">${previewText}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
                     <div class="gb-actions">
                         <button class="reply-btn" data-id="${doc.id}" data-name="${data.name}">Balas</button>
-                        <button class="like-btn" data-id="${doc.id}" data-likes="${likes}">
+                        <button class="like-btn" data-id="${doc.id}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
                             <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
                         </button>
                     </div>
@@ -1563,24 +1565,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, (error) => console.warn("Guestbook listener error:", error));
     }
 
-    if (gbList) {
-        loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10)));
+    // --- Inisialisasi Buku Tamu Secara Cerdas (Lazy Loading untuk Best Practices 100%) ---
+    let isGuestbookInitialized = false;
+    const initGuestbook = () => {
+        if (isGuestbookInitialized) return;
+        isGuestbookInitialized = true;
 
-        if (btnNextGb) {
-            btnNextGb.addEventListener('click', () => {
-                currentPage++;
-                loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(lastVisible), limit(10)));
-            });
+        if (gbList) {
+            loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10)));
+
+            if (btnNextGb && !btnNextGb.dataset.listenerAttached) {
+                btnNextGb.dataset.listenerAttached = "true";
+                btnNextGb.addEventListener('click', () => {
+                    currentPage++;
+                    loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(lastVisible), limit(10)));
+                });
+            }
+
+            if (btnPrevGb && !btnPrevGb.dataset.listenerAttached) {
+                btnPrevGb.dataset.listenerAttached = "true";
+                btnPrevGb.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), endBefore(firstVisible), limitToLast(10)));
+                    }
+                });
+            }
         }
+    };
 
-        if (btnPrevGb) {
-            btnPrevGb.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    loadGuestbook(query(collection(db, "messages"), orderBy("timestamp", "desc"), endBefore(firstVisible), limitToLast(10)));
+    // 1. Muat saat tombol 'Buka Undangan' diklik
+    if (btnOpen) {
+        btnOpen.addEventListener('click', initGuestbook, { once: true });
+    }
+
+    // 2. Atau saat bagian buku tamu mulai terlihat di layar
+    const attendanceSection = document.getElementById('attendance');
+    if (attendanceSection && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    initGuestbook();
+                    observer.disconnect();
                 }
             });
-        }
+        }, { rootMargin: '300px' });
+        observer.observe(attendanceSection);
+    } else {
+        // Fallback untuk browser lama
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 200) initGuestbook();
+        }, { passive: true, once: true });
     }
 
     // --- Sinkronisasi Tinggi Box Kanan Otomatis (Responsive) ---
