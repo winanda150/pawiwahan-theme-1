@@ -267,10 +267,10 @@
                         </div>
                         <div class="event-buttons">
                             <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Pawiwahan+Edi+dan+Winda&dates=20260130T000000Z/20260130T040000Z&details=Upacara+Manusa+Yadnya+Pawiwahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
-                                target="_blank" class="btn-event"
+                                target="_blank" rel="noopener noreferrer" class="btn-event"
                                 aria-label="Simpan Jadwal Pawiwahan ke Kalender"><i class="bi bi-calendar-plus"></i> Simpan
                                 Kalender</a>
-                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
+                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank" rel="noopener noreferrer"
                                 class="btn-event outline"><i class="bi bi-geo-alt-fill"></i> Lihat Lokasi</a>
                         </div>
                     </div>
@@ -295,10 +295,10 @@
                         </div>
                         <div class="event-buttons">
                             <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Resepsi+Edi+dan+Winda&dates=20260130T100000Z/20260130T140000Z&details=Resepsi+Pernikahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
-                                target="_blank" class="btn-event"
+                                target="_blank" rel="noopener noreferrer" class="btn-event"
                                 aria-label="Simpan Jadwal Resepsi ke Kalender"><i class="bi bi-calendar-plus"></i> Simpan
                                 Kalender</a>
-                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
+                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank" rel="noopener noreferrer"
                                 class="btn-event outline"><i class="bi bi-geo-alt-fill"></i> Lihat Lokasi</a>
                         </div>
                     </div>
@@ -403,8 +403,8 @@
                             <div class="form-group">
                                 <label for="att-name">Nama Lengkap</label>
                                 <input type="text" id="att-name" placeholder="Masukkan nama Anda" required
-                                    pattern="[A-Za-z\s]+" title="Nama hanya boleh berisi huruf dan spasi"
-                                    maxlength="20">
+                                    pattern="[A-Za-z\s.,'\-]+" title="Nama hanya boleh berisi huruf, spasi, titik, koma, petik, atau tanda hubung"
+                                    maxlength="50">
                             </div>
                             <div class="form-row">
                                 <div class="form-group flex-1">
@@ -452,11 +452,9 @@
                         <div id="pagination-controls" class="pagination-controls"
                             style="display: none; justify-content: space-between; align-items: center; margin-top: 15px; padding-bottom: 0;">
                             <button id="btn-prev-gb" class="btn-event outline"
-                                style="padding: 8px 15px; font-size: 0.75rem;" disabled><i
-                                    class="bi bi-chevron-left"></i> Sebelumnya</button>
+                                style="padding: 8px 18px; font-size: 0.75rem;" disabled>Prev</button>
                             <button id="btn-next-gb" class="btn-event outline"
-                                style="padding: 8px 15px; font-size: 0.75rem;">Berikutnya <i
-                                    class="bi bi-chevron-right"></i></button>
+                                style="padding: 8px 18px; font-size: 0.75rem;">Next</button>
                         </div>
                     </div>
                 </div>
@@ -530,7 +528,7 @@
                                 <p>Edi & Winda (Pawiwahan Office)</p>
                             </div>
                         </div>
-                        <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank" class="btn-map">
+                        <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank" rel="noopener noreferrer" class="btn-map">
                             <i class="bi bi-geo-alt-fill"></i> Lihat Lokasi
                         </a>
                     </div>
@@ -603,6 +601,30 @@
                 <button id="btn-cancel-confirm" class="btn-event outline">Batal</button>
                 <button id="btn-delete-confirm" class="btn-event">Hapus</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modern Password Modal for Mode Mempelai -->
+    <div id="mempelai-auth-modal" class="custom-modal">
+        <div class="modal-content-confirm auth-modal-content">
+            <div class="modal-header-confirm auth-header-icon">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h3 class="cinzel-font">Akses Mempelai</h3>
+            <p>Masukkan kata sandi khusus untuk mengaktifkan Mode Mempelai.</p>
+            <form id="mempelai-auth-form" class="auth-form">
+                <div class="auth-input-wrapper">
+                    <i class="bi bi-key auth-input-icon"></i>
+                    <input type="password" id="mempelai-password-input" placeholder="Kata sandi..." autocomplete="off" required>
+                    <button type="button" id="btn-toggle-mempelai-pwd" class="btn-toggle-pwd" aria-label="Lihat kata sandi">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <div class="modal-actions-confirm">
+                    <button type="button" id="btn-cancel-auth" class="btn-event outline">Batal</button>
+                    <button type="submit" id="btn-submit-auth" class="btn-event">Masuk</button>
+                </div>
+            </form>
         </div>
     </div>
 

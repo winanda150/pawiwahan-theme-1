@@ -752,13 +752,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }, { passive: true });
 
-    // --- Logika Navigasi Keyboard ---
+    // --- Logika Navigasi Keyboard & Modal Escape ---
     document.addEventListener('keydown', (e) => {
-        if (lightbox.classList.contains('show')) {
+        if (lightbox && lightbox.classList.contains('show')) {
             if (e.key === 'ArrowRight') {
                 updateLightboxImage(currentIndex + 1, 'next');
             } else if (e.key === 'ArrowLeft') {
                 updateLightboxImage(currentIndex - 1, 'prev');
+            } else if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        }
+        if (e.key === 'Escape') {
+            const confirmModal = document.getElementById('custom-confirm-modal');
+            if (confirmModal && confirmModal.classList.contains('show')) {
+                confirmModal.classList.remove('show');
+                docIdToDelete = null;
+                parentIdForReply = null;
+            }
+            const authModal = document.getElementById('mempelai-auth-modal');
+            if (authModal && authModal.classList.contains('show')) {
+                authModal.classList.remove('show');
+                const pwdInput = document.getElementById('mempelai-password-input');
+                if (pwdInput) pwdInput.value = '';
             }
         }
     });
@@ -778,17 +794,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightbox) {
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+    }
 
     // --- Logika Hybrid Form ---
     const hybridForm = document.getElementById('hybrid-form');
     const statusSelect = document.getElementById('att-status');
     const countGroup = document.getElementById('count-group');
 
-    // Filter input nama agar tidak mengandung karakter khusus atau angka secara real-time
+    // Filter input nama agar hanya karakter yang valid untuk nama/gelar (huruf, spasi, titik, koma, petik, tanda hubung)
     const nameInput = document.getElementById('att-name');
     if (nameInput) {
         nameInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+            this.value = this.value.replace(/[^a-zA-Z\s.,'\-]/g, '');
         });
     }
 
@@ -846,6 +867,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (submitBtn.innerText === 'Berhasil!') return; // Mencegah klik ganda saat pesan sukses tampil
 
             const originalText = submitBtn.innerText;
+
+            // Pencegahan spam: Jeda 10 detik antar pengiriman (kecuali mode Mempelai)
+            if (!isMempelai) {
+                const lastSub = localStorage.getItem('last_gb_submission');
+                const now = Date.now();
+                const COOLDOWN_MS = 10000;
+                if (lastSub && (now - Number(lastSub)) < COOLDOWN_MS) {
+                    const remainingSec = Math.ceil((COOLDOWN_MS - (now - Number(lastSub))) / 1000);
+                    showToast(`Mohon tunggu ${remainingSec} detik sebelum mengirim lagi.`, 'error');
+                    return;
+                }
+            }
+
             submitBtn.disabled = true;
             submitBtn.innerText = 'Mengirim...';
 
@@ -975,6 +1009,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Logika Akses Khusus (Admin & Mempelai) ---
     let isMempelai = sessionStorage.getItem('isMempelai') === 'true';
 
+    // Inisialisasi status tampilan mempelai jika sudah login di session sebelumnya
+    if (isMempelai) {
+        document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
+    }
+
     // Fungsi untuk memantau total tamu secara real-time (Privat untuk Mempelai)
     function initGuestCounter() {
         const guestStatsWrapper = document.getElementById('guest-stats-wrapper');
@@ -1002,26 +1041,227 @@ document.addEventListener('DOMContentLoaded', async () => {
     let docIdToDelete = null; // Pindahkan ke sini agar nilainya tidak ter-reset saat modal konfirmasi muncul
     let parentIdForReply = null; // Menyimpan ID pesan utama jika yang dihapus adalah balasan
 
-    // Fungsi Login (Bisa dipicu dengan klik judul section 5x)
-    const sectionTitle = document.querySelector('#attendance .section-title');
-    let clickCount = 0;
-    sectionTitle.addEventListener('click', () => {
-        clickCount++;
-        if (clickCount === 5) {
-            const pass = prompt("Masukkan kata sandi akses khusus:");
+    // --- Logika Modal Password Modern (Mode Mempelai) ---
+    const authModal = document.getElementById('mempelai-auth-modal');
+    const authForm = document.getElementById('mempelai-auth-form');
+    const pwdInput = document.getElementById('mempelai-password-input');
+    const togglePwdBtn = document.getElementById('btn-toggle-mempelai-pwd');
+    const cancelAuthBtn = document.getElementById('btn-cancel-auth');
+
+    const openAuthModal = () => {
+        if (!authModal) return;
+        authModal.classList.add('show');
+        if (pwdInput) {
+            pwdInput.value = '';
+            pwdInput.type = 'password';
+            setTimeout(() => pwdInput.focus(), 150);
+        }
+        if (togglePwdBtn) {
+            const icon = togglePwdBtn.querySelector('i');
+            if (icon) icon.className = 'bi bi-eye';
+        }
+    };
+
+    const closeAuthModal = () => {
+        if (!authModal) return;
+        authModal.classList.remove('show');
+        if (pwdInput) pwdInput.value = '';
+    };
+
+    if (togglePwdBtn && pwdInput) {
+        togglePwdBtn.addEventListener('click', () => {
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            const icon = togglePwdBtn.querySelector('i');
+            if (icon) icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            pwdInput.focus();
+        });
+    }
+
+    if (cancelAuthBtn) {
+        cancelAuthBtn.addEventListener('click', closeAuthModal);
+    }
+
+    if (authModal) {
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) closeAuthModal();
+        });
+    }
+
+    if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = pwdInput ? pwdInput.value : '';
+
             if (pass === MEMPELAI_PASS) {
                 isMempelai = true;
                 sessionStorage.setItem('isMempelai', 'true');
                 document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                 initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
                 showToast("Mode Mempelai Aktif");
+                closeAuthModal();
+            } else {
+                showToast("Kata sandi salah.", "error");
+                const modalBox = authModal.querySelector('.auth-modal-content');
+                if (modalBox) {
+                    modalBox.classList.remove('shake');
+                    void modalBox.offsetWidth; // Force reflow agar animasi shake bisa dipicu ulang
+                    modalBox.classList.add('shake');
+                }
+                if (pwdInput) {
+                    pwdInput.select();
+                    pwdInput.focus();
+                }
             }
-            clickCount = 0;
-        }
-    });
+        });
+    }
+
+    // Pemicu login: klik judul section 5x
+    const sectionTitle = document.querySelector('#attendance .section-title');
+    let clickCount = 0;
+    if (sectionTitle) {
+        sectionTitle.addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 5) {
+                openAuthModal();
+                clickCount = 0;
+            }
+        });
+    }
+
+    // Helper untuk sanitasi HTML (mencegah XSS)
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     // Inisialisasi tampilan jika sudah login di session sebelumnya
-    if (isMempelai) document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
+    function createReplyItemElement(rDoc, parentId, parentName) {
+        const rData = rDoc.data();
+        const rDocId = rDoc.id;
+        const rLikes = rData.likes || 0;
+        const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
+        const isReplyLiked = likedReplies.includes(rDocId);
+
+        const rMessage = rData.message || '';
+        const rIsLong = rMessage.length > 200;
+        const rPreviewText = rIsLong ? rMessage.substring(0, 200) + '...' : rMessage;
+
+        let rFullDate = 'Baru saja';
+        if (rData.timestamp) {
+            try {
+                const rDateObj = rData.timestamp.toDate ? rData.timestamp.toDate() : new Date(rData.timestamp);
+                if (!isNaN(rDateObj.getTime())) {
+                    const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+                    rFullDate = `${rDateStr} pukul ${rTimeStr} Wita`;
+                }
+            } catch (e) {
+                rFullDate = 'Baru saja';
+            }
+        }
+
+        const safeName = escapeHTML(rData.name || 'Tamu');
+        const safePreview = escapeHTML(rPreviewText);
+        const safeReplyTo = escapeHTML(rData.replyTo || '');
+
+        const mentionHTML = rData.replyTo && rData.replyTo !== parentName
+            ? `<span class="reply-to-mention">${safeReplyTo}</span>`
+            : '';
+
+        const replyItem = document.createElement('div');
+        replyItem.id = `reply-${rDocId}`;
+        replyItem.className = 'gb-reply-item fade-in-text';
+        replyItem.style.marginBottom = '20px';
+        replyItem.innerHTML = `
+            <div class="gb-header-row">
+                <div class="gb-avatar"><i class="bi bi-person-circle"></i></div>
+                <div class="gb-info">
+                    <div class="gb-top-row">
+                        <span class="gb-name">${safeName}</span>${rData.isMempelaiReply ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
+                        <button class="delete-btn" data-id="${rDocId}" data-parent-id="${parentId}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
+                    </div>
+                    <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
+                </div>
+            </div>
+            <p class="gb-message">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
+            <div class="gb-actions" style="margin-top: -5px;">
+                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}">Balas</button>
+                <button class="like-btn" data-id="${rDocId}" data-parent-id="${parentId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
+                    <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
+                </button>
+            </div>
+        `;
+        if (rIsLong) replyItem.querySelector('.msg-text').dataset.full = rMessage;
+        return replyItem;
+    }
+
+    function updateReplyItemElement(existingReply, rDoc) {
+        const rData = rDoc.data();
+        const rLikes = rData.likes || 0;
+        const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
+        const isReplyLiked = likedReplies.includes(rDoc.id);
+
+        const rMessage = rData.message || '';
+        const rIsLong = rMessage.length > 200;
+        const rPreviewText = rIsLong ? rMessage.substring(0, 200) + '...' : rMessage;
+
+        let rFullDate = 'Baru saja';
+        if (rData.timestamp) {
+            try {
+                const rDateObj = rData.timestamp.toDate ? rData.timestamp.toDate() : new Date(rData.timestamp);
+                if (!isNaN(rDateObj.getTime())) {
+                    const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+                    rFullDate = `${rDateStr} pukul ${rTimeStr} Wita`;
+                }
+            } catch (e) {
+                rFullDate = 'Baru saja';
+            }
+        }
+
+        const rNameEl = existingReply.querySelector('.gb-name');
+        if (rNameEl) rNameEl.textContent = rData.name || 'Tamu';
+
+        const rTimeEl = existingReply.querySelector('.gb-time');
+        if (rTimeEl) rTimeEl.textContent = rFullDate;
+
+        const rMsgContainer = existingReply.querySelector('.gb-message');
+        const rMsgTextEl = rMsgContainer?.querySelector('.msg-text');
+        if (rMsgTextEl) {
+            const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
+            const rIsExpanded = rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true';
+            if (!rIsExpanded) rMsgTextEl.textContent = rPreviewText;
+            if (rIsLong) rMsgTextEl.dataset.full = rMessage;
+        }
+
+        const rLikeBtn = existingReply.querySelector('.like-btn');
+        if (rLikeBtn) {
+            rLikeBtn.dataset.likes = rLikes;
+            rLikeBtn.setAttribute('aria-label', isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini');
+            const countSpan = rLikeBtn.querySelector('.like-count');
+            if (countSpan) {
+                countSpan.textContent = rLikes > 0 ? rLikes : '';
+                countSpan.classList.toggle('liked', isReplyLiked);
+            }
+            const icon = rLikeBtn.querySelector('i');
+            if (icon) icon.className = `bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
+        }
+
+        const rVerifiedIcon = existingReply.querySelector('.verified-icon');
+        if (rData.isMempelaiReply && !rVerifiedIcon && rNameEl) {
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-patch-check-fill verified-icon';
+            rNameEl.after(icon);
+        } else if (!rData.isMempelaiReply && rVerifiedIcon) {
+            rVerifiedIcon.remove();
+        }
+    }
 
     document.addEventListener('click', async (e) => {
         // 1. Klik Tombol Balas (Publik)
@@ -1188,6 +1428,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showToast("Akses ditolak: Hanya mempelai yang memiliki izin untuk menghapus.", "error");
                 return;
             }
+
+            const modalTitle = confirmModal.querySelector('h3');
+            const modalDesc = confirmModal.querySelector('p');
+            if (modalTitle && modalDesc) {
+                if (parentIdForReply) {
+                    modalTitle.textContent = "Hapus Balasan?";
+                    modalDesc.textContent = "Apakah Anda yakin ingin menghapus balasan ini? Tindakan ini tidak dapat dibatalkan.";
+                } else {
+                    modalTitle.textContent = "Hapus Ucapan?";
+                    modalDesc.textContent = "Apakah Anda yakin ingin menghapus ucapan ini? Tindakan ini tidak dapat dibatalkan.";
+                }
+            }
+
             confirmModal.classList.add('show');
         }
 
@@ -1231,112 +1484,69 @@ document.addEventListener('DOMContentLoaded', async () => {
             parentIdForReply = null;
         }
 
-        // 4. Klik Lihat Balasan (Toggle View)
         if (e.target.classList.contains('view-reply-btn') || e.target.closest('.view-reply-btn')) {
             const btn = e.target.classList.contains('view-reply-btn') ? e.target : e.target.closest('.view-reply-btn');
             const docId = btn.dataset.id;
+            const parentName = btn.dataset.parentName || '';
             const replyContent = document.getElementById(`reply-content-${docId}`);
 
             if (replyContent) {
                 const isHidden = replyContent.style.display === 'none';
 
                 if (isHidden) {
-                    // Aktifkan Real-time listener untuk balasan jika belum ada
-                    if (!replyUnsubscribers[docId]) {
-                        replyContent.innerHTML = ''; // Bersihkan kontainer saat pertama kali dibuka
+                    // Pasang listener jika belum ada atau jika kontainer kosong
+                    if (!replyUnsubscribers[docId] || replyContent.children.length === 0) {
+                        if (replyUnsubscribers[docId]) {
+                            replyUnsubscribers[docId]();
+                            delete replyUnsubscribers[docId];
+                        }
+
+                        replyContent.innerHTML = `
+                            <div class="text-center" style="padding: 10px 0;">
+                                <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0 auto;"></div>
+                                <p style="color: #999; margin-top: 5px; font-size: 0.75rem; font-style: italic;">Memuat balasan...</p>
+                            </div>
+                        `;
+
                         const repliesRef = collection(db, "messages", docId, "replies");
                         const qReplies = query(repliesRef, orderBy("timestamp", "asc"));
+                        let isInitialReply = true;
 
                         replyUnsubscribers[docId] = onSnapshot(qReplies, (snapshot) => {
-                            const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
-                            snapshot.docChanges().forEach((change) => {
-                                const rDoc = change.doc;
-                                const rData = rDoc.data();
-                                const rDocId = rDoc.id;
-                                const existingReply = document.getElementById(`reply-${rDocId}`);
-                                const rLikes = rData.likes || 0;
-                                const isReplyLiked = likedReplies.includes(rDocId);
+                            if (snapshot.empty) {
+                                replyContent.innerHTML = '<p style="color: #999; font-style: italic; font-size: 0.8rem; margin: 5px 0;">Belum ada balasan.</p>';
+                                return;
+                            }
 
-                                const rMessage = rData.message || '';
-                                const rIsLong = rMessage.length > 200;
-                                const rPreviewText = rIsLong ? rMessage.substring(0, 200) + '...' : rMessage;
-
-                                const rDateObj = rData.timestamp ? rData.timestamp.toDate() : new Date();
-                                const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                                const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-                                const rFullDate = rData.timestamp ? `${rDateStr} pukul ${rTimeStr} Wita` : 'Baru saja';
-
-                                const mentionHTML = rData.replyTo && rData.replyTo !== btn.dataset.parentName
-                                    ? `<span class="reply-to-mention">${rData.replyTo}</span>`
-                                    : '';
-
-                                const replyHTML = `
-                                <div class="gb-header-row">
-                                    <div class="gb-avatar"><i class="bi bi-person-circle"></i></div>
-                                    <div class="gb-info">
-                                        <div class="gb-top-row">
-                                            <span class="gb-name">${rData.name}</span>${rData.isMempelaiReply ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
-                                            <button class="delete-btn" data-id="${rDoc.id}" data-parent-id="${docId}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
-                                        </div>
-                                        <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
-                                    </div>
-                                </div>
-                                <p class="gb-message">${mentionHTML}<span class="msg-text">${rPreviewText}</span>${rIsLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
-                                <div class="gb-actions" style="margin-top: -5px;">
-                                    <button class="reply-btn" data-id="${docId}" data-name="${rData.name}">Balas</button>
-                                    <button class="like-btn" data-id="${rDocId}" data-parent-id="${docId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
-                                        <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
-                                    </button>
-                                </div>`;
-
-                                if (change.type === "added") {
-                                    const replyItem = document.createElement('div');
-                                    replyItem.id = `reply-${rDocId}`;
-                                    replyItem.className = 'gb-reply-item fade-in-text';
-                                    replyItem.style.marginBottom = '20px';
-                                    replyItem.innerHTML = replyHTML;
-                                    if (rIsLong) replyItem.querySelector('.msg-text').dataset.full = rMessage;
+                            if (isInitialReply) {
+                                replyContent.innerHTML = '';
+                                snapshot.docs.forEach((rDoc) => {
+                                    const replyItem = createReplyItemElement(rDoc, docId, parentName);
                                     replyContent.appendChild(replyItem);
-                                } else if (change.type === "modified" && existingReply) {
-                                    // OPTIMASI: Update komponen balasan secara spesifik (Cegah Flicker)
-                                    const rNameEl = existingReply.querySelector('.gb-name');
-                                    if (rNameEl) rNameEl.textContent = rData.name;
+                                });
+                                isInitialReply = false;
+                            } else {
+                                snapshot.docChanges().forEach((change) => {
+                                    const rDoc = change.doc;
+                                    const rDocId = rDoc.id;
+                                    const existingReply = document.getElementById(`reply-${rDocId}`);
 
-                                    const rMsgContainer = existingReply.querySelector('.gb-message');
-                                    const rMsgTextEl = rMsgContainer?.querySelector('.msg-text');
-                                    if (rMsgTextEl) {
-                                        const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
-                                        const rIsExpanded = rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true';
-                                        // Update teks hanya jika tidak sedang di-expand agar tidak menutup tiba-tiba
-                                        if (!rIsExpanded) rMsgTextEl.textContent = rPreviewText;
-                                        if (rIsLong) rMsgTextEl.dataset.full = rMessage;
-                                    }
-
-                                    const rLikeBtn = existingReply.querySelector('.like-btn');
-                                    if (rLikeBtn) {
-                                        rLikeBtn.dataset.likes = rLikes;
-                                        const rCountSpan = rLikeBtn.querySelector('.like-count');
-                                        if (rCountSpan) {
-                                            rCountSpan.textContent = rLikes > 0 ? rLikes : '';
-                                            rCountSpan.classList.toggle('liked', isReplyLiked);
+                                    if (change.type === "added") {
+                                        if (!existingReply) {
+                                            const replyItem = createReplyItemElement(rDoc, docId, parentName);
+                                            replyContent.appendChild(replyItem);
                                         }
-                                        const rIcon = rLikeBtn.querySelector('i');
-                                        if (rIcon) rIcon.className = `bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
+                                    } else if (change.type === "modified" && existingReply) {
+                                        updateReplyItemElement(existingReply, rDoc);
+                                    } else if (change.type === "removed" && existingReply) {
+                                        existingReply.remove();
                                     }
-
-                                    const rVerifiedIcon = existingReply.querySelector('.verified-icon');
-                                    if (rData.isMempelaiReply && !rVerifiedIcon) {
-                                        const icon = document.createElement('i');
-                                        icon.className = 'bi bi-patch-check-fill verified-icon';
-                                        rNameEl.after(icon);
-                                    } else if (!rData.isMempelaiReply && rVerifiedIcon) {
-                                        rVerifiedIcon.remove();
-                                    }
-                                } else if (change.type === "removed" && existingReply) {
-                                    existingReply.remove();
-                                }
-                            });
-                        }, (error) => console.warn("Reply listener error:", error));
+                                });
+                            }
+                        }, (error) => {
+                            console.warn("Reply listener error:", error);
+                            replyContent.innerHTML = '<p style="color: #dc3545; font-size: 0.8rem; margin: 5px 0;">Gagal memuat balasan.</p>';
+                        });
                     }
                 }
 
@@ -1390,6 +1600,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const likes = data.likes || 0;
         const isAlreadyLiked = likedMessages.includes(docId);
 
+        const safeName = escapeHTML(data.name || 'Tamu');
+        const safeStatus = escapeHTML(data.status || 'Hadir');
+        const safePreview = escapeHTML(previewText);
+
         const item = document.createElement('div');
         item.id = `msg-${docId}`;
         item.className = `guestbook-item ${isInitial ? 'fade-in-up' : ''}`;
@@ -1400,8 +1614,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="gb-info">
                     <div class="gb-top-row">
-                        <span class="gb-name">${data.name}</span>
-                        <span class="status-badge ${statusClass}">${data.status}</span>
+                        <span class="gb-name">${safeName}</span>
+                        <span class="status-badge ${statusClass}">${safeStatus}</span>
                         <button class="delete-btn" data-id="${docId}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="gb-meta">
@@ -1409,9 +1623,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             </div>
-            <p class="gb-message"><span class="msg-text">${previewText}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
+            <p class="gb-message"><span class="msg-text">${safePreview}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
             <div class="gb-actions">
-                <button class="reply-btn" data-id="${docId}" data-name="${data.name}">Balas</button>
+                <button class="reply-btn" data-id="${docId}" data-name="${safeName}">Balas</button>
                 <button class="like-btn" data-id="${docId}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
                     <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
                 </button>
@@ -1419,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${(data.replyCount > 0) ? `
             <div class="reply-toggle-container">
                 <div id="reply-content-${docId}" class="gb-reply fade-in-text" style="display: none;"></div>
-                <button class="view-reply-btn" data-id="${docId}" data-count="${data.replyCount || 0}" data-parent-name="${data.name}">
+                <button class="view-reply-btn" data-id="${docId}" data-count="${data.replyCount || 0}" data-parent-name="${safeName}">
                     <i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya
                 </button>
             </div>
@@ -1487,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan`
                 : `<i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya`;
 
-            if (data.replyCount === 0) {
+            if ((data.replyCount || 0) <= 0) {
                 existingItem.querySelector('.reply-toggle-container')?.remove();
             }
         } else if (data.replyCount > 0) {
@@ -1514,6 +1728,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function loadGuestbook(page = 1) {
         if (unsubscribeGb) unsubscribeGb();
+        // Bersihkan semua listener balasan aktif dari halaman sebelumnya
+        Object.values(replyUnsubscribers).forEach(unsub => unsub && typeof unsub === 'function' && unsub());
+        for (const key in replyUnsubscribers) delete replyUnsubscribers[key];
+
         currentPage = page;
         let isInitialLoad = true;
 
@@ -1666,18 +1884,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.addEventListener('resize', syncHeight);
     }
 
-    // --- Logika Copy to Clipboard ---
+    // --- Logika Copy to Clipboard (dengan Fallback untuk WebView & Browser Lama) ---
     document.querySelectorAll('.btn-copy').forEach(btn => {
         btn.addEventListener('click', () => {
             const textToCopy = btn.dataset.copy;
-            navigator.clipboard.writeText(textToCopy).then(() => {
+
+            const handleSuccess = () => {
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<i class="bi bi-check2"></i> Berhasil!';
                 showToast('Nomor rekening berhasil disalin!');
                 setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
-            }).catch(err => {
-                showToast('Gagal menyalin teks.', 'error');
-            });
+            };
+
+            const handleFallback = (text) => {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-999999px";
+                    textArea.style.top = "-999999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) {
+                        handleSuccess();
+                    } else {
+                        showToast('Gagal menyalin teks.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Gagal menyalin teks.', 'error');
+                }
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy)
+                    .then(handleSuccess)
+                    .catch(() => handleFallback(textToCopy));
+            } else {
+                handleFallback(textToCopy);
+            }
         });
     });
 
@@ -1685,5 +1932,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const yearSpan = document.getElementById('current-year');
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
+    }
+
+    // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(err => {
+                console.log('SW registration note:', err);
+            });
+        });
     }
 });

@@ -94,8 +94,8 @@ body:active {
 /* Music Control Button */
 .music-control {
     position: fixed;
-    bottom: 25px;
-    right: 25px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: calc(20px + env(safe-area-inset-right, 0px));
     z-index: 12000;
     width: 45px;
     height: 45px;
@@ -125,8 +125,8 @@ body:active {
 /* Music Status Text Label */
 .music-status-text {
     position: fixed;
-    bottom: 34px;
-    right: 80px;
+    bottom: calc(29px + env(safe-area-inset-bottom, 0px));
+    right: calc(75px + env(safe-area-inset-right, 0px));
     background: rgba(212, 175, 55, 0.9);
     color: white;
     padding: 5px 12px;
@@ -1031,7 +1031,7 @@ body:active {
 .lightbox {
     display: none;
     position: fixed;
-    z-index: 9999;
+    z-index: 14000;
     top: 0;
     left: 0;
     width: 100%;
@@ -1988,18 +1988,21 @@ body:active {
 /* Toast Notification Styles */
 .toast-container {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: calc(20px + env(safe-area-inset-right, 0px));
     z-index: 20000;
     display: flex;
     flex-direction: column;
     gap: 10px;
     pointer-events: none;
+    max-width: calc(100vw - 40px);
 }
 
 .toast {
     pointer-events: auto;
-    min-width: 280px;
+    min-width: 240px;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 15px 20px;
     border-radius: 12px;
     background: #ffffff;
@@ -2123,6 +2126,110 @@ body:active {
 .modal-content-confirm .modal-actions-confirm #btn-delete-confirm:hover {
     background: #c82333 !important;
     border-color: #bd2130 !important;
+}
+
+/* Modern Auth Modal (Mode Mempelai) Styles */
+.auth-header-icon i {
+    font-size: 3.2rem !important;
+    color: #d4af37 !important;
+}
+
+.auth-modal-content {
+    max-width: 400px;
+}
+
+.auth-form {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.auth-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.auth-input-wrapper input {
+    width: 100%;
+    padding: 13px 45px 13px 42px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    background: #fdfdfd;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.auth-input-wrapper input:focus {
+    border-color: #d4af37;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+}
+
+.auth-input-icon {
+    position: absolute;
+    left: 14px;
+    color: #d4af37;
+    font-size: 1.15rem;
+    pointer-events: none;
+}
+
+.btn-toggle-pwd {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-toggle-pwd:hover {
+    color: #bfa100;
+    transform: scale(1.1);
+}
+
+.modal-content-confirm .modal-actions-confirm #btn-cancel-auth {
+    background: #f0f0f0 !important;
+    color: #555 !important;
+    border-color: #ddd !important;
+}
+
+.modal-content-confirm .modal-actions-confirm #btn-cancel-auth:hover {
+    background: #e0e0e0 !important;
+    border-color: #ccc !important;
+}
+
+.modal-content-confirm .modal-actions-confirm #btn-submit-auth {
+    background: #d4af37 !important;
+    color: white !important;
+    border-color: #d4af37 !important;
+}
+
+.modal-content-confirm .modal-actions-confirm #btn-submit-auth:hover {
+    background: #bfa100 !important;
+    border-color: #bfa100 !important;
+}
+
+/* Animasi getar ketika password salah */
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+.auth-modal-content.shake {
+    animation: shakeError 0.4s ease-in-out;
 }
 
 /* Floating Hearts Animation */
