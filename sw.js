@@ -60,7 +60,9 @@ self.addEventListener('fetch', (event) => {
                 }
                 return networkResponse;
             }).catch(() => {
-                return caches.match(event.request);
+                return caches.match(event.request).then((cached) => {
+                    return cached || caches.match('./index.html');
+                });
             })
         );
         return;
@@ -73,13 +75,15 @@ self.addEventListener('fetch', (event) => {
                 return cachedResponse;
             }
             return fetch(event.request).then((response) => {
-                if (event.request.url.match(/\.(webp|jpg|jpeg|png|mp3|woff2|ico)$/)) {
+                if (response && response.status === 200 && event.request.url.match(/\.(webp|jpg|jpeg|png|mp3|woff2|ico)$/)) {
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
                     });
                 }
                 return response;
+            }).catch(() => {
+                return caches.match(event.request);
             });
         })
     );

@@ -840,6 +840,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Helper Sanitasi HTML Global (Pencegahan XSS) ---
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     // --- Fungsi Toast Notification ---
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
@@ -849,7 +860,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         toast.className = `toast ${type}`;
 
         const icon = type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill';
-        toast.innerHTML = `<i class="bi bi-${icon}" style="margin-right: 12px; font-size: 1.2rem; color: ${type === 'success' ? '#28a745' : '#dc3545'}"></i> ${message}`;
+        toast.innerHTML = `<i class="bi bi-${icon}" style="margin-right: 12px; font-size: 1.2rem; color: ${type === 'success' ? '#28a745' : '#dc3545'}"></i> ${escapeHTML(message)}`;
 
         container.appendChild(toast);
 
@@ -900,7 +911,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
 
                     // Hanya tambahkan adminKey jika sedang dalam mode mempelai
-                    if (isMempelai) replyData.adminKey = "mempelai123";
+                    if (isMempelai) replyData.adminKey = sessionStorage.getItem('mKey') || "";
 
                     const newReplyRef = await addDoc(repliesRef, replyData);
 
@@ -1007,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Logika Akses Khusus (Admin & Mempelai) ---
-    let isMempelai = sessionStorage.getItem('isMempelai') === 'true';
+    let isMempelai = sessionStorage.getItem('isMempelai') === 'true' && !!sessionStorage.getItem('mKey');
 
     // Inisialisasi status tampilan mempelai jika sudah login di session sebelumnya
     if (isMempelai) {
@@ -1034,7 +1045,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     initGuestCounter(); // Jalankan saat halaman dimuat (untuk cek session)
 
-    const MEMPELAI_PASS = "mempelai123"; // Password Mempelai
+    // Helper Kriptografi SHA-256 untuk keamanan kata sandi
+    async function sha256(str) {
+        const buffer = new TextEncoder().encode(str);
+        const digest = await crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Hash SHA-256 dari kata sandi Mempelai (mencegah pembacaan password langsung dari kode sumber)
+    const MEMPELAI_HASH = "e58fb6b9713fea3141744cbf988eb1852d68816e16f9615ad2621b6e16377a47";
     const replyUnsubscribers = {}; // Simpan fungsi unsubscribe untuk listener balasan
 
     let replyingToId = null; // Menyimpan ID pesan yang sedang dibalas
@@ -1089,13 +1108,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (authForm) {
-        authForm.addEventListener('submit', (e) => {
+        authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const pass = pwdInput ? pwdInput.value : '';
+            const inputHash = await sha256(pass);
 
-            if (pass === MEMPELAI_PASS) {
+            if (inputHash === MEMPELAI_HASH) {
                 isMempelai = true;
                 sessionStorage.setItem('isMempelai', 'true');
+                sessionStorage.setItem('mKey', pass);
                 document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                 initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
                 showToast("Mode Mempelai Aktif");
@@ -1127,17 +1148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clickCount = 0;
             }
         });
-    }
-
-    // Helper untuk sanitasi HTML (mencegah XSS)
-    function escapeHTML(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
     }
 
     // Inisialisasi tampilan jika sudah login di session sebelumnya
