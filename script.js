@@ -93,7 +93,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             easing: 'ease-in-out',
             mirror: false
         });
-        AOS.refresh(); // Segarkan koordinat elemen
     };
 
     // Jalankan inisialisasi pertama kali

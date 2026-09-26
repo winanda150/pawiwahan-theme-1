@@ -1,11 +1,11 @@
-const CACHE_NAME = 'pawiwahan-v2';
+const CACHE_NAME = 'pawiwahan-v3';
 const ASSETS_TO_CACHE = [
     './index.html',
     './style.css',
     './script.js',
     './site.webmanifest',
-    './Elemen/Elemen%20Pendukung/Music.mp3',
-    './Elemen/Elemen%20Pendukung/wave.png'
+    './Elemen/Photo%20Gallery/Cover1.webp',
+    './Elemen/Elemen%20Pendukung/wave.webp'
 ];
 
 // Install Service Worker dan simpan aset dasar
