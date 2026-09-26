@@ -124,26 +124,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Logika untuk mengambil nama tamu dari URL ---
     const guestNameElement = document.getElementById('guest-name');
 
-    // Fungsi untuk mengecilkan font secara otomatis jika nama terlalu panjang
+    // Fungsi untuk mengecilkan font secara otomatis jika nama terlalu panjang (O(1) tanpa Forced Reflow)
     const adjustGuestNameSize = () => {
         if (!guestNameElement) return;
         const container = guestNameElement.parentElement;
         if (!container) return;
 
         const maxWidth = container.offsetWidth * 0.85; // Batas maksimal lebar (85% dari lebar container)
-        guestNameElement.style.fontSize = ""; // Reset ke default CSS (agar perhitungan mulai dari awal)
-        let currentSize = parseFloat(window.getComputedStyle(guestNameElement).fontSize);
+        guestNameElement.style.fontSize = ""; // Reset ke default CSS
+        const currentSize = parseFloat(window.getComputedStyle(guestNameElement).fontSize) || 28;
 
-        // Gunakan inline-block dan nowrap sementara untuk mengukur lebar teks asli tanpa terpotong
+        // Gunakan inline-block dan nowrap sementara untuk mengukur lebar teks asli
         guestNameElement.style.whiteSpace = 'nowrap';
         guestNameElement.style.display = 'inline-block';
 
-        while (guestNameElement.offsetWidth > maxWidth && currentSize > 12) {
-            currentSize -= 1; // Kecilkan 1 pixel setiap perulangan
-            guestNameElement.style.fontSize = currentSize + 'px';
+        const currentWidth = guestNameElement.offsetWidth;
+        if (currentWidth > maxWidth && maxWidth > 0) {
+            const scale = maxWidth / currentWidth;
+            const targetSize = Math.max(12, Math.floor(currentSize * scale));
+            guestNameElement.style.fontSize = targetSize + 'px';
         }
 
-        // Kembalikan ke normal agar tata letak tetap rapi
+        // Kembalikan ke normal
         guestNameElement.style.display = 'block';
         guestNameElement.style.whiteSpace = 'normal';
     };
