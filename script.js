@@ -961,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } finally {
                         // Pastikan tiket otorisasi balasan segera dibersihkan
                         if (isMempelai) {
-                            deleteDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`)).catch(() => {});
+                            deleteDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`)).catch(() => { });
                         }
                     }
 
@@ -1013,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } finally {
                         // Pastikan tiket otorisasi pesan segera dibersihkan
                         if (isMempelai) {
-                            deleteDoc(doc(db, "admin_actions", `${newDocRef.id}_create`)).catch(() => {});
+                            deleteDoc(doc(db, "admin_actions", `${newDocRef.id}_create`)).catch(() => { });
                         }
                     }
 
@@ -1586,8 +1586,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 likeCountSpan.textContent = currentLikes > 0 ? currentLikes : '';
             } finally {
-                setTimeout(() => { 
-                    likeBtn.disabled = false; 
+                setTimeout(() => {
+                    likeBtn.disabled = false;
                     likeLocks.delete(likeLockKey);
                 }, 800);
             }
@@ -1598,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deleteBtn) {
             docIdToDelete = deleteBtn.dataset.id;
             parentIdForReply = deleteBtn.dataset.parentId || null;
-            
+
             const mKey = sessionStorage.getItem('mKey');
             if (!isMempelai || !mKey) {
                 showToast("Sesi telah berakhir. Silakan masuk kembali untuk melanjutkan.", "error");
@@ -1644,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         await deleteDoc(replyRef);
                     } finally {
                         // 3. Bersihkan tiket otorisasi balasan secara instan
-                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => {});
+                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => { });
                     }
                     // 4. Kurangi counter balasan di dokumen utama
                     try {
@@ -1690,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     });
                                     await deleteDoc(rDoc.ref);
                                 } finally {
-                                    deleteDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`)).catch(() => {});
+                                    deleteDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`)).catch(() => { });
                                 }
                             }
                         } catch (subErr) {
@@ -1708,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         await deleteDoc(msgRef);
                     } finally {
                         // 3. Bersihkan tiket otorisasi pesan utama secara instan
-                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => {});
+                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => { });
                     }
 
                     // 4. Sinkronisasi ulang total hitungan pasti dari server setelah deleteDoc selesai
@@ -1774,7 +1774,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast("Ucapan berhasil disematkan di posisi teratas.");
                     }
                 } finally {
-                    deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => {});
+                    deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => { });
                 }
             } catch (error) {
                 console.error("Error toggling pin status:", error);
