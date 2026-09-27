@@ -1448,6 +1448,8 @@ body:active {
     overflow-wrap: break-word;
     word-break: break-word;
     display: block;
+    text-align: justify;
+    text-justify: inter-word;
 }
 
 .msg-text {

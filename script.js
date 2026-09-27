@@ -1196,7 +1196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pwdInput) {
             pwdInput.value = '';
             pwdInput.type = 'password';
-            setTimeout(() => pwdInput.focus(), 150);
         }
         if (togglePwdBtn) {
             const icon = togglePwdBtn.querySelector('i');
