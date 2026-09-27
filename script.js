@@ -851,6 +851,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, '&#039;');
     }
 
+    // --- Helper Aman Parsing LocalStorage (Anti Crash jika Storage Rusak/Dimanipulasi) ---
+    function getSafeLocalStorageArray(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
     // --- Fungsi Toast Notification ---
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
@@ -899,31 +910,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // PROSES BALASAN (Sub-collection)
                     const docRef = doc(db, "messages", replyingToId);
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
+                    const newReplyRef = doc(repliesRef);
 
                     // 1. Siapkan data balasan
+                    const inputName = (document.getElementById('att-name')?.value || '').trim();
+                    const inputMessage = (document.getElementById('att-message')?.value || '').trim();
+
                     const replyData = {
-                        name: document.getElementById('att-name').value,
-                        message: document.getElementById('att-message').value,
-                        replyTo: document.getElementById('replying-to-name').innerText, // Mencatat siapa yang dibalas
+                        name: inputName,
+                        message: inputMessage,
+                        replyTo: document.getElementById('replying-to-name')?.innerText || '', // Mencatat siapa yang dibalas
                         isMempelaiReply: isMempelai,
                         timestamp: serverTimestamp(),
                         likes: 0 // Inisialisasi field likes pada balasan
                     };
 
-                    // Hanya tambahkan adminKey jika sedang dalam mode mempelai (token server bertingkat)
+                    // Otorisasi via private zero-leak sink jika dalam mode mempelai
                     if (isMempelai) {
                         const mKey = sessionStorage.getItem('mKey') || "";
-                        replyData.adminKey = await generateAdminToken(mKey);
+                        const adminSecretHash = await generateAdminToken(mKey);
+                        await setDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`), {
+                            secret: adminSecretHash,
+                            timestamp: serverTimestamp()
+                        });
                     }
 
-                    const newReplyRef = await addDoc(repliesRef, replyData);
+                    await setDoc(newReplyRef, replyData);
 
-                    // 2. Jika ini balasan mempelai, hapus adminKey dari dokumen segera setelah terverifikasi
-                    if (isMempelai) {
-                        await updateDoc(newReplyRef, { adminKey: deleteField() });
-                    }
-
-                    // 3. Update counter jumlah balasan di dokumen utama
+                    // 2. Update counter jumlah balasan di dokumen utama
                     await updateDoc(docRef, {
                         replyCount: increment(1)
                     });
@@ -935,29 +949,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('reply-mode-indicator').style.display = 'none';
                 } else {
                     // PROSES UCAPAN BARU
-                    const guestCount = document.getElementById('att-status').value === 'Hadir' ? Number(document.getElementById('att-count').value) : 0;
+                    const newDocRef = doc(collection(db, "messages"));
+                    const inputName = (document.getElementById('att-name')?.value || '').trim();
+                    const inputMessage = (document.getElementById('att-message')?.value || '').trim();
+                    const guestCount = document.getElementById('att-status')?.value === 'Hadir' ? Number(document.getElementById('att-count')?.value) : 0;
 
                     const messageData = {
-                        name: document.getElementById('att-name').value,
-                        status: document.getElementById('att-status').value,
+                        name: inputName,
+                        status: document.getElementById('att-status')?.value || 'Hadir',
                         count: guestCount,
-                        message: document.getElementById('att-message').value,
+                        message: inputMessage,
                         timestamp: serverTimestamp(),
                         likes: 0,
                         replyCount: 0,
                         isMempelai: isMempelai
                     };
 
+                    // Otorisasi via private zero-leak sink jika dalam mode mempelai
                     if (isMempelai) {
                         const mKey = sessionStorage.getItem('mKey') || "";
-                        messageData.adminKey = await generateAdminToken(mKey);
+                        const adminSecretHash = await generateAdminToken(mKey);
+                        await setDoc(doc(db, "admin_actions", `${newDocRef.id}_create`), {
+                            secret: adminSecretHash,
+                            timestamp: serverTimestamp()
+                        });
                     }
 
-                    const newDoc = await addDoc(collection(db, "messages"), messageData);
-
-                    if (isMempelai) {
-                        await updateDoc(newDoc, { adminKey: deleteField() });
-                    }
+                    await setDoc(newDocRef, messageData);
 
                     // Jalankan update metadata di background agar tidak memblokir UI sukses
                     if (guestCount > 0) {
@@ -1127,13 +1145,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    let authFailedAttempts = 0;
+    let authLockoutUntil = 0;
+
     if (authForm) {
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const pass = pwdInput ? pwdInput.value : '';
+            const now = Date.now();
+            if (now < authLockoutUntil) {
+                const remaining = Math.ceil((authLockoutUntil - now) / 1000);
+                showToast(`Terlalu banyak percobaan salah. Silakan coba lagi dalam ${remaining} detik.`, "error");
+                return;
+            }
+
+            const pass = pwdInput ? pwdInput.value.trim() : '';
+            if (!pass) return;
+
+            // Artificial delay 300ms untuk mencegah automated rapid script cracking
+            await new Promise(res => setTimeout(res, 300));
             const inputHash = await sha256(pass);
 
             if (inputHash === MEMPELAI_HASH) {
+                authFailedAttempts = 0;
+                authLockoutUntil = 0;
                 isMempelai = true;
                 sessionStorage.setItem('isMempelai', 'true');
                 sessionStorage.setItem('mKey', pass);
@@ -1142,7 +1176,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showToast("Mode Mempelai Aktif");
                 closeAuthModal();
             } else {
-                showToast("Kata sandi salah.", "error");
+                authFailedAttempts++;
+                if (authFailedAttempts >= 5) {
+                    authLockoutUntil = Date.now() + 30000; // Kunci modal selama 30 detik
+                    authFailedAttempts = 0;
+                    showToast("Terlalu banyak percobaan gagal. Akses modal dikunci selama 30 detik.", "error");
+                } else {
+                    const attemptsLeft = 5 - authFailedAttempts;
+                    showToast(`Kata sandi salah. Sisa percobaan: ${attemptsLeft}`, "error");
+                }
+
                 const modalBox = authModal.querySelector('.auth-modal-content');
                 if (modalBox) {
                     modalBox.classList.remove('shake');
@@ -1175,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rData = rDoc.data();
         const rDocId = rDoc.id;
         const rLikes = rData.likes || 0;
-        const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
+        const likedReplies = getSafeLocalStorageArray('liked_replies');
         const isReplyLiked = likedReplies.includes(rDocId);
 
         const rMessage = rData.message || '';
@@ -1234,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateReplyItemElement(existingReply, rDoc) {
         const rData = rDoc.data();
         const rLikes = rData.likes || 0;
-        const likedReplies = JSON.parse(localStorage.getItem('liked_replies') || '[]');
+        const likedReplies = getSafeLocalStorageArray('liked_replies');
         const isReplyLiked = likedReplies.includes(rDoc.id);
 
         const rMessage = rData.message || '';
@@ -1347,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Gunakan key penyimpanan yang berbeda untuk ucapan utama dan balasan
             const storageKey = parentId ? 'liked_replies' : 'liked_messages';
-            let likedItems = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            let likedItems = getSafeLocalStorageArray(storageKey);
             const isAlreadyLiked = likedItems.includes(docId);
 
             // Fungsi untuk membuat efek hamburan hati
@@ -1490,8 +1533,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (parentIdForReply) {
                     const replyRef = doc(db, "messages", parentIdForReply, "replies", docIdToDelete);
-                    // 1. Otorisasi hapus balasan ke server Firestore
-                    await updateDoc(replyRef, { deleteSecret: adminSecretHash });
+                    // 1. Otorisasi hapus balasan via private zero-leak sink
+                    await setDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`), {
+                        secret: adminSecretHash,
+                        timestamp: serverTimestamp()
+                    });
                     // 2. Hapus balasan dari sub-koleksi
                     await deleteDoc(replyRef);
                     // 3. Kurangi counter balasan di dokumen utama
@@ -1524,7 +1570,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const repliesSnap = await getDocs(collection(db, "messages", docIdToDelete, "replies"));
                             for (const rDoc of repliesSnap.docs) {
                                 try {
-                                    await updateDoc(rDoc.ref, { deleteSecret: adminSecretHash });
+                                    await setDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`), {
+                                        secret: adminSecretHash,
+                                        timestamp: serverTimestamp()
+                                    });
                                     await deleteDoc(rDoc.ref);
                                 } catch (rErr) {
                                     console.warn("Reply doc delete note:", rErr);
@@ -1535,8 +1584,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
 
-                    // 1. Otorisasi hapus pesan utama ke server Firestore
-                    await updateDoc(msgRef, { deleteSecret: adminSecretHash });
+                    // 1. Otorisasi hapus pesan utama via private zero-leak sink
+                    await setDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`), {
+                        secret: adminSecretHash,
+                        timestamp: serverTimestamp()
+                    });
                     // 2. Hapus pesan utama secara permanen
                     await deleteDoc(msgRef);
                 }
@@ -1577,20 +1629,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const adminSecretHash = await generateAdminToken(mKey);
                 const msgRef = doc(db, "messages", docId);
+                // Otorisasi aksi pin/unpin via private zero-leak sink
+                await setDoc(doc(db, "admin_actions", `${docId}_pin`), {
+                    secret: adminSecretHash,
+                    timestamp: serverTimestamp()
+                });
+
                 if (isCurrentlyPinned) {
                     await updateDoc(msgRef, {
-                        isPinned: false,
-                        adminKey: adminSecretHash
+                        isPinned: false
                     });
-                    await updateDoc(msgRef, { adminKey: deleteField() });
                     showToast("Sematan ucapan dilepas.");
                 } else {
                     await updateDoc(msgRef, {
                         isPinned: true,
-                        pinnedAt: serverTimestamp(),
-                        adminKey: adminSecretHash
+                        pinnedAt: serverTimestamp()
                     });
-                    await updateDoc(msgRef, { adminKey: deleteField() });
                     showToast("Ucapan berhasil disematkan!");
                 }
             } catch (error) {
@@ -1710,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function createMessageElement(docSnap, isInitial = false, isPinnedContainer = false) {
         const data = docSnap.data();
         const docId = docSnap.id;
-        const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
+        const likedMessages = getSafeLocalStorageArray('liked_messages');
         const isPinned = data.isPinned === true;
 
         const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
@@ -1792,7 +1846,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isLong = message.length > 200;
         const previewText = isLong ? message.substring(0, 200) + '...' : message;
         const likes = data.likes || 0;
-        const likedMessages = JSON.parse(localStorage.getItem('liked_messages') || '[]');
+        const likedMessages = getSafeLocalStorageArray('liked_messages');
         const isAlreadyLiked = likedMessages.includes(docSnap.id);
 
         existingItem.classList.toggle('is-pinned', isPinned);
