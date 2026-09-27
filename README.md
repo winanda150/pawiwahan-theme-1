@@ -155,6 +155,9 @@ pawiwahan-theme-1/
 ├── 📄 index.html                        # Struktur utama halaman, meta SEO, & modal
 ├── 🎨 style.css                         # Desain sistem, palet warna, responsivitas, & animasi
 ├── ⚡ script.js                          # Logika interaktif, Firestore real-time, & lightbox
+├── 📁 rules/                            # Konfigurasi keamanan & aturan database
+│   └── 🔒 firestore.rules               # Aturan keamanan Cloud Firestore (Security Rules)
+├── 🔧 firebase.json                     # Konfigurasi deployment Firebase CLI
 ├── ⚙️ sw.js                             # Service Worker untuk manajemen cache & mode offline
 ├── 📱 site.webmanifest                  # Konfigurasi PWA (nama aplikasi, icon, tema warna)
 ├── 🗺️ sitemap.xml                       # Peta situs untuk pengindeksan mesin pencari (SEO)
@@ -176,7 +179,7 @@ Website ini bersifat **murni static frontend** (*Client-side Application*), sehi
    ```
 2. Buka folder proyek di **Visual Studio Code**.
 3. Install ekstensi **Live Server** (`ritwickdey.LiveServer`).
-4. Klik kanan pada file [`index.html`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/index.html) lalu pilih **"Open with Live Server"**.
+4. Klik kanan pada file `index.html` lalu pilih **"Open with Live Server"**.
 5. Browser akan otomatis terbuka di `http://127.0.0.1:5500`.
 
 ### Opsi 2: Menggunakan Python HTTP Server
@@ -197,7 +200,7 @@ npx serve .
 ## ⚙️ Panduan Kustomisasi & Konfigurasi
 
 ### 1. Mengubah Data Pasangan & Jadwal Acara
-Buka file [`index.html`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/index.html):
+Buka file `index.html`:
 - **Nama Mempelai & Judul:** Cari tag `<title>` dan elemen `h1.cinzel-font`.
 - **Rangkaian Acara:** Edit bagian `<section id="event-details">` untuk mengubah tanggal, waktu, dan alamat.
 - **Link Google Calendar & Maps:** Perbarui atribut `href` pada tombol jadwal dan lokasi acara.
@@ -212,7 +215,7 @@ https://domain-anda.com/?to=Bapak+I+Wayan+Sudira,+S.T.+%26+Keluarga
 ```
 
 ### 3. Mengganti Konfigurasi Firebase
-Buka file [`script.js`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/script.js#L4-L12) dan ganti objek `firebaseConfig` dengan project Firebase Anda sendiri:
+Buka file `script.js` dan ganti objek `firebaseConfig` dengan project Firebase Anda sendiri:
 ```javascript
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
@@ -226,105 +229,43 @@ const firebaseConfig = {
 ```
 
 ### 4. Mengubah Password Mode Mempelai
-Password diverifikasi melalui hash SHA-256 pada konstanta `MEMPELAI_HASH` di [`script.js`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/script.js#L1056).
+Password diverifikasi melalui sistem otorisasi dua tingkat (*Dual-Tier Salted Token*): `MEMPELAI_HASH` di `script.js` untuk otentikasi login, serta token bertingkat pada fungsi `getAdminSecretHash()` di Firestore Rules.
 Untuk mengganti password dengan yang baru:
-1. Buka console browser (`F12`) dan jalankan skrip berikut:
+1. Buka console browser (`F12`) dan jalankan skrip generator berikut:
    ```javascript
-   async function generateHash(pass) {
-       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
-       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+   async function generateBothHashes(pass) {
+       const hash1 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass)))).map(b => b.toString(16).padStart(2, '0')).join('');
+       const hash2 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass + "@pawiwahan-secure-backend-key-2026")))).map(b => b.toString(16).padStart(2, '0')).join('');
+       console.log("MEMPELAI_HASH (script.js):", hash1);
+       console.log("getAdminSecretHash (Firestore Rules):", hash2);
    }
-   generateHash("PasswordBaruAnda").then(console.log);
+   generateBothHashes("PasswordBaruAnda");
    ```
-2. Salin kode hash yang dihasilkan lalu tempelkan ke variabel `MEMPELAI_HASH` di [`script.js`](file:///c:/Users/User/Downloads/pawiwahan-theme-1/script.js#L1056).
+2. Tempelkan `hash1` ke variabel `MEMPELAI_HASH` di `script.js` dan `hash2` ke fungsi `getAdminSecretHash()` di `rules/firestore.rules` atau Firestore Security Rules Anda.
 
 ---
 
 ## 🛡️ Aturan Keamanan Firestore (Security Rules)
 
-Untuk menjaga integritas data buku tamu dari akses ilegal atau injeksi data yang tidak valid, gunakan rekomendasi konfigurasi **Firebase Firestore Security Rules** berikut:
+Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada file [`rules/firestore.rules`](./rules/firestore.rules). Aturan ini dirancang dengan tingkat keamanan sangat ketat (*High-Level Security Lockdown*):
 
-```javascript
-rules_version = '2';
+- **🛡️ Validasi Ketat Data Kehadiran & Anti-Spam:** Membatasi ukuran teks nama (1–50 karakter), pesan (1–500 karakter), integritas status (`Hadir` wajib 1–10 orang, `Tidak Hadir` wajib 0 orang), serta mengunci status pin awal.
+- **🔐 Otorisasi Bertingkat (*Dual-Tier Salted Token*):** Menjamin fitur sematkan (*pin/unpin*), hapus ucapan, dan centang verifikasi balasan mempelai (*blue badge*) hanya dapat dieksekusi oleh mempelai yang memegang kata sandi sah.
+- **⚡ Batasan Operasi Dinamis (Anti-Bot):** Operasi *like* dan *reply count* dibatasi hanya $\pm 1$ per request serta mencegah nilai negatif.
+- **🚫 Global Wildcard Lockdown:** Mengunci seluruh koleksi lain di database selain yang diizinkan (`allow read, write: if false;`).
 
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // ==========================================
-    // 1. Koleksi messages (Pesan Utama & Balasan)
-    // ==========================================
-    match /messages/{messageId} {
-      allow read: if true;
-      
-      // CREATE: Ucapan baru oleh tamu (likes & replyCount wajib mulai dari 0)
-      allow create: if request.resource.data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt'])
-                    && request.resource.data.name is string 
-                    && request.resource.data.name.size() > 0
-                    && request.resource.data.name.size() <= 50
-                    && request.resource.data.message is string
-                    && request.resource.data.message.size() <= 500
-                    && request.resource.data.status in ['Hadir', 'Tidak Hadir']
-                    && request.resource.data.count is int
-                    && request.resource.data.count >= 0
-                    && request.resource.data.count <= 10
-                    && request.resource.data.likes == 0
-                    && request.resource.data.replyCount == 0
-                    && (!('isPinned' in request.resource.data) || request.resource.data.isPinned is bool)
-                    && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp)
-                    && request.resource.data.timestamp == request.time;
-      
-      // UPDATE: Mengizinkan perubahan Suka, Jumlah Balasan, dan Pin / Unpin
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'likes', 'isPinned', 'pinnedAt'])
-                    && (!('likes' in request.resource.data) || (request.resource.data.likes is int && request.resource.data.likes >= 0))
-                    && (!('replyCount' in request.resource.data) || (request.resource.data.replyCount is int && request.resource.data.replyCount >= 0))
-                    && (!('isPinned' in request.resource.data) || request.resource.data.isPinned is bool)
-                    && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp);
-      
-      // DELETE: Penghapusan oleh Mode Mempelai
-      allow delete: if true;
+### 🚀 Cara Menerapkan Security Rules:
 
-      // SUB-KOLEKSI: Balasan Pesan (Replies)
-      match /replies/{replyId} {
-        allow read: if true;
-        
-        // CREATE Balasan
-        allow create: if request.resource.data.keys().hasOnly(['name', 'message', 'replyTo', 'isMempelaiReply', 'timestamp', 'likes', 'adminKey'])
-                      && request.resource.data.name is string
-                      && request.resource.data.name.size() > 0
-                      && request.resource.data.name.size() <= 50
-                      && request.resource.data.message is string
-                      && request.resource.data.message.size() <= 500
-                      && request.resource.data.replyTo is string
-                      && request.resource.data.replyTo.size() <= 50
-                      && request.resource.data.isMempelaiReply is bool
-                      && request.resource.data.likes == 0
-                      && request.resource.data.timestamp == request.time
-                      && (
-                        request.resource.data.isMempelaiReply == false ||
-                        (request.resource.data.isMempelaiReply == true && request.resource.data.adminKey == 'KATA_SANDI_RAHASIA_ANDA')
-                      );
-
-        // UPDATE Balasan: Mengizinkan Suka & Penghapusan adminKey otomatis
-        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'adminKey'])
-                      && (!('likes' in request.resource.data) || (request.resource.data.likes is int && request.resource.data.likes >= 0));
-        
-        // DELETE Balasan
-        allow delete: if true;
-      }
-    }
-
-    // ==========================================
-    // 2. Koleksi metadata (Total Statistik Tamu)
-    // ==========================================
-    match /metadata/totals {
-      allow read: if true;
-      allow write: if request.resource.data.keys().hasOnly(['totalGuests'])
-                   && request.resource.data.totalGuests is int 
-                   && request.resource.data.totalGuests >= 0;
-    }
-  }
-}
+#### Opsi 1: Menggunakan Firebase CLI (Direkomendasikan)
+Jalankan perintah berikut di terminal root proyek:
+```bash
+npx firebase deploy --only firestore:rules
 ```
+
+#### Opsi 2: Menggunakan Firebase Console (Manual)
+1. Buka file [`rules/firestore.rules`](./rules/firestore.rules) lalu salin seluruh kodenya.
+2. Masuk ke [Firebase Console](https://console.firebase.google.com/) > Pilih Project Anda > **Firestore Database**.
+3. Buka tab **Rules**, tempelkan kode yang telah disalin, lalu klik tombol **Publish**.
 
 ---
 

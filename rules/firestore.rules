@@ -1,0 +1,139 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // 🛡️ HELPER FUNCTIONS (VALIDASI KEAMANAN TINGKAT TINGGI)
+    // ==========================================
+    
+    // Token Otorisasi Server Bertingkat (HMAC-style Salted Token dari kata sandi Mempelai)
+    function getAdminSecretHash() {
+      return "2f2be58602bbff6b9b1252305d65dc38d5903e0316efc19da7fb3c2c3ac85797";
+    }
+
+    // 1. Validasi Pesan Baru (Anti-Spam, Integritas Kehadiran, & Kebal Pin Sepihak)
+    function isValidNewMessage() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 50
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
+        && data.status in ['Hadir', 'Tidak Hadir']
+        && data.count is int
+        && (data.status == 'Tidak Hadir' ? data.count == 0 : (data.count >= 1 && data.count <= 10))
+        && data.likes == 0
+        && data.replyCount == 0
+        && (!('isPinned' in data) || data.isPinned == false)
+        && data.timestamp == request.time;
+    }
+
+    // 2. Validasi Update Like (Anti-Bot: Maksimal +-1 per request)
+    function isValidMessageLikeUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && request.resource.data.likes is int
+        && request.resource.data.likes >= 0
+        && (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1);
+    }
+
+    // 3. Validasi Update ReplyCount (Hanya +-1 per transaksi)
+    function isValidReplyCountUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
+        && request.resource.data.replyCount is int
+        && request.resource.data.replyCount >= 0
+        && (request.resource.data.replyCount == resource.data.replyCount + 1 || request.resource.data.replyCount == resource.data.replyCount - 1);
+    }
+
+    // 4. Validasi Pin / Unpin Pesan (WAJIB Otorisasi Hash Sandi)
+    function isValidPinUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPinned', 'pinnedAt', 'adminKey'])
+        && request.resource.data.isPinned is bool
+        && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp)
+        && ('adminKey' in request.resource.data)
+        && request.resource.data.adminKey == getAdminSecretHash();
+    }
+
+    // 5. Validasi Balasan Baru (Kebal Pemalsuan Centang Biru Mempelai)
+    function isValidNewReply() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['name', 'message', 'replyTo', 'isMempelaiReply', 'timestamp', 'likes', 'adminKey'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 50
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
+        && data.replyTo is string && data.replyTo.size() >= 1 && data.replyTo.size() <= 50
+        && data.isMempelaiReply is bool
+        && data.likes == 0
+        && data.timestamp == request.time
+        && (
+          data.isMempelaiReply == false ||
+          (data.isMempelaiReply == true && ('adminKey' in data) && data.adminKey == getAdminSecretHash())
+        );
+    }
+
+    // 6. Validasi Like pada Balasan
+    function isValidReplyLikeUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && request.resource.data.likes is int
+        && request.resource.data.likes >= 0
+        && (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1);
+    }
+
+    // ==========================================
+    // 💬 1. Koleksi messages (Pesan Utama & Balasan)
+    // ==========================================
+    match /messages/{messageId} {
+      allow read: if true;
+      
+      // CREATE: Ucapan baru oleh tamu
+      allow create: if isValidNewMessage();
+      
+      // UPDATE: Like (+-1), ReplyCount (+-1), Pin/Unpin (Admin Only), Pembersihan adminKey, ATAU Otorisasi Hapus
+      allow update: if isValidMessageLikeUpdate() 
+                    || isValidReplyCountUpdate() 
+                    || isValidPinUpdate()
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['adminKey'])
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleteSecret']) && request.resource.data.deleteSecret == getAdminSecretHash());
+      
+      // DELETE: Hanya jika dokumen sudah diotorisasi dengan hash sandi yang sah
+      allow delete: if resource.data.deleteSecret == getAdminSecretHash();
+
+      // SUB-KOLEKSI: Balasan Pesan (Replies)
+      match /replies/{replyId} {
+        allow read: if true;
+        
+        // CREATE: Balasan baru
+        allow create: if isValidNewReply();
+        
+        // UPDATE: Like balasan, pembersihan adminKey, ATAU Otorisasi Hapus dengan Hash Sandi
+        allow update: if isValidReplyLikeUpdate() 
+                      || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['adminKey'])
+                      || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleteSecret']) && request.resource.data.deleteSecret == getAdminSecretHash());
+        
+        // DELETE: Hanya jika balasan sudah diotorisasi dengan hash sandi yang sah
+        allow delete: if resource.data.deleteSecret == getAdminSecretHash();
+      }
+    }
+
+    // ==========================================
+    // 📊 2. Koleksi metadata (Total Statistik Tamu)
+    // ==========================================
+    match /metadata/totals {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['totalGuests'])
+                    && request.resource.data.totalGuests is int 
+                    && request.resource.data.totalGuests >= 0
+                    && request.resource.data.totalGuests <= 10;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalGuests'])
+                    && request.resource.data.totalGuests is int 
+                    && request.resource.data.totalGuests >= 0
+                    && request.resource.data.totalGuests - resource.data.totalGuests <= 10
+                    && resource.data.totalGuests - request.resource.data.totalGuests <= 10;
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 🚫 3. LOCKDOWN: Kunci semua koleksi lain
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

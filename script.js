@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
@@ -910,8 +910,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         likes: 0 // Inisialisasi field likes pada balasan
                     };
 
-                    // Hanya tambahkan adminKey jika sedang dalam mode mempelai
-                    if (isMempelai) replyData.adminKey = sessionStorage.getItem('mKey') || "";
+                    // Hanya tambahkan adminKey jika sedang dalam mode mempelai (token server bertingkat)
+                    if (isMempelai) {
+                        const mKey = sessionStorage.getItem('mKey') || "";
+                        replyData.adminKey = await generateAdminToken(mKey);
+                    }
 
                     const newReplyRef = await addDoc(repliesRef, replyData);
 
@@ -1052,7 +1055,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Hash SHA-256 dari kata sandi Mempelai (mencegah pembacaan password langsung dari kode sumber)
+    // Token Otorisasi Server Berlapis (HMAC-style Salted Token)
+    async function generateAdminToken(plainPass) {
+        return await sha256(plainPass + "@pawiwahan-secure-backend-key-2026");
+    }
+
+    // Hash SHA-256 dari kata sandi Mempelai (Level 1: Verifikasi Frontend)
     const MEMPELAI_HASH = "e58fb6b9713fea3141744cbf988eb1852d68816e16f9615ad2621b6e16377a47";
     const replyUnsubscribers = {}; // Simpan fungsi unsubscribe untuk listener balasan
 
@@ -1434,8 +1442,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (deleteBtn) {
             docIdToDelete = deleteBtn.dataset.id;
             parentIdForReply = deleteBtn.dataset.parentId || null;
-            if (!isMempelai) {
-                showToast("Akses ditolak: Hanya mempelai yang memiliki izin untuk menghapus.", "error");
+            
+            const mKey = sessionStorage.getItem('mKey');
+            if (!isMempelai || !mKey) {
+                showToast("Sesi Mempelai belum aktif atau telah kedaluwarsa. Silakan login kembali.", "error");
+                openAuthModal();
                 return;
             }
 
@@ -1456,13 +1467,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (e.target.id === 'btn-delete-confirm' && docIdToDelete) {
             try {
+                const mKey = sessionStorage.getItem('mKey');
+                if (!mKey) {
+                    showToast("Sesi telah kedaluwarsa. Silakan masukkan kata sandi kembali.", "error");
+                    openAuthModal();
+                    confirmModal.classList.remove('show');
+                    return;
+                }
+                const adminSecretHash = await generateAdminToken(mKey);
+
                 if (parentIdForReply) {
-                    // Hapus balasan dari sub-koleksi
-                    await deleteDoc(doc(db, "messages", parentIdForReply, "replies", docIdToDelete));
-                    // Kurangi counter balasan di dokumen utama
-                    await updateDoc(doc(db, "messages", parentIdForReply), {
-                        replyCount: increment(-1)
-                    });
+                    const replyRef = doc(db, "messages", parentIdForReply, "replies", docIdToDelete);
+                    // 1. Otorisasi hapus balasan ke server Firestore
+                    await updateDoc(replyRef, { deleteSecret: adminSecretHash });
+                    // 2. Hapus balasan dari sub-koleksi
+                    await deleteDoc(replyRef);
+                    // 3. Kurangi counter balasan di dokumen utama
+                    try {
+                        await updateDoc(doc(db, "messages", parentIdForReply), {
+                            replyCount: increment(-1)
+                        });
+                    } catch (cntErr) {
+                        console.warn("Reply count update note:", cntErr);
+                    }
                 } else {
                     // Ambil data pesan dulu untuk tahu berapa tamu yang harus dikurangi
                     const msgRef = doc(db, "messages", docIdToDelete);
@@ -1471,17 +1498,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (msgSnap.exists()) {
                         const msgData = msgSnap.data();
                         if (msgData.status === 'Hadir' && msgData.count > 0) {
-                            // Gunakan setDoc dengan merge agar jika dokumen belum ada, tidak error
-                            await setDoc(doc(db, "metadata", "totals"), {
-                                totalGuests: increment(-msgData.count)
-                            }, { merge: true });
+                            try {
+                                await setDoc(doc(db, "metadata", "totals"), {
+                                    totalGuests: increment(-msgData.count)
+                                }, { merge: true });
+                            } catch (metaErr) {
+                                console.warn("Metadata total update note:", metaErr);
+                            }
+                        }
+
+                        // Hapus semua sub-koleksi balasan terlebih dahulu agar tidak menjadi phantom document (italic)
+                        try {
+                            const repliesSnap = await getDocs(collection(db, "messages", docIdToDelete, "replies"));
+                            for (const rDoc of repliesSnap.docs) {
+                                try {
+                                    await updateDoc(rDoc.ref, { deleteSecret: adminSecretHash });
+                                    await deleteDoc(rDoc.ref);
+                                } catch (rErr) {
+                                    console.warn("Reply doc delete note:", rErr);
+                                }
+                            }
+                        } catch (subErr) {
+                            console.warn("Sub-replies cleanup note:", subErr);
                         }
                     }
+
+                    // 1. Otorisasi hapus pesan utama ke server Firestore
+                    await updateDoc(msgRef, { deleteSecret: adminSecretHash });
+                    // 2. Hapus pesan utama secara permanen
                     await deleteDoc(msgRef);
                 }
                 showToast("Pesan berhasil dihapus.");
             } catch (error) {
-                showToast("Gagal menghapus pesan.", "error");
+                console.error("Gagal menghapus pesan:", error);
+                if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+                    showToast("Gagal: Izin ditolak. Pastikan Rules Firestore sudah dipublikasikan.", "error");
+                } else {
+                    showToast("Gagal menghapus pesan. Pastikan Anda memiliki akses yang sah.", "error");
+                }
             }
             confirmModal.classList.remove('show');
             docIdToDelete = null;
@@ -1500,24 +1554,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             const docId = pinBtn.dataset.id;
             const isCurrentlyPinned = pinBtn.dataset.pinned === 'true';
 
-            if (!isMempelai) {
-                showToast("Akses ditolak: Hanya mempelai yang memiliki izin untuk menyematkan ucapan.", "error");
+            const mKey = sessionStorage.getItem('mKey');
+            if (!isMempelai || !mKey) {
+                showToast("Sesi Mempelai belum aktif atau telah kedaluwarsa. Silakan login kembali.", "error");
+                openAuthModal();
                 return;
             }
 
             pinBtn.disabled = true;
             try {
+                const adminSecretHash = await generateAdminToken(mKey);
                 const msgRef = doc(db, "messages", docId);
                 if (isCurrentlyPinned) {
                     await updateDoc(msgRef, {
-                        isPinned: false
+                        isPinned: false,
+                        adminKey: adminSecretHash
                     });
+                    await updateDoc(msgRef, { adminKey: deleteField() });
                     showToast("Sematan ucapan dilepas.");
                 } else {
                     await updateDoc(msgRef, {
                         isPinned: true,
-                        pinnedAt: serverTimestamp()
+                        pinnedAt: serverTimestamp(),
+                        adminKey: adminSecretHash
                     });
+                    await updateDoc(msgRef, { adminKey: deleteField() });
                     showToast("Ucapan berhasil disematkan!");
                 }
             } catch (error) {
