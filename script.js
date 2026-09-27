@@ -937,15 +937,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // PROSES UCAPAN BARU
                     const guestCount = document.getElementById('att-status').value === 'Hadir' ? Number(document.getElementById('att-count').value) : 0;
 
-                    const newDoc = await addDoc(collection(db, "messages"), {
+                    const messageData = {
                         name: document.getElementById('att-name').value,
                         status: document.getElementById('att-status').value,
                         count: guestCount,
                         message: document.getElementById('att-message').value,
                         timestamp: serverTimestamp(),
                         likes: 0,
-                        replyCount: 0
-                    });
+                        replyCount: 0,
+                        isMempelai: isMempelai
+                    };
+
+                    if (isMempelai) {
+                        const mKey = sessionStorage.getItem('mKey') || "";
+                        messageData.adminKey = await generateAdminToken(mKey);
+                    }
+
+                    const newDoc = await addDoc(collection(db, "messages"), messageData);
+
+                    if (isMempelai) {
+                        await updateDoc(newDoc, { adminKey: deleteField() });
+                    }
 
                     // Jalankan update metadata di background agar tidak memblokir UI sukses
                     if (guestCount > 0) {
@@ -1733,7 +1745,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="gb-info">
                     <div class="gb-top-row">
-                        <span class="gb-name">${safeName}</span>
+                        <span class="gb-name">${safeName}</span>${data.isMempelai ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
                         <span class="status-badge ${statusClass}">${safeStatus}</span>
                         <div class="gb-admin-actions">
                             <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${docId}" data-pinned="${isPinned}" title="${isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan'}" aria-label="${isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan'}">
@@ -1811,6 +1823,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const nameEl = existingItem.querySelector('.gb-name');
         if (nameEl) nameEl.textContent = data.name;
+
+        const verifiedIcon = existingItem.querySelector('.verified-icon');
+        if (data.isMempelai && !verifiedIcon && nameEl) {
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-patch-check-fill verified-icon';
+            nameEl.after(icon);
+        } else if (!data.isMempelai && verifiedIcon) {
+            verifiedIcon.remove();
+        }
 
         const badgeEl = existingItem.querySelector('.status-badge');
         if (badgeEl) {
@@ -2010,6 +2031,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     if (change.type === "added") {
                         if (!existingItem && !isDocPinned) {
+                            const emptyMsg = targetList.querySelector('.empty-msg');
+                            if (emptyMsg) emptyMsg.remove();
+
                             const item = createMessageElement(docSnap, false, false);
                             if (change.newIndex === 0) {
                                 targetList.prepend(item);

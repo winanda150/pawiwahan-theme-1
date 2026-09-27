@@ -12,10 +12,10 @@ service cloud.firestore {
       return "2f2be58602bbff6b9b1252305d65dc38d5903e0316efc19da7fb3c2c3ac85797";
     }
 
-    // 1. Validasi Pesan Baru (Anti-Spam, Integritas Kehadiran, & Kebal Pin Sepihak)
+    // 1. Validasi Pesan Baru (Anti-Spam, Integritas Kehadiran, Kebal Pin Sepihak, & Kebal Pemalsuan Centang Biru)
     function isValidNewMessage() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt'])
+      return data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt', 'isMempelai', 'adminKey'])
         && data.name is string && data.name.size() >= 1 && data.name.size() <= 50
         && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
         && data.status in ['Hadir', 'Tidak Hadir']
@@ -24,7 +24,12 @@ service cloud.firestore {
         && data.likes == 0
         && data.replyCount == 0
         && (!('isPinned' in data) || data.isPinned == false)
-        && data.timestamp == request.time;
+        && (!('isMempelai' in data) || data.isMempelai is bool)
+        && data.timestamp == request.time
+        && (
+          !('isMempelai' in data) || data.isMempelai == false ||
+          (data.isMempelai == true && ('adminKey' in data) && data.adminKey == getAdminSecretHash())
+        );
     }
 
     // 2. Validasi Update Like (Anti-Bot: Maksimal +-1 per request)
