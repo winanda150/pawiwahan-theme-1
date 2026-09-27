@@ -464,10 +464,18 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group emoji-field-group">
                                 <label for="att-message">Ucapan & Doa Restu</label>
-                                <textarea id="att-message" placeholder="Tuliskan ucapan manis Anda..." rows="4" required
-                                    maxlength="500"></textarea>
+                                <div class="textarea-relative-wrapper">
+                                    <textarea id="att-message" placeholder="Tuliskan ucapan manis Anda..." rows="4" required
+                                        maxlength="500"></textarea>
+                                    <button type="button" id="btn-emoji-trigger" class="btn-emoji-trigger" aria-label="Buka keyboard emoji" title="Sisipkan Emoji">
+                                        <i class="bi bi-emoji-smile"></i>
+                                    </button>
+                                    <div id="emoji-picker-dropdown" class="emoji-picker-dropdown" style="display: none;">
+                                        <emoji-picker class="light"></emoji-picker>
+                                    </div>
+                                </div>
                                 <small id="char-counter"
                                     style="display: block; text-align: right; color: #999; margin-top: 5px;">0 /
                                     500</small>
@@ -676,6 +684,10 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Twemoji for Universal WhatsApp-style Vector Emojis -->
+    <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <!-- Emoji Keyboard Picker Element -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js" defer></script>
     <script type="module" src="script.js"></script>
 </body>

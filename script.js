@@ -834,6 +834,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Logika Keyboard Emoji Picker Interaktif ---
+    const btnEmojiTrigger = document.getElementById('btn-emoji-trigger');
+    const emojiDropdown = document.getElementById('emoji-picker-dropdown');
+    const emojiPickerEl = emojiDropdown?.querySelector('emoji-picker');
+
+    const toggleEmojiPicker = (show) => {
+        if (!emojiDropdown) return;
+        const isVisible = emojiDropdown.style.display !== 'none';
+        const willShow = typeof show === 'boolean' ? show : !isVisible;
+
+        if (willShow) {
+            emojiDropdown.style.display = 'block';
+            btnEmojiTrigger?.classList.add('active');
+        } else {
+            emojiDropdown.style.display = 'none';
+            btnEmojiTrigger?.classList.remove('active');
+        }
+    };
+
+    if (btnEmojiTrigger && emojiDropdown) {
+        btnEmojiTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEmojiPicker();
+        });
+
+        // Mencegah klik di dalam dropdown menutup dirinya sendiri
+        emojiDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Menangani pemilihan emoji dari picker
+        if (emojiPickerEl) {
+            emojiPickerEl.addEventListener('emoji-click', (event) => {
+                const emoji = event.detail?.unicode;
+                if (!emoji || !messageInput) return;
+
+                const startPos = messageInput.selectionStart ?? messageInput.value.length;
+                const endPos = messageInput.selectionEnd ?? messageInput.value.length;
+                const currentVal = messageInput.value;
+
+                // Hitung estimasi panjang setelah disisipkan
+                const newLength = currentVal.length + emoji.length - (endPos - startPos);
+                if (newLength > 500) {
+                    showToast('Batas maksimal 500 karakter telah tercapai.', 'error');
+                    return;
+                }
+
+                // Sisipkan emoji tepat pada posisi kursor pengguna
+                messageInput.value = currentVal.substring(0, startPos) + emoji + currentVal.substring(endPos);
+                const nextCursorPos = startPos + emoji.length;
+                messageInput.focus();
+                messageInput.setSelectionRange(nextCursorPos, nextCursorPos);
+
+                // Picu event input agar counter karakter terupdate otomatis
+                messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+
+        // Tutup emoji picker jika mengklik di luar area
+        document.addEventListener('click', (e) => {
+            if (emojiDropdown.style.display !== 'none' && !emojiDropdown.contains(e.target) && e.target !== btnEmojiTrigger && !btnEmojiTrigger.contains(e.target)) {
+                toggleEmojiPicker(false);
+            }
+        });
+
+        // Tutup emoji picker saat tombol Escape ditekan
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && emojiDropdown.style.display !== 'none') {
+                toggleEmojiPicker(false);
+            }
+        });
+    }
+
     // --- Helper Sanitasi HTML Global (Pencegahan XSS Ketat) ---
     function escapeHTML(str) {
         if (str === null || str === undefined) return '';
@@ -844,6 +917,96 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;')
             .replace(/`/g, '&#x60;');
+    }
+
+    // --- Helper Universal WhatsApp-Style Emoji Renderer ---
+    function applyTwemoji(el) {
+        if (typeof twemoji !== 'undefined' && el) {
+            try {
+                twemoji.parse(el, {
+                    folder: 'svg',
+                    ext: '.svg',
+                    base: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/'
+                });
+            } catch (e) {
+                console.warn('Twemoji parse note:', e);
+            }
+        }
+    }
+
+    // --- Helper WhatsApp & Markdown Rich Text Formatter (100% XSS-Safe) ---
+    function formatRichText(rawStr) {
+        if (!rawStr) return '';
+        // 1. Sanitasi ketat terhadap XSS
+        let safe = escapeHTML(rawStr);
+
+        // 2. Code blocks (```code```) dan inline code (`code`)
+        safe = safe.replace(/```([\s\S]+?)```/g, '<code class="gb-code-block">$1</code>');
+        safe = safe.replace(/`([^`\n]+?)`/g, '<code class="gb-inline-code">$1</code>');
+
+        // 3. Spoiler / Pesan Rahasia (||spoiler||) - Sentuh/klik untuk membuka
+        safe = safe.replace(/\|\|([^|\n]+?)\|\|/g, '<span class="gb-spoiler" onclick="this.classList.toggle(\'revealed\')" title="Klik untuk membuka pesan rahasia">$1</span>');
+
+        // 4. Highlight / Penanda Teks (==highlight==)
+        safe = safe.replace(/==([^=\n]+?)==/g, '<mark class="gb-highlight">$1</mark>');
+
+        // 5. Kombinasi 3 tingkat: Bold + Italic + Strikethrough (*_~text~_*, dsb.)
+        safe = safe.replace(/\*\_~([^\*\_~\n]+?)~\_\*/g, '<strong><em><del>$1</del></em></strong>');
+        safe = safe.replace(/~\_\*([^\*\_~\n]+?)\*\_~/g, '<strong><em><del>$1</del></em></strong>');
+        safe = safe.replace(/\*~\_([^\*\_~\n]+?)\_~\*/g, '<strong><em><del>$1</del></em></strong>');
+
+        // 6. Kombinasi 2 tingkat:
+        // Bold + Italic: ***text***, **_text_**, *_text_*, _*text*_
+        safe = safe.replace(/\*\*\*([^\*\n]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        safe = safe.replace(/\*\*\_([^\*\_\n]+?)\_\*\*/g, '<strong><em>$1</em></strong>');
+        safe = safe.replace(/(^|[\s(>])\*_([^\*_\s\n][^\*_\n]*?[^\*_\s\n]|\S)_\*(?=[\s.,!?;:<)]|$)/g, '$1<strong><em>$2</em></strong>');
+        safe = safe.replace(/(^|[\s(>])_\*([^\*_\s\n][^\*_\n]*?[^\*_\s\n]|\S)\*_(?=[\s.,!?;:<)]|$)/g, '$1<strong><em>$2</em></strong>');
+
+        // Bold + Strikethrough: *~text~*, ~*text*~, **~text~**, ~**text**~
+        safe = safe.replace(/\*\*~([^~*\n]+?)~\*\*/g, '<strong><del>$1</del></strong>');
+        safe = safe.replace(/~\*\*([^~*\n]+?)\*\*~/g, '<strong><del>$1</del></strong>');
+        safe = safe.replace(/(^|[\s(>])\*~([^~*\s\n][^~*\n]*?[^~*\s\n]|\S)~\*(?=[\s.,!?;:<)]|$)/g, '$1<strong><del>$2</del></strong>');
+        safe = safe.replace(/(^|[\s(>])~\*([^~*\s\n][^~*\n]*?[^~*\s\n]|\S)\*~(?=[\s.,!?;:<)]|$)/g, '$1<strong><del>$2</del></strong>');
+
+        // Italic + Strikethrough: _~text~_, ~_text_~
+        safe = safe.replace(/(^|[\s(>])_~([^~_\s\n][^~_\n]*?[^~_\s\n]|\S)~_(?=[\s.,!?;:<)]|$)/g, '$1<em><del>$2</del></em>');
+        safe = safe.replace(/(^|[\s(>])~_([^~_\s\n][^~_\n]*?[^~_\s\n]|\S)_~(?=[\s.,!?;:<)]|$)/g, '$1<em><del>$2</del></em>');
+
+        // 7. Format Tunggal:
+        // Bold: **text** (Markdown) & *text* (WhatsApp)
+        safe = safe.replace(/\*\*([^\*\n]+?)\*\*/g, '<strong>$1</strong>');
+        safe = safe.replace(/(^|[\s(>])\*([^\*\s\n][^\*\n]*?[^\*\s\n]|\S)\*(?=[\s.,!?;:<)]|$)/g, '$1<strong>$2</strong>');
+
+        // Italic: _text_
+        safe = safe.replace(/(^|[\s(>])_([^_\s\n][^_\n]*?[^_\s\n]|\S)_(?=[\s.,!?;:<)]|$)/g, '$1<em>$2</em>');
+
+        // Strikethrough: ~~text~~ (Markdown) & ~text~ (WhatsApp)
+        safe = safe.replace(/~~([^~\n]+?)~~/g, '<del>$1</del>');
+        safe = safe.replace(/(^|[\s(>])~([^~\s\n][^~\n]*?[^~\s\n]|\S)~(?=[\s.,!?;:<)]|$)/g, '$1<del>$2</del>');
+
+        // 8. Line-by-line block formatting (Quote: > text, Bulleted list: - text, Numbered list: 1. text)
+        const lines = safe.split('\n');
+        const formattedLines = lines.map(line => {
+            const trimmed = line.trimStart();
+            // Blockquote ala WhatsApp: > quote
+            if (trimmed.startsWith('&gt; ') || trimmed.startsWith('&gt;')) {
+                const quoteContent = trimmed.replace(/^&gt;\s?/, '');
+                return `<blockquote class="gb-quote">${quoteContent}</blockquote>`;
+            }
+            // Bulleted list ala WhatsApp: - item atau • item
+            if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+                const itemContent = trimmed.replace(/^[-•]\s+/, '');
+                return `<span class="gb-list-item"><span class="gb-bullet">•</span><span>${itemContent}</span></span>`;
+            }
+            // Numbered list ala WhatsApp: 1. item, 2. item, dst.
+            const numMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+            if (numMatch) {
+                return `<span class="gb-list-item"><span class="gb-num">${numMatch[1]}.</span><span>${numMatch[2]}</span></span>`;
+            }
+            return line;
+        });
+
+        return formattedLines.join('\n');
     }
 
     // --- Helper Aman Parsing LocalStorage (Anti Crash jika Storage Rusak/Dimanipulasi) ---
@@ -1037,6 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 submitBtn.innerText = 'Berhasil!';
                 hybridForm.reset();
+                toggleEmojiPicker(false);
                 if (charCounter) {
                     charCounter.textContent = '0 / 500';
                     charCounter.style.color = '#999';
@@ -1084,17 +1248,18 @@ document.addEventListener('DOMContentLoaded', () => {
             void msgEl.offsetWidth; // Force reflow agar animasi bisa dipicu ulang
 
             if (isExpanded) {
-                msgEl.textContent = fullText.substring(0, 200) + '...';
+                msgEl.innerHTML = formatRichText(fullText.substring(0, 200) + '...');
                 btn.textContent = 'Baca Selengkapnya';
                 btn.dataset.expanded = 'false';
             } else {
-                msgEl.textContent = fullText;
+                msgEl.innerHTML = formatRichText(fullText);
                 btn.textContent = 'Sembunyikan';
                 btn.dataset.expanded = 'true';
             }
 
-            // Tambahkan class untuk memicu animasi fade-in
+            // Tambahkan class untuk memicu animasi fade-in & render emoji
             msgEl.classList.add('fade-in-text');
+            applyTwemoji(msgEl);
         }
     });
 
@@ -1333,7 +1498,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const safeName = escapeHTML(rData.name || 'Tamu');
-        const safePreview = escapeHTML(rPreviewText);
+        const safePreview = formatRichText(rPreviewText);
         const safeReplyTo = escapeHTML(rData.replyTo || '');
 
         const mentionHTML = rData.replyTo && rData.replyTo !== parentName
@@ -1364,6 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         if (rIsLong) replyItem.querySelector('.msg-text').dataset.full = rMessage;
+        applyTwemoji(replyItem);
         return replyItem;
     }
 
@@ -1402,7 +1568,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rMsgTextEl) {
             const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
             const rIsExpanded = rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true';
-            if (!rIsExpanded) rMsgTextEl.textContent = rPreviewText;
+            if (!rIsExpanded) {
+                rMsgTextEl.innerHTML = formatRichText(rPreviewText);
+                applyTwemoji(rMsgTextEl);
+            }
             if (rIsLong) rMsgTextEl.dataset.full = rMessage;
         }
 
@@ -1460,6 +1629,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Klik Cancel Balas
         if (e.target.id === 'cancel-reply') {
             replyingToId = null;
+            toggleEmojiPicker(false);
             document.getElementById('reply-mode-indicator').style.display = 'none';
             document.getElementById('att-message').placeholder = "Tuliskan ucapan manis Anda...";
 
@@ -1921,7 +2091,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const safeName = escapeHTML(data.name || 'Tamu');
         const safeStatus = escapeHTML(data.status || 'Hadir');
-        const safePreview = escapeHTML(previewText);
+        const safePreview = formatRichText(previewText);
 
         const item = document.createElement('div');
         item.id = isPinnedContainer ? `pinned-msg-${docId}` : `msg-${docId}`;
@@ -1970,6 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ` : ''}
         `;
         if (isLong) item.querySelector('.msg-text').dataset.full = message;
+        applyTwemoji(item);
         return item;
     }
 
@@ -2041,7 +2212,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (msgTextEl) {
             const readMoreBtn = msgContainer.querySelector('.read-more-btn');
             const isExpanded = readMoreBtn && readMoreBtn.dataset.expanded === 'true';
-            if (!isExpanded) msgTextEl.textContent = previewText;
+            if (!isExpanded) {
+                msgTextEl.innerHTML = formatRichText(previewText);
+                applyTwemoji(msgTextEl);
+            }
             if (isLong) msgTextEl.dataset.full = message;
         }
 
@@ -2437,6 +2611,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
     }
+
+    // --- Render Universal WhatsApp-Style Emoji ke Seluruh Halaman ---
+    applyTwemoji(document.body);
 
     // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization) ---
     if ('serviceWorker' in navigator) {

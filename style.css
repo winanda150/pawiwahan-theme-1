@@ -49,7 +49,7 @@ html {
 }
 
 body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Montserrat', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif;
     background-color: #ffffff;
     overflow: hidden;
     height: 100%;
@@ -1539,13 +1539,128 @@ body:active {
     overflow-wrap: break-word;
     word-break: break-word;
     display: block;
-    text-align: left;
+    text-align: justify;
+    text-justify: inter-word;
     white-space: pre-line;
 }
 
 .msg-text {
     display: inline;
     white-space: pre-line;
+}
+
+/* WhatsApp-Style Universal Emoji */
+img.emoji {
+    height: 1.22em;
+    width: 1.22em;
+    margin: 0 0.12em;
+    vertical-align: -0.22em;
+    display: inline-block;
+}
+
+/* WhatsApp & Markdown Rich Text Formatting */
+.gb-message strong {
+    font-weight: 700;
+    color: #1a252f;
+}
+
+.gb-message em {
+    font-style: italic;
+    color: #4a5568;
+}
+
+.gb-message del {
+    text-decoration: line-through;
+    opacity: 0.75;
+}
+
+.gb-message code.gb-inline-code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: rgba(212, 175, 55, 0.12);
+    color: #8c7300;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.gb-message code.gb-code-block {
+    display: block;
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: #f8f9fa;
+    color: #2d3748;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82em;
+    border: 1px solid #e2e8f0;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    text-align: left;
+}
+
+/* WhatsApp Blockquote */
+.gb-message .gb-quote {
+    border-left: 3.5px solid #d4af37;
+    padding: 4px 12px;
+    margin: 6px 0;
+    color: #555;
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+    display: block;
+    text-align: left;
+}
+
+/* WhatsApp Lists (Poin & Nomor) */
+.gb-message .gb-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 3px 0;
+    text-align: left;
+}
+
+.gb-message .gb-bullet {
+    color: #bfa100;
+    font-weight: bold;
+    font-size: 1.1em;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+.gb-message .gb-num {
+    color: #bfa100;
+    font-weight: 600;
+    min-width: 18px;
+    flex-shrink: 0;
+}
+
+/* WhatsApp / Discord Spoiler Text */
+.gb-message .gb-spoiler {
+    background: #2c3e50;
+    color: transparent !important;
+    border-radius: 4px;
+    padding: 1px 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.gb-message .gb-spoiler.revealed,
+.gb-message .gb-spoiler:hover {
+    background: rgba(44, 62, 80, 0.1);
+    color: #2c3e50 !important;
+}
+
+/* Highlight Text */
+.gb-message mark.gb-highlight {
+    background: rgba(212, 175, 55, 0.28);
+    color: #2c3e50;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
 @keyframes fadeInText {
@@ -2129,6 +2244,101 @@ body:active {
     resize: vertical;
     min-height: 100px;
     line-height: 1.5;
+}
+
+/* Emoji Picker Trigger & Dropdown */
+.emoji-field-group {
+    position: relative;
+}
+
+.textarea-relative-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.textarea-relative-wrapper textarea {
+    padding-right: 45px !important;
+}
+
+.btn-emoji-trigger {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #bfa100;
+    font-size: 1.35rem;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+    line-height: 1;
+}
+
+.btn-emoji-trigger:hover,
+.btn-emoji-trigger.active {
+    color: #d4af37;
+    background-color: rgba(212, 175, 55, 0.12);
+    transform: scale(1.15);
+}
+
+.emoji-picker-dropdown {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    z-index: 1050;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: emojiPopupFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border: 1.5px solid rgba(212, 175, 55, 0.35);
+    background: #ffffff;
+}
+
+@keyframes emojiPopupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+emoji-picker {
+    --num-columns: 8;
+    --emoji-size: 1.35rem;
+    --background: #ffffff;
+    --border-color: rgba(212, 175, 55, 0.2);
+    --indicator-color: #bfa100;
+    --input-border-color: rgba(212, 175, 55, 0.35);
+    --input-padding: 8px 12px;
+    --outline-color: #d4af37;
+    width: 330px;
+    height: 360px;
+    font-family: 'Montserrat', sans-serif;
+    max-width: calc(100vw - 40px);
+}
+
+/* Penyesuaian responsif layar HP */
+@media (max-width: 480px) {
+    .emoji-picker-dropdown {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 30px);
+    }
+
+    emoji-picker {
+        width: 290px;
+        height: 320px;
+        --num-columns: 7;
+        --emoji-size: 1.25rem;
+    }
 }
 
 /* Menghilangkan gaya bawaan iOS dan menambahkan panah kustom */
