@@ -1308,6 +1308,10 @@ body:active {
     gap: 15px;
 }
 
+.pinned-messages-list .guestbook-item {
+    margin-bottom: 0; /* Menghilangkan margin ganda karena sudah ada gap: 15px */
+}
+
 .guestbook-item.is-pinned {
     background: linear-gradient(135deg, rgba(212, 175, 55, 0.09) 0%, rgba(255, 255, 255, 0.98) 100%);
     border: 1.5px solid rgba(212, 175, 55, 0.45);

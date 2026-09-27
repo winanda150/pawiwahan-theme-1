@@ -1891,6 +1891,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function getPinnedTimestamp(docSnap) {
+        const data = docSnap.data({ serverTimestamps: 'estimate' });
+        if (data.pinnedAt) {
+            if (typeof data.pinnedAt.toMillis === 'function') return data.pinnedAt.toMillis();
+            if (data.pinnedAt instanceof Date) return data.pinnedAt.getTime();
+            if (typeof data.pinnedAt === 'number') return data.pinnedAt;
+        }
+        if (data.timestamp) {
+            if (typeof data.timestamp.toMillis === 'function') return data.timestamp.toMillis();
+            if (data.timestamp instanceof Date) return data.timestamp.getTime();
+            if (typeof data.timestamp === 'number') return data.timestamp;
+        }
+        return Date.now();
+    }
+
     function initPinnedMessagesListener() {
         if (unsubscribePinned) unsubscribePinned();
         const pinnedContainer = document.getElementById('pinned-messages-list');
@@ -1905,10 +1920,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Urutkan ucapan yang disematkan berdasarkan pinnedAt atau timestamp terbaru
+            // Urutkan ucapan yang disematkan: pinnedAt / waktu semat terbaru di posisi paling atas (index 0)
             const sortedDocs = snapshot.docs.slice().sort((a, b) => {
-                const timeA = a.data().pinnedAt?.toMillis?.() || a.data().timestamp?.toMillis?.() || 0;
-                const timeB = b.data().pinnedAt?.toMillis?.() || b.data().timestamp?.toMillis?.() || 0;
+                const timeA = getPinnedTimestamp(a);
+                const timeB = getPinnedTimestamp(b);
                 return timeB - timeA;
             });
 
@@ -1926,24 +1941,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
 
-            // 2. Render atau perbarui elemen pin secara in-place (mencegah reset balasan yang terbuka)
+            // 2. Render atau perbarui elemen pin serta sinkronkan urutan DOM (terbaru di paling atas)
             sortedDocs.forEach((docSnap, index) => {
                 const docId = docSnap.id;
-                const existing = pinnedContainer.querySelector(`#pinned-msg-${docId}`);
-                if (existing) {
-                    updateMessageElement(existing, docSnap);
+                let item = pinnedContainer.querySelector(`#pinned-msg-${docId}`);
+                if (item) {
+                    updateMessageElement(item, docSnap);
                 } else {
-                    const item = createMessageElement(docSnap, true, true);
-                    if (index === 0) {
-                        pinnedContainer.prepend(item);
-                    } else {
-                        const referenceNode = pinnedContainer.children[index];
-                        if (referenceNode) {
-                            pinnedContainer.insertBefore(item, referenceNode);
-                        } else {
-                            pinnedContainer.appendChild(item);
-                        }
-                    }
+                    item = createMessageElement(docSnap, true, true);
+                }
+
+                // Pastikan posisi elemen di DOM sesuai persis dengan urutan index hasil sorting
+                const currentChildAtIndex = pinnedContainer.children[index];
+                if (currentChildAtIndex !== item) {
+                    pinnedContainer.insertBefore(item, currentChildAtIndex || null);
                 }
             });
 
