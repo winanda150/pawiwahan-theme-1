@@ -112,7 +112,8 @@ service cloud.firestore {
                             && request.resource.data.secret == getAdminSecretHash()
                             && request.resource.data.timestamp == request.time;
       
-      allow delete: if false;
+      // DELETE: Tiket otorisasi dapat dibersihkan seketika setelah selesai digunakan
+      allow delete: if resource.data.secret == getAdminSecretHash();
     }
 
     // ==========================================

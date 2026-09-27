@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
@@ -937,6 +937,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     await setDoc(newReplyRef, replyData);
 
+                    // Bersihkan tiket otorisasi balasan setelah berhasil disimpan
+                    if (isMempelai) {
+                        deleteDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`)).catch(() => {});
+                    }
+
                     // 2. Update counter jumlah balasan di dokumen utama
                     await updateDoc(docRef, {
                         replyCount: increment(1)
@@ -965,6 +970,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         isMempelai: isMempelai
                     };
 
+                    // Optimistic counter update di UI (Instan 0ms)
+                    const currentCount = parseInt(document.getElementById('message-counter')?.innerText || '0', 10) || 0;
+                    updateTotalCount(currentCount + 1);
+
                     // Otorisasi via private zero-leak sink jika dalam mode mempelai
                     if (isMempelai) {
                         const mKey = sessionStorage.getItem('mKey') || "";
@@ -976,6 +985,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     await setDoc(newDocRef, messageData);
+
+                    // Bersihkan tiket otorisasi pesan setelah berhasil disimpan
+                    if (isMempelai) {
+                        deleteDoc(doc(db, "admin_actions", `${newDocRef.id}_create`)).catch(() => {});
+                    }
+
+                    // Sinkronisasi ulang total hitungan pasti dari server setelah setDoc selesai
+                    updateTotalCount();
 
                     // Jalankan update metadata di background agar tidak memblokir UI sukses
                     if (guestCount > 0) {
@@ -1058,6 +1075,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
     }
 
+    // Fungsi untuk menghitung dan menyinkronkan total tamu riil langsung dari database
+    async function syncGuestCount(forcedCount = null) {
+        const guestCounter = document.getElementById('guest-counter');
+        if (!guestCounter) return;
+
+        if (typeof forcedCount === 'number') {
+            guestCounter.innerText = Math.max(0, forcedCount);
+            return;
+        }
+
+        try {
+            const qHadir = query(collection(db, "messages"), where("status", "==", "Hadir"));
+            const snapshot = await getAggregateFromServer(qHadir, {
+                totalGuests: sum('count')
+            });
+            const total = snapshot.data().totalGuests || 0;
+            guestCounter.innerText = Math.max(0, total);
+
+            // Perbaiki dokumen metadata/totals jika ada selisih (misal sehabis hapus manual di console)
+            try {
+                await setDoc(doc(db, "metadata", "totals"), {
+                    totalGuests: total
+                }, { merge: true });
+            } catch (metaErr) {
+                // Abaikan jika ada pembatasan rules
+            }
+            return total;
+        } catch (error) {
+            console.warn("Gagal sinkronisasi agregasi tamu:", error);
+        }
+    }
+
     // Fungsi untuk memantau total tamu secara real-time (Privat untuk Mempelai)
     function initGuestCounter() {
         const guestStatsWrapper = document.getElementById('guest-stats-wrapper');
@@ -1065,12 +1114,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isMempelai && guestStatsWrapper && guestCounter) {
             guestStatsWrapper.style.display = 'inline';
+            // Jalankan sinkronisasi agregasi riil pertama kali
+            syncGuestCount();
+
             // Pastikan listener Firestore hanya didaftarkan sekali
             if (!guestStatsWrapper.dataset.listenerActive) {
                 guestStatsWrapper.dataset.listenerActive = "true";
                 onSnapshot(doc(db, "metadata", "totals"), (docSnap) => {
                     if (docSnap.exists()) {
-                        guestCounter.innerText = docSnap.data().totalGuests || 0;
+                        const count = docSnap.data().totalGuests || 0;
+                        guestCounter.innerText = Math.max(0, count);
                     }
                 }, (error) => console.warn("Guest counter listener error:", error));
             }
@@ -1540,7 +1593,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     // 2. Hapus balasan dari sub-koleksi
                     await deleteDoc(replyRef);
-                    // 3. Kurangi counter balasan di dokumen utama
+                    // 3. Bersihkan tiket otorisasi balasan
+                    deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => {});
+                    // 4. Kurangi counter balasan di dokumen utama
                     try {
                         await updateDoc(doc(db, "messages", parentIdForReply), {
                             replyCount: increment(-1)
@@ -1549,6 +1604,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.warn("Reply count update note:", cntErr);
                     }
                 } else {
+                    // Optimistic counter update di UI (Instan 0ms)
+                    const currentCount = parseInt(document.getElementById('message-counter')?.innerText || '0', 10) || 0;
+                    updateTotalCount(Math.max(0, currentCount - 1));
+
                     // Ambil data pesan dulu untuk tahu berapa tamu yang harus dikurangi
                     const msgRef = doc(db, "messages", docIdToDelete);
                     const msgSnap = await getDoc(msgRef);
@@ -1556,6 +1615,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (msgSnap.exists()) {
                         const msgData = msgSnap.data();
                         if (msgData.status === 'Hadir' && msgData.count > 0) {
+                            // Optimistic update counter total tamu
+                            const currentGuests = parseInt(document.getElementById('guest-counter')?.innerText || '0', 10) || 0;
+                            syncGuestCount(Math.max(0, currentGuests - msgData.count));
+
                             try {
                                 await setDoc(doc(db, "metadata", "totals"), {
                                     totalGuests: increment(-msgData.count)
@@ -1575,6 +1638,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         timestamp: serverTimestamp()
                                     });
                                     await deleteDoc(rDoc.ref);
+                                    deleteDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`)).catch(() => {});
                                 } catch (rErr) {
                                     console.warn("Reply doc delete note:", rErr);
                                 }
@@ -1591,6 +1655,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     // 2. Hapus pesan utama secara permanen
                     await deleteDoc(msgRef);
+                    // 3. Bersihkan tiket otorisasi pesan utama
+                    deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => {});
+
+                    // 4. Sinkronisasi ulang total hitungan pasti dari server setelah deleteDoc selesai
+                    await updateTotalCount();
+                    if (isMempelai) {
+                        await syncGuestCount();
+                    }
                 }
                 showToast("Pesan berhasil dihapus.");
             } catch (error) {
@@ -1639,12 +1711,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await updateDoc(msgRef, {
                         isPinned: false
                     });
+                    deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => {});
                     showToast("Sematan ucapan dilepas.");
                 } else {
                     await updateDoc(msgRef, {
                         isPinned: true,
                         pinnedAt: serverTimestamp()
                     });
+                    deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => {});
                     showToast("Ucapan berhasil disematkan!");
                 }
             } catch (error) {
@@ -1745,17 +1819,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentPage = 1;
     const pageCursors = [null]; // Menyimpan document cursor untuk setiap halaman: pageCursors[1] = null, pageCursors[2] = doc10, dst.
 
-    async function updateTotalCount() {
+    async function updateTotalCount(forcedCount = null) {
         try {
+            const counterEl = messageCounter || document.getElementById('message-counter');
+            if (typeof forcedCount === 'number') {
+                if (counterEl) counterEl.innerText = forcedCount;
+                const paginationControls = document.getElementById('pagination-controls');
+                if (paginationControls) {
+                    paginationControls.style.display = forcedCount > 10 ? 'flex' : 'none';
+                }
+                return forcedCount;
+            }
+
             const coll = collection(db, "messages");
             const snapshot = await getCountFromServer(coll);
             const total = snapshot.data().count;
-            if (messageCounter) messageCounter.innerText = total;
+            if (counterEl) counterEl.innerText = total;
 
             const paginationControls = document.getElementById('pagination-controls');
             if (paginationControls) {
                 paginationControls.style.display = total > 10 ? 'flex' : 'none';
             }
+            return total;
         } catch (error) {
             console.error("Gagal mengambil total ucapan:", error);
         }
@@ -1968,6 +2053,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const qPinned = query(collection(db, "messages"), where("isPinned", "==", true));
         unsubscribePinned = onSnapshot(qPinned, (snapshot) => {
             pinnedIds.clear();
+            if (!snapshot.metadata.hasPendingWrites) {
+                updateTotalCount();
+                if (isMempelai) {
+                    syncGuestCount();
+                }
+            }
             if (snapshot.empty) {
                 pinnedContainer.style.display = 'none';
                 pinnedContainer.innerHTML = '';
@@ -2059,9 +2150,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const q = getQueryForPage(currentPage);
 
         unsubscribeGb = onSnapshot(q, (snapshot) => {
-            updateTotalCount();
+            if (!snapshot.metadata.hasPendingWrites) {
+                updateTotalCount();
+                if (isMempelai) {
+                    syncGuestCount();
+                }
+            }
 
             if (snapshot.empty) {
+                if (currentPage === 1) {
+                    updateTotalCount(0);
+                    if (isMempelai) {
+                        syncGuestCount(0);
+                    }
+                }
                 targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
                 if (btnNextGb) btnNextGb.disabled = true;
                 if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
@@ -2141,6 +2243,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             delete replyUnsubscribers[docId];
                         }
                         existingItem.remove();
+                        const pinnedContainer = document.getElementById('pinned-messages-list');
+                        const hasPinned = pinnedContainer && pinnedContainer.children.length > 0 && pinnedContainer.style.display !== 'none';
+                        if (targetList.children.length === 0 && !hasPinned) {
+                            targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+                        }
                     }
                 });
             }
