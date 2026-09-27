@@ -402,6 +402,8 @@
                                 style="border:none; background:none; color:#dc3545; cursor:pointer; font-weight:bold;">✕</button>
                         </div>
                         <form id="hybrid-form">
+                            <!-- Anti-Bot Honeypot Trap (Hidden from genuine users) -->
+                            <input type="text" id="att-honeypot" name="website_hp" style="display:none !important; position:absolute !important; left:-9999px !important;" tabindex="-1" autocomplete="off" aria-hidden="true">
                             <div class="form-group">
                                 <label for="att-name">Nama Lengkap</label>
                                 <input type="text" id="att-name" placeholder="Masukkan nama Anda" required

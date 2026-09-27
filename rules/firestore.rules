@@ -4,20 +4,31 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ==========================================
-    // 🛡️ HELPER FUNCTIONS (VALIDASI KEAMANAN TINGKAT TINGGI)
+    // 🛡️ 1. HELPER FUNCTIONS (VALIDASI KEAMANAN TINGKAT TINGGI & ZERO-TRUST)
     // ==========================================
     
-    // Token Otorisasi Server Bertingkat (HMAC-style Salted Token dari kata sandi Mempelai)
+    // Hash Kredensial Server Berlapis (Salted HMAC Secret Hash)
     function getAdminSecretHash() {
       return "2f2be58602bbff6b9b1252305d65dc38d5903e0316efc19da7fb3c2c3ac85797";
     }
 
-    // 1. Validasi Pesan Baru (Anti-Spam, Integritas Kehadiran, Kebal Pin Sepihak, & Kebal Pemalsuan Centang Biru)
+    // Validasi Izin Aksi Khusus Mempelai (Pin, Delete, Verified Badge) dengan Freshness Window 30 Detik & Anti-Future Skew
+    function isAuthorizedAdminAction(actionKey) {
+      return exists(/databases/$(database)/documents/admin_actions/$(actionKey))
+        && get(/databases/$(database)/documents/admin_actions/$(actionKey)).data.secret == getAdminSecretHash()
+        && request.time.toMillis() >= get(/databases/$(database)/documents/admin_actions/$(actionKey)).data.timestamp.toMillis()
+        && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(actionKey)).data.timestamp.toMillis() <= 30000;
+    }
+
+    // 1. Validasi Pesan Baru (Anti-Spam, Integritas Format Ketat, Kebal Pin Sepihak, & Kebal Pemalsuan Badge Mempelai)
     function isValidNewMessage(messageId) {
       let data = request.resource.data;
       return data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt', 'isMempelai'])
-        && data.name is string && data.name.size() >= 1 && data.name.size() <= 50
-        && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
+        && data.name is string 
+        && data.name.size() >= 2 && data.name.size() <= 50
+        && data.name.matches('^[a-zA-Z0-9 .,\'\\-]{2,50}$')
+        && data.message is string 
+        && data.message.size() >= 2 && data.message.size() <= 500
         && data.status in ['Hadir', 'Tidak Hadir']
         && data.count is int
         && (data.status == 'Tidak Hadir' ? data.count == 0 : (data.count >= 1 && data.count <= 10))
@@ -31,50 +42,94 @@ service cloud.firestore {
           !('isMempelai' in data) || data.isMempelai == false ||
           (
             data.isMempelai == true 
-            && exists(/databases/$(database)/documents/admin_actions/$(messageId + "_create"))
-            && get(/databases/$(database)/documents/admin_actions/$(messageId + "_create")).data.secret == getAdminSecretHash()
-            && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(messageId + "_create")).data.timestamp.toMillis() <= 60000
+            && isAuthorizedAdminAction(messageId + "_create")
           )
         );
     }
 
-    // 2. Validasi Update Like (Anti-Bot & Anti-Manipulasi: Maksimal +-1 per request, minimal 0)
+    // 2. Validasi Update Like Pesan (Anti-Bot & Anti-Manipulasi: +-1 per transaksi, tipe aman & kebal crash field opsional)
     function isValidMessageLikeUpdate() {
       let currentLikes = ('likes' in resource.data && resource.data.likes is int) ? resource.data.likes : 0;
+      let isMempelaiMatches = (!('isMempelai' in resource.data) && !('isMempelai' in request.resource.data)) ||
+                              (('isMempelai' in resource.data) && ('isMempelai' in request.resource.data) && request.resource.data.isMempelai == resource.data.isMempelai);
+      let isPinnedMatches = (!('isPinned' in resource.data) && !('isPinned' in request.resource.data)) ||
+                            (('isPinned' in resource.data) && ('isPinned' in request.resource.data) && request.resource.data.isPinned == resource.data.isPinned);
+      let pinnedAtMatches = (!('pinnedAt' in resource.data) && !('pinnedAt' in request.resource.data)) ||
+                            (('pinnedAt' in resource.data) && ('pinnedAt' in request.resource.data) && request.resource.data.pinnedAt == resource.data.pinnedAt);
+
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
         && request.resource.data.likes is int
         && request.resource.data.likes >= 0
-        && request.resource.data.likes <= 100000
-        && (request.resource.data.likes == currentLikes + 1 || request.resource.data.likes == currentLikes - 1);
+        && request.resource.data.likes <= 50000
+        && (request.resource.data.likes == currentLikes + 1 || request.resource.data.likes == currentLikes - 1)
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.count == resource.data.count
+        && request.resource.data.timestamp == resource.data.timestamp
+        && request.resource.data.replyCount == resource.data.replyCount
+        && isMempelaiMatches
+        && isPinnedMatches
+        && pinnedAtMatches;
     }
 
-    // 3. Validasi Update ReplyCount (Hanya +-1 per transaksi, minimal 0)
+    // 3. Validasi Update ReplyCount (Hanya +-1 per transaksi, minimal 0, data lain terkunci)
     function isValidReplyCountUpdate() {
       let currentCount = ('replyCount' in resource.data && resource.data.replyCount is int) ? resource.data.replyCount : 0;
+      let isMempelaiMatches = (!('isMempelai' in resource.data) && !('isMempelai' in request.resource.data)) ||
+                              (('isMempelai' in resource.data) && ('isMempelai' in request.resource.data) && request.resource.data.isMempelai == resource.data.isMempelai);
+      let isPinnedMatches = (!('isPinned' in resource.data) && !('isPinned' in request.resource.data)) ||
+                            (('isPinned' in resource.data) && ('isPinned' in request.resource.data) && request.resource.data.isPinned == resource.data.isPinned);
+      let pinnedAtMatches = (!('pinnedAt' in resource.data) && !('pinnedAt' in request.resource.data)) ||
+                            (('pinnedAt' in resource.data) && ('pinnedAt' in request.resource.data) && request.resource.data.pinnedAt == resource.data.pinnedAt);
+
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
         && request.resource.data.replyCount is int
         && request.resource.data.replyCount >= 0
         && request.resource.data.replyCount <= 10000
-        && (request.resource.data.replyCount == currentCount + 1 || request.resource.data.replyCount == currentCount - 1);
+        && (request.resource.data.replyCount == currentCount + 1 || request.resource.data.replyCount == currentCount - 1)
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.count == resource.data.count
+        && request.resource.data.timestamp == resource.data.timestamp
+        && request.resource.data.likes == resource.data.likes
+        && isMempelaiMatches
+        && isPinnedMatches
+        && pinnedAtMatches;
     }
 
-    // 4. Validasi Pin / Unpin Pesan (WAJIB Otorisasi Dokumen Aksi Admin Rahasia dengan Window 60 Detik)
+    // 4. Validasi Pin / Unpin Pesan (WAJIB Otorisasi Admin Rahasia dengan Freshness Window 30 Detik)
     function isValidPinUpdate(messageId) {
+      let isMempelaiMatches = (!('isMempelai' in resource.data) && !('isMempelai' in request.resource.data)) ||
+                              (('isMempelai' in resource.data) && ('isMempelai' in request.resource.data) && request.resource.data.isMempelai == resource.data.isMempelai);
+
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPinned', 'pinnedAt'])
         && request.resource.data.isPinned is bool
-        && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp)
-        && exists(/databases/$(database)/documents/admin_actions/$(messageId + "_pin"))
-        && get(/databases/$(database)/documents/admin_actions/$(messageId + "_pin")).data.secret == getAdminSecretHash()
-        && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(messageId + "_pin")).data.timestamp.toMillis() <= 60000;
+        && (!('pinnedAt' in request.resource.data) || request.resource.data.pinnedAt is timestamp || request.resource.data.pinnedAt == null)
+        && isAuthorizedAdminAction(messageId + "_pin")
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.count == resource.data.count
+        && request.resource.data.timestamp == resource.data.timestamp
+        && request.resource.data.likes == resource.data.likes
+        && request.resource.data.replyCount == resource.data.replyCount
+        && isMempelaiMatches;
     }
 
-    // 5. Validasi Balasan Baru (Kebal Pemalsuan Centang Biru Mempelai dengan Window 60 Detik)
+    // 5. Validasi Balasan Baru (Kebal Pemalsuan Badge Mempelai dengan Freshness Window 30 Detik)
     function isValidNewReply(replyId) {
       let data = request.resource.data;
       return data.keys().hasOnly(['name', 'message', 'replyTo', 'isMempelaiReply', 'timestamp', 'likes'])
-        && data.name is string && data.name.size() >= 1 && data.name.size() <= 50
-        && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
-        && data.replyTo is string && data.replyTo.size() >= 1 && data.replyTo.size() <= 50
+        && data.name is string 
+        && data.name.size() >= 2 && data.name.size() <= 50
+        && data.name.matches('^[a-zA-Z0-9 .,\'\\-]{2,50}$')
+        && data.message is string 
+        && data.message.size() >= 2 && data.message.size() <= 500
+        && data.replyTo is string 
+        && data.replyTo.size() >= 1 && data.replyTo.size() <= 50
+        && data.replyTo.matches('^[a-zA-Z0-9 .,\'\\-]{1,50}$')
         && data.isMempelaiReply is bool
         && data.likes == 0
         && data.timestamp == request.time
@@ -82,21 +137,27 @@ service cloud.firestore {
           data.isMempelaiReply == false ||
           (
             data.isMempelaiReply == true 
-            && exists(/databases/$(database)/documents/admin_actions/$(replyId + "_reply"))
-            && get(/databases/$(database)/documents/admin_actions/$(replyId + "_reply")).data.secret == getAdminSecretHash()
-            && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(replyId + "_reply")).data.timestamp.toMillis() <= 60000
+            && isAuthorizedAdminAction(replyId + "_reply")
           )
         );
     }
 
-    // 6. Validasi Like pada Balasan
+    // 6. Validasi Like pada Balasan (Aman dari crash field opsional)
     function isValidReplyLikeUpdate() {
       let currentLikes = ('likes' in resource.data && resource.data.likes is int) ? resource.data.likes : 0;
+      let isMempelaiReplyMatches = (!('isMempelaiReply' in resource.data) && !('isMempelaiReply' in request.resource.data)) ||
+                                   (('isMempelaiReply' in resource.data) && ('isMempelaiReply' in request.resource.data) && request.resource.data.isMempelaiReply == resource.data.isMempelaiReply);
+
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
         && request.resource.data.likes is int
         && request.resource.data.likes >= 0
-        && request.resource.data.likes <= 100000
-        && (request.resource.data.likes == currentLikes + 1 || request.resource.data.likes == currentLikes - 1);
+        && request.resource.data.likes <= 50000
+        && (request.resource.data.likes == currentLikes + 1 || request.resource.data.likes == currentLikes - 1)
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.replyTo == resource.data.replyTo
+        && request.resource.data.timestamp == resource.data.timestamp
+        && isMempelaiReplyMatches;
     }
 
     // ==========================================
@@ -125,15 +186,13 @@ service cloud.firestore {
       // CREATE: Ucapan baru oleh tamu / mempelai
       allow create: if isValidNewMessage(messageId);
       
-      // UPDATE: Like (+-1), ReplyCount (+-1), ATAU Pin/Unpin (Admin Only via admin_actions)
+      // UPDATE: Like (+-1), ReplyCount (+-1), ATAU Pin/Unpin (Admin Only)
       allow update: if isValidMessageLikeUpdate() 
                     || isValidReplyCountUpdate() 
                     || isValidPinUpdate(messageId);
       
-      // DELETE: Hanya jika sudah diotorisasi via admin_actions dalam window 60 detik
-      allow delete: if exists(/databases/$(database)/documents/admin_actions/$(messageId + "_delete"))
-                    && get(/databases/$(database)/documents/admin_actions/$(messageId + "_delete")).data.secret == getAdminSecretHash()
-                    && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(messageId + "_delete")).data.timestamp.toMillis() <= 60000;
+      // DELETE: Hanya jika sudah diotorisasi via admin_actions dalam window 30 detik
+      allow delete: if isAuthorizedAdminAction(messageId + "_delete");
 
       // SUB-KOLEKSI: Balasan Pesan (Replies)
       match /replies/{replyId} {
@@ -146,10 +205,8 @@ service cloud.firestore {
         // UPDATE: Like balasan
         allow update: if isValidReplyLikeUpdate();
         
-        // DELETE: Hanya jika sudah diotorisasi via admin_actions dalam window 60 detik
-        allow delete: if exists(/databases/$(database)/documents/admin_actions/$(replyId + "_delete_reply"))
-                      && get(/databases/$(database)/documents/admin_actions/$(replyId + "_delete_reply")).data.secret == getAdminSecretHash()
-                      && request.time.toMillis() - get(/databases/$(database)/documents/admin_actions/$(replyId + "_delete_reply")).data.timestamp.toMillis() <= 60000;
+        // DELETE: Hanya jika sudah diotorisasi via admin_actions dalam window 30 detik
+        allow delete: if isAuthorizedAdminAction(replyId + "_delete_reply");
       }
     }
 
@@ -165,17 +222,19 @@ service cloud.firestore {
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalGuests'])
                     && request.resource.data.totalGuests is int 
                     && request.resource.data.totalGuests >= 0
-                    && request.resource.data.totalGuests <= 10000
+                    && request.resource.data.totalGuests <= 50000
                     && (
                       !('totalGuests' in resource.data) || !(resource.data.totalGuests is int) ||
-                      (request.resource.data.totalGuests - resource.data.totalGuests <= 10
+                      (request.resource.data.totalGuests >= resource.data.totalGuests 
+                       && request.resource.data.totalGuests - resource.data.totalGuests <= 10) ||
+                      (request.resource.data.totalGuests < resource.data.totalGuests 
                        && resource.data.totalGuests - request.resource.data.totalGuests <= 10)
                     );
       allow delete: if false;
     }
 
     // ==========================================
-    // 🚫 3. LOCKDOWN: Kunci semua koleksi lain
+    // 🚫 3. LOCKDOWN: Kunci total semua koleksi lain
     // ==========================================
     match /{document=**} {
       allow read, write: if false;

@@ -840,15 +840,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- Helper Sanitasi HTML Global (Pencegahan XSS) ---
+    // --- Helper Sanitasi HTML Global (Pencegahan XSS Ketat) ---
     function escapeHTML(str) {
-        if (!str) return '';
+        if (str === null || str === undefined) return '';
         return String(str)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(/'/g, '&#039;')
+            .replace(/`/g, '&#x60;');
     }
 
     // --- Helper Aman Parsing LocalStorage (Anti Crash jika Storage Rusak/Dimanipulasi) ---
@@ -882,26 +883,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 4000);
     }
 
+    let isFormSubmitting = false;
+
     if (hybridForm) {
         hybridForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (isFormSubmitting) return;
+
+            // 0. Anti-Bot Honeypot Trap Detection
+            const honeypotVal = (document.getElementById('att-honeypot')?.value || '').trim();
+            if (honeypotVal !== '') {
+                console.warn("Security Alert: Automated bot submission intercepted and dropped.");
+                showToast('Doa & ucapan hangat Anda berhasil terkirim.');
+                hybridForm.reset();
+                return;
+            }
+
             const submitBtn = hybridForm.querySelector('button');
             if (submitBtn.innerText === 'Berhasil!') return; // Mencegah klik ganda saat pesan sukses tampil
 
             const originalText = submitBtn.innerText;
 
-            // Pencegahan spam: Jeda 10 detik antar pengiriman (kecuali mode Mempelai)
+            // 1. Validasi Input Ketat (Selaras dengan Firestore Rules)
+            const rawName = (document.getElementById('att-name')?.value || '').trim();
+            const rawMessage = (document.getElementById('att-message')?.value || '').trim();
+            const validNameRegex = /^[a-zA-Z0-9 .,'\-]{2,50}$/;
+
+            if (rawName.length < 2 || rawName.length > 50 || !validNameRegex.test(rawName)) {
+                showToast('Mohon masukkan nama yang valid (2–50 karakter).', 'error');
+                return;
+            }
+
+            if (rawMessage.length < 2 || rawMessage.length > 500) {
+                showToast('Mohon tuliskan ucapan doa restu antara 2 hingga 500 karakter.', 'error');
+                return;
+            }
+
+            // 2. Pencegahan Spam & Rate Limiting (Jeda 15 detik untuk Tamu)
             if (!isMempelai) {
                 const lastSub = localStorage.getItem('last_gb_submission');
                 const now = Date.now();
-                const COOLDOWN_MS = 10000;
+                const COOLDOWN_MS = 15000;
                 if (lastSub && (now - Number(lastSub)) < COOLDOWN_MS) {
                     const remainingSec = Math.ceil((COOLDOWN_MS - (now - Number(lastSub))) / 1000);
-                    showToast(`Mohon tunggu ${remainingSec} detik sebelum mengirim lagi.`, 'error');
+                    showToast(`Mohon tunggu ${remainingSec} detik sebelum mengirimkan ucapan berikutnya.`, 'error');
                     return;
                 }
             }
 
+            isFormSubmitting = true;
             submitBtn.disabled = true;
             submitBtn.innerText = 'Mengirim...';
 
@@ -911,18 +941,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const docRef = doc(db, "messages", replyingToId);
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
                     const newReplyRef = doc(repliesRef);
-
-                    // 1. Siapkan data balasan
-                    const inputName = (document.getElementById('att-name')?.value || '').trim();
-                    const inputMessage = (document.getElementById('att-message')?.value || '').trim();
+                    const targetParentName = (document.getElementById('replying-to-name')?.innerText || 'Tamu').trim().substring(0, 50) || 'Tamu';
 
                     const replyData = {
-                        name: inputName,
-                        message: inputMessage,
-                        replyTo: document.getElementById('replying-to-name')?.innerText || '', // Mencatat siapa yang dibalas
-                        isMempelaiReply: isMempelai,
+                        name: rawName,
+                        message: rawMessage,
+                        replyTo: targetParentName,
+                        isMempelaiReply: Boolean(isMempelai),
                         timestamp: serverTimestamp(),
-                        likes: 0 // Inisialisasi field likes pada balasan
+                        likes: 0
                     };
 
                     // Otorisasi via private zero-leak sink jika dalam mode mempelai
@@ -935,19 +962,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                     }
 
-                    await setDoc(newReplyRef, replyData);
-
-                    // Bersihkan tiket otorisasi balasan setelah berhasil disimpan
-                    if (isMempelai) {
-                        deleteDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`)).catch(() => {});
+                    try {
+                        await setDoc(newReplyRef, replyData);
+                    } finally {
+                        // Pastikan tiket otorisasi balasan segera dibersihkan
+                        if (isMempelai) {
+                            deleteDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`)).catch(() => {});
+                        }
                     }
 
-                    // 2. Update counter jumlah balasan di dokumen utama
+                    // Update counter jumlah balasan di dokumen utama
                     await updateDoc(docRef, {
                         replyCount: increment(1)
                     });
 
-                    showToast('Balasan Anda telah terkirim.');
+                    showToast('Balasan ucapan berhasil dikirimkan.');
 
                     // Reset Mode Balas
                     replyingToId = null;
@@ -955,19 +984,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     // PROSES UCAPAN BARU
                     const newDocRef = doc(collection(db, "messages"));
-                    const inputName = (document.getElementById('att-name')?.value || '').trim();
-                    const inputMessage = (document.getElementById('att-message')?.value || '').trim();
-                    const guestCount = document.getElementById('att-status')?.value === 'Hadir' ? Number(document.getElementById('att-count')?.value) : 0;
+                    const rawStatus = document.getElementById('att-status')?.value || 'Hadir';
+                    const isAttending = rawStatus === 'Hadir';
+                    const parsedCount = parseInt(document.getElementById('att-count')?.value || '1', 10) || 1;
+                    const guestCount = isAttending ? Math.min(10, Math.max(1, parsedCount)) : 0;
 
                     const messageData = {
-                        name: inputName,
-                        status: document.getElementById('att-status')?.value || 'Hadir',
+                        name: rawName,
+                        status: isAttending ? 'Hadir' : 'Tidak Hadir',
                         count: guestCount,
-                        message: inputMessage,
+                        message: rawMessage,
                         timestamp: serverTimestamp(),
                         likes: 0,
                         replyCount: 0,
-                        isMempelai: isMempelai
+                        isMempelai: Boolean(isMempelai)
                     };
 
                     // Optimistic counter update di UI (Instan 0ms)
@@ -984,24 +1014,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                     }
 
-                    await setDoc(newDocRef, messageData);
-
-                    // Bersihkan tiket otorisasi pesan setelah berhasil disimpan
-                    if (isMempelai) {
-                        deleteDoc(doc(db, "admin_actions", `${newDocRef.id}_create`)).catch(() => {});
+                    try {
+                        await setDoc(newDocRef, messageData);
+                    } finally {
+                        // Pastikan tiket otorisasi pesan segera dibersihkan
+                        if (isMempelai) {
+                            deleteDoc(doc(db, "admin_actions", `${newDocRef.id}_create`)).catch(() => {});
+                        }
                     }
 
                     // Sinkronisasi ulang total hitungan pasti dari server setelah setDoc selesai
                     updateTotalCount();
 
-                    // Jalankan update metadata di background agar tidak memblokir UI sukses
+                    // Jalankan update metadata di background
                     if (guestCount > 0) {
                         setDoc(doc(db, "metadata", "totals"), {
                             totalGuests: increment(guestCount)
-                        }, { merge: true }).catch(err => console.error("Metadata update failed:", err));
+                        }, { merge: true }).catch(err => console.warn("Metadata update note:", err));
                     }
 
-                    showToast('Terima kasih! Ucapan Anda telah tersimpan.');
+                    showToast('Terima kasih! Doa dan konfirmasi kehadiran Anda telah tersimpan.');
                 }
 
                 // Simpan timestamp pengiriman terakhir (Kecuali jika Mempelai)
@@ -1031,10 +1063,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     submitBtn.innerText = originalText;
                 }, 3000);
             } catch (error) {
-                console.error("Error: ", error);
-                showToast('Gagal mengirim. Silakan coba lagi.', 'error');
+                console.error("Error submitting form: ", error);
+                if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+                    showToast('Format data tidak memenuhi kriteria validasi. Silakan periksa kembali.', 'error');
+                } else {
+                    showToast('Tidak dapat mengirim saat ini. Periksa koneksi internet Anda dan coba lagi.', 'error');
+                }
                 submitBtn.innerText = originalText; // Revert teks jika gagal
             } finally {
+                isFormSubmitting = false;
                 submitBtn.disabled = false;
             }
         });
@@ -1146,6 +1183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Hash SHA-256 dari kata sandi Mempelai (Level 1: Verifikasi Frontend)
     const MEMPELAI_HASH = "e58fb6b9713fea3141744cbf988eb1852d68816e16f9615ad2621b6e16377a47";
     const replyUnsubscribers = {}; // Simpan fungsi unsubscribe untuk listener balasan
+    const likeLocks = new Set(); // Mencegah flooding / rapid clicking pada tombol suka
 
     let replyingToId = null; // Menyimpan ID pesan yang sedang dibalas
     let docIdToDelete = null; // Pindahkan ke sini agar nilainya tidak ter-reset saat modal konfirmasi muncul
@@ -1199,44 +1237,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let authFailedAttempts = 0;
-    let authLockoutUntil = 0;
 
     if (authForm) {
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const now = Date.now();
-            if (now < authLockoutUntil) {
-                const remaining = Math.ceil((authLockoutUntil - now) / 1000);
-                showToast(`Terlalu banyak percobaan salah. Silakan coba lagi dalam ${remaining} detik.`, "error");
+            const storedLockout = Number(localStorage.getItem('auth_lockout_until') || '0');
+            if (now < storedLockout) {
+                const remaining = Math.ceil((storedLockout - now) / 1000);
+                showToast(`Akses sementara dinonaktifkan. Silakan coba kembali dalam ${remaining} detik.`, "error");
                 return;
             }
 
             const pass = pwdInput ? pwdInput.value.trim() : '';
             if (!pass) return;
 
-            // Artificial delay 300ms untuk mencegah automated rapid script cracking
-            await new Promise(res => setTimeout(res, 300));
+            // Constant Artificial delay 350ms untuk mencegah automated rapid script cracking & timing attack
+            await new Promise(res => setTimeout(res, 350));
             const inputHash = await sha256(pass);
 
             if (inputHash === MEMPELAI_HASH) {
                 authFailedAttempts = 0;
-                authLockoutUntil = 0;
+                localStorage.removeItem('auth_lockout_until');
+                localStorage.removeItem('auth_total_fails');
                 isMempelai = true;
                 sessionStorage.setItem('isMempelai', 'true');
                 sessionStorage.setItem('mKey', pass);
                 document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                 initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
-                showToast("Mode Mempelai Aktif");
+                showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
                 closeAuthModal();
             } else {
                 authFailedAttempts++;
-                if (authFailedAttempts >= 5) {
-                    authLockoutUntil = Date.now() + 30000; // Kunci modal selama 30 detik
+                const totalFails = Number(localStorage.getItem('auth_total_fails') || '0') + 1;
+                localStorage.setItem('auth_total_fails', String(totalFails));
+
+                if (authFailedAttempts >= 5 || totalFails >= 5) {
+                    // Progressive exponential lockout: 30s -> 60s -> 300s
+                    let lockoutDuration = 30000;
+                    if (totalFails >= 10) lockoutDuration = 300000; // 5 menit
+                    else if (totalFails >= 7) lockoutDuration = 60000; // 1 menit
+
+                    localStorage.setItem('auth_lockout_until', String(Date.now() + lockoutDuration));
                     authFailedAttempts = 0;
-                    showToast("Terlalu banyak percobaan gagal. Akses modal dikunci selama 30 detik.", "error");
+                    showToast(`Batas percobaan terlampaui. Akses ditangguhkan selama ${lockoutDuration / 1000} detik.`, "error");
                 } else {
-                    const attemptsLeft = 5 - authFailedAttempts;
-                    showToast(`Kata sandi salah. Sisa percobaan: ${attemptsLeft}`, "error");
+                    const attemptsLeft = Math.max(1, 5 - authFailedAttempts);
+                    showToast(`Kata sandi tidak sesuai. Sisa kesempatan: ${attemptsLeft}`, "error");
                 }
 
                 const modalBox = authModal.querySelector('.auth-modal-content');
@@ -1432,11 +1479,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // 3. Klik Tombol Like
+        // 3. Klik Tombol Like (Anti-Bot Debounced)
         const likeBtn = e.target.closest('.like-btn');
         if (likeBtn) {
             const docId = likeBtn.dataset.id;
             const parentId = likeBtn.dataset.parentId; // Jika ada, berarti ini like untuk balasan
+            const likeLockKey = parentId ? `${parentId}_${docId}` : docId;
+
+            if (likeLocks.has(likeLockKey)) return; // Mencegah spam klik instan / bot loop
+            likeLocks.add(likeLockKey);
+
             const currentLikes = parseInt(likeBtn.dataset.likes || '0', 10);
             const likeCountSpan = likeBtn.querySelector('.like-count');
             const likeIcon = likeBtn.querySelector('i');
@@ -1528,7 +1580,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (error) {
                 console.error("Error liking message:", error);
-                showToast("Gagal memperbarui suka.", "error");
+                showToast("Tidak dapat memperbarui tanda suka. Silakan coba lagi.", "error");
                 // Revert UI jika terjadi kesalahan
                 if (isAlreadyLiked) {
                     likeCountSpan.classList.add('liked'); // Kembalikan warna merah jika sebelumnya sudah liked
@@ -1541,7 +1593,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 likeCountSpan.textContent = currentLikes > 0 ? currentLikes : '';
             } finally {
-                setTimeout(() => { likeBtn.disabled = false; }, 500);
+                setTimeout(() => { 
+                    likeBtn.disabled = false; 
+                    likeLocks.delete(likeLockKey);
+                }, 800);
             }
         }
 
@@ -1553,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const mKey = sessionStorage.getItem('mKey');
             if (!isMempelai || !mKey) {
-                showToast("Sesi Mempelai belum aktif atau telah kedaluwarsa. Silakan login kembali.", "error");
+                showToast("Sesi telah berakhir. Silakan masuk kembali untuk melanjutkan.", "error");
                 openAuthModal();
                 return;
             }
@@ -1577,7 +1632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const mKey = sessionStorage.getItem('mKey');
                 if (!mKey) {
-                    showToast("Sesi telah kedaluwarsa. Silakan masukkan kata sandi kembali.", "error");
+                    showToast("Sesi autentikasi telah kedaluwarsa. Silakan verifikasi ulang kata sandi Anda.", "error");
                     openAuthModal();
                     confirmModal.classList.remove('show');
                     return;
@@ -1591,10 +1646,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         secret: adminSecretHash,
                         timestamp: serverTimestamp()
                     });
-                    // 2. Hapus balasan dari sub-koleksi
-                    await deleteDoc(replyRef);
-                    // 3. Bersihkan tiket otorisasi balasan
-                    deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => {});
+                    try {
+                        // 2. Hapus balasan dari sub-koleksi
+                        await deleteDoc(replyRef);
+                    } finally {
+                        // 3. Bersihkan tiket otorisasi balasan secara instan
+                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => {});
+                    }
                     // 4. Kurangi counter balasan di dokumen utama
                     try {
                         await updateDoc(doc(db, "messages", parentIdForReply), {
@@ -1628,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
 
-                        // Hapus semua sub-koleksi balasan terlebih dahulu agar tidak menjadi phantom document (italic)
+                        // Hapus semua sub-koleksi balasan terlebih dahulu agar tidak menjadi phantom document
                         try {
                             const repliesSnap = await getDocs(collection(db, "messages", docIdToDelete, "replies"));
                             for (const rDoc of repliesSnap.docs) {
@@ -1638,9 +1696,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         timestamp: serverTimestamp()
                                     });
                                     await deleteDoc(rDoc.ref);
+                                } finally {
                                     deleteDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`)).catch(() => {});
-                                } catch (rErr) {
-                                    console.warn("Reply doc delete note:", rErr);
                                 }
                             }
                         } catch (subErr) {
@@ -1653,10 +1710,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         secret: adminSecretHash,
                         timestamp: serverTimestamp()
                     });
-                    // 2. Hapus pesan utama secara permanen
-                    await deleteDoc(msgRef);
-                    // 3. Bersihkan tiket otorisasi pesan utama
-                    deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => {});
+                    try {
+                        // 2. Hapus pesan utama secara permanen
+                        await deleteDoc(msgRef);
+                    } finally {
+                        // 3. Bersihkan tiket otorisasi pesan utama secara instan
+                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => {});
+                    }
 
                     // 4. Sinkronisasi ulang total hitungan pasti dari server setelah deleteDoc selesai
                     await updateTotalCount();
@@ -1664,13 +1724,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await syncGuestCount();
                     }
                 }
-                showToast("Pesan berhasil dihapus.");
+                showToast("Ucapan berhasil dihapus dari buku tamu.");
             } catch (error) {
                 console.error("Gagal menghapus pesan:", error);
                 if (error.code === 'permission-denied' || error.message?.includes('permission')) {
-                    showToast("Gagal: Izin ditolak. Pastikan Rules Firestore sudah dipublikasikan.", "error");
+                    showToast("Akses ditolak: Anda tidak memiliki izin untuk menghapus ucapan ini.", "error");
                 } else {
-                    showToast("Gagal menghapus pesan. Pastikan Anda memiliki akses yang sah.", "error");
+                    showToast("Gagal menghapus ucapan. Silakan periksa koneksi Anda dan coba lagi.", "error");
                 }
             }
             confirmModal.classList.remove('show');
@@ -1692,7 +1752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const mKey = sessionStorage.getItem('mKey');
             if (!isMempelai || !mKey) {
-                showToast("Sesi Mempelai belum aktif atau telah kedaluwarsa. Silakan login kembali.", "error");
+                showToast("Sesi telah berakhir. Silakan masuk kembali untuk menyematkan ucapan.", "error");
                 openAuthModal();
                 return;
             }
@@ -1707,26 +1767,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     timestamp: serverTimestamp()
                 });
 
-                if (isCurrentlyPinned) {
-                    await updateDoc(msgRef, {
-                        isPinned: false
-                    });
+                try {
+                    if (isCurrentlyPinned) {
+                        await updateDoc(msgRef, {
+                            isPinned: false
+                        });
+                        showToast("Sematan ucapan berhasil dilepas.");
+                    } else {
+                        await updateDoc(msgRef, {
+                            isPinned: true,
+                            pinnedAt: serverTimestamp()
+                        });
+                        showToast("Ucapan berhasil disematkan di posisi teratas.");
+                    }
+                } finally {
                     deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => {});
-                    showToast("Sematan ucapan dilepas.");
-                } else {
-                    await updateDoc(msgRef, {
-                        isPinned: true,
-                        pinnedAt: serverTimestamp()
-                    });
-                    deleteDoc(doc(db, "admin_actions", `${docId}_pin`)).catch(() => {});
-                    showToast("Ucapan berhasil disematkan!");
                 }
             } catch (error) {
                 console.error("Error toggling pin status:", error);
                 if (error.code === 'permission-denied' || error.message?.includes('permission')) {
-                    showToast("Gagal: Izin ditolak. Pastikan Rules Firestore sudah dipublikasikan.", "error");
+                    showToast("Akses ditolak: Anda tidak memiliki izin untuk mengubah status sematan.", "error");
                 } else {
-                    showToast("Gagal mengubah status sematan.", "error");
+                    showToast("Gagal memperbarui sematan ucapan. Silakan coba lagi.", "error");
                 }
             } finally {
                 setTimeout(() => { pinBtn.disabled = false; }, 500);
@@ -2341,7 +2403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const handleSuccess = () => {
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<i class="bi bi-check2"></i> Berhasil!';
-                showToast('Nomor rekening berhasil disalin!');
+                showToast('Nomor rekening berhasil disalin ke papan klip!');
                 setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
             };
 
@@ -2360,10 +2422,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (successful) {
                         handleSuccess();
                     } else {
-                        showToast('Gagal menyalin teks.', 'error');
+                        showToast('Gagal menyalin nomor rekening. Silakan salin secara manual.', 'error');
                     }
                 } catch (err) {
-                    showToast('Gagal menyalin teks.', 'error');
+                    showToast('Gagal menyalin nomor rekening. Silakan salin secara manual.', 'error');
                 }
             };
 
