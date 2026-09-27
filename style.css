@@ -295,11 +295,36 @@ body:active {
     /* Menampilkan img-2 di atas img-1 */
 }
 
+/* Animasi Ultra Smooth & Cinematic untuk Konten Cover (Silky 60/120fps, Bebas Reflow & Jitter) */
+@keyframes coverFadeUp {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.cover-content h1,
+.cover-content .event-date,
+.cover-content .recipient-text,
+.cover-content .guest-name,
+.cover-content .open-btn {
+    opacity: 0;
+    animation: coverFadeUp 1.1s cubic-bezier(0.25, 1, 0.5, 1) both;
+    will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
 .cover-content h1 {
     font-size: 3rem;
     margin: 10px 0;
     /* Merapatkan jarak antara salam dan nama */
     letter-spacing: 5px;
+    animation-delay: 0.1s;
 }
 
 .event-date {
@@ -308,21 +333,28 @@ body:active {
     /* Jarak tanggal ke bagian sapaan tamu dirapatkan */
     letter-spacing: 2px;
     text-transform: uppercase;
+    animation-delay: 0.25s;
 }
 
 .recipient-text {
     font-size: 0.9rem;
     font-weight: 300;
     margin-bottom: 8px;
+    animation-delay: 0.4s;
 }
 
 .guest-name {
-    font-size: 1.6rem;
+    font-size: clamp(1.25rem, 4vw, 1.6rem);
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 20px;
     /* Merapatkan jarak nama tamu ke tombol */
     font-weight: 600;
     letter-spacing: 1px;
+    word-break: break-word;
     transition: margin-bottom 0.5s ease-in-out;
+    animation-delay: 0.55s;
 }
 
 /* Responsive Wave Animation Styles */
@@ -419,8 +451,10 @@ body:active {
     border: 1px solid white;
     color: white;
     cursor: pointer;
-    transition: 0.3s ease;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
     text-transform: uppercase;
+    animation-delay: 0.7s;
+    pointer-events: auto;
 }
 
 .open-btn:hover {

@@ -71,36 +71,7 @@ async function syncTimeWithServer() {
 }
 
 // Logika Buka Undangan dan Putar Musik
-document.addEventListener('DOMContentLoaded', async () => {
-    // Fungsi untuk (re)inisialisasi AOS agar durasi & offset selalu sinkron dengan lebar layar
-    const initAOS = () => {
-        const width = window.innerWidth;
-        let aosDuration = 1100; // Default Desktop: Lebih elegan dan lambat
-        let aosOffset = 90;
-
-        if (width < 768) {
-            aosOffset = 50;
-            aosDuration = 900; // Mobile: Ditingkatkan agar transisi terlihat jelas
-        } else if (width <= 1024) {
-            aosOffset = 80;
-            aosDuration = 900; // Tablet: Seimbang antara responsif dan estetika
-        }
-
-        AOS.init({
-            duration: aosDuration,
-            once: true,
-            offset: aosOffset,
-            easing: 'ease-in-out',
-            mirror: false
-        });
-    };
-
-    // Jalankan inisialisasi pertama kali
-    initAOS();
-
-    // Jalankan sinkronisasi waktu saat halaman dimuat
-    await syncTimeWithServer();
-
+document.addEventListener('DOMContentLoaded', () => {
     const btnOpen = document.getElementById('btn-open');
     const cover = document.getElementById('cover');
     const music = document.getElementById('bg-music');
@@ -120,33 +91,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     };
 
-    // --- Logika untuk mengambil nama tamu dari URL ---
+    // --- Logika untuk mengambil nama tamu dari URL (Segera dieksekusi agar layout stabil sejak awal) ---
     const guestNameElement = document.getElementById('guest-name');
 
-    // Fungsi untuk mengecilkan font secara otomatis jika nama terlalu panjang (O(1) tanpa Forced Reflow)
+    // Fungsi untuk mengecilkan font secara otomatis jika nama terlalu panjang (Zero-Reflow, Aman & Mulus)
     const adjustGuestNameSize = () => {
         if (!guestNameElement) return;
-        const container = guestNameElement.parentElement;
-        if (!container) return;
-
-        const maxWidth = container.offsetWidth * 0.85; // Batas maksimal lebar (85% dari lebar container)
-        guestNameElement.style.fontSize = ""; // Reset ke default CSS
-        const currentSize = parseFloat(window.getComputedStyle(guestNameElement).fontSize) || 28;
-
-        // Gunakan inline-block dan nowrap sementara untuk mengukur lebar teks asli
-        guestNameElement.style.whiteSpace = 'nowrap';
-        guestNameElement.style.display = 'inline-block';
-
-        const currentWidth = guestNameElement.offsetWidth;
-        if (currentWidth > maxWidth && maxWidth > 0) {
-            const scale = maxWidth / currentWidth;
-            const targetSize = Math.max(12, Math.floor(currentSize * scale));
-            guestNameElement.style.fontSize = targetSize + 'px';
+        const text = guestNameElement.textContent ? guestNameElement.textContent.trim() : '';
+        const len = text.length;
+        if (len > 35) {
+            guestNameElement.style.fontSize = "1.1rem";
+        } else if (len > 24) {
+            guestNameElement.style.fontSize = "1.3rem";
+        } else {
+            guestNameElement.style.fontSize = "";
         }
-
-        // Kembalikan ke normal
-        guestNameElement.style.display = 'block';
-        guestNameElement.style.whiteSpace = 'normal';
     };
 
     if (guestNameElement) {
@@ -163,6 +122,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         adjustGuestNameSize();
         window.addEventListener('resize', adjustGuestNameSize);
     }
+
+    // Fungsi untuk (re)inisialisasi AOS agar durasi & offset selalu sinkron dengan lebar layar
+    const initAOS = () => {
+        const width = window.innerWidth;
+        let aosDuration = 1100; // Default Desktop: Lebih elegan dan lambat
+        let aosOffset = 90;
+
+        if (width < 768) {
+            aosOffset = 50;
+            aosDuration = 900; // Mobile: Ditingkatkan agar transisi terlihat jelas
+        } else if (width <= 1024) {
+            aosOffset = 80;
+            aosDuration = 900; // Tablet: Seimbang antara responsif dan estetika
+        }
+
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                duration: aosDuration,
+                once: true,
+                offset: aosOffset,
+                easing: 'ease-in-out',
+                mirror: false
+            });
+        }
+    };
+
+    // Jalankan inisialisasi AOS pertama kali
+    initAOS();
+
+    // Jalankan sinkronisasi waktu server secara asinkron di background tanpa menghalangi render
+    syncTimeWithServer().then(() => {
+        if (typeof updateCountdown === 'function') {
+            updateCountdown();
+        }
+    });
 
     // --- Logika Sinkronisasi Layout Cover saat Rotasi Layar ---
     let lastWidth = window.innerWidth; // Melacak lebar untuk membedakan rotasi vs resize bar browser mobile
