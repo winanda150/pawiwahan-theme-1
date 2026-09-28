@@ -1056,10 +1056,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const submitBtn = hybridForm.querySelector('button');
-            if (submitBtn.innerText === 'Berhasil!') return; // Mencegah klik ganda saat pesan sukses tampil
-
-            const originalText = submitBtn.innerText;
+            const submitBtn = hybridForm.querySelector('button[type="submit"]');
+            if (isFormSubmitting) return;
 
             // 1. Validasi Input Ketat (Selaras dengan Firestore Rules)
             const rawName = (document.getElementById('att-name')?.value || '').trim();
@@ -1089,8 +1087,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             isFormSubmitting = true;
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Mengirim...';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
 
             try {
                 if (replyingToId) {
@@ -1098,12 +1097,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const docRef = doc(db, "messages", replyingToId);
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
                     const newReplyRef = doc(repliesRef);
-                    const targetParentName = (document.getElementById('replying-to-name')?.innerText || 'Tamu').trim().substring(0, 50) || 'Tamu';
+                    const targetName = (replyingToTargetName || (document.getElementById('replying-to-name')?.innerText || '')).replace(/^@/, '').trim() || 'Tamu';
 
                     const replyData = {
                         name: rawName,
                         message: rawMessage,
-                        replyTo: targetParentName,
+                        replyTo: targetName,
                         isMempelaiReply: Boolean(isMempelai),
                         timestamp: serverTimestamp(),
                         likes: 0
@@ -1137,6 +1136,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Reset Mode Balas
                     replyingToId = null;
+                    replyingToTargetName = '';
+                    replyingToIsSubReply = false;
                     document.getElementById('reply-mode-indicator').style.display = 'none';
                 } else {
                     // PROSES UCAPAN BARU
@@ -1198,7 +1199,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('last_gb_submission', Date.now());
                 }
 
-                submitBtn.innerText = 'Berhasil!';
                 hybridForm.reset();
                 toggleEmojiPicker(false);
                 if (charCounter) {
@@ -1217,9 +1217,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (countGroup) countGroup.style.display = 'block';
 
-                setTimeout(() => {
-                    submitBtn.innerText = originalText;
-                }, 3000);
             } catch (error) {
                 console.error("Error submitting form: ", error);
                 if (error.code === 'permission-denied' || error.message?.includes('permission')) {
@@ -1227,39 +1224,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showToast('Tidak dapat mengirim saat ini. Periksa koneksi internet Anda dan coba lagi.', 'error');
                 }
-                submitBtn.innerText = originalText; // Revert teks jika gagal
             } finally {
                 isFormSubmitting = false;
-                submitBtn.disabled = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
             }
         });
     }
 
-    // --- Logika Event Delegation untuk Read More ---
+    // Helper untuk pemotongan teks secara rapi pada batas kata
+    function getTruncatedText(str, maxLength = 200) {
+        if (!str || str.length <= maxLength) return str || '';
+        const sub = str.substring(0, maxLength);
+        const lastSpace = sub.lastIndexOf(' ');
+        if (lastSpace > maxLength - 35) {
+            return sub.substring(0, lastSpace) + '...';
+        }
+        return sub + '...';
+    }
+
+    // --- Logika Event Delegation untuk Read More (Gaya Instagram Seamless) ---
     document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('read-more-btn')) {
-            const btn = e.target;
-            const msgEl = btn.previousElementSibling;
-            const fullText = msgEl.dataset.full;
-            const isExpanded = btn.dataset.expanded === 'true';
+        const btn = e.target.closest('.read-more-btn');
+        if (btn) {
+            const msgContainer = btn.closest('.gb-message');
+            const msgEl = msgContainer?.querySelector('.msg-text');
+            if (!msgEl) return;
+
+            const fullText = msgEl.dataset.full || '';
 
             // Hapus class jika sudah ada untuk reset animasi
             msgEl.classList.remove('fade-in-text');
             void msgEl.offsetWidth; // Force reflow agar animasi bisa dipicu ulang
 
-            if (isExpanded) {
-                msgEl.innerHTML = formatRichText(fullText.substring(0, 200) + '...');
-                btn.textContent = 'Baca Selengkapnya';
-                btn.dataset.expanded = 'false';
-            } else {
-                msgEl.innerHTML = formatRichText(fullText);
-                btn.textContent = 'Sembunyikan';
-                btn.dataset.expanded = 'true';
-            }
-
-            // Tambahkan class untuk memicu animasi fade-in & render emoji
+            msgEl.innerHTML = formatRichText(fullText);
             msgEl.classList.add('fade-in-text');
             applyTwemoji(msgEl);
+
+            // Hapus tombol selengkapnya ala Instagram agar tampilan pesan terbuka bersih
+            btn.remove();
         }
     });
 
@@ -1344,7 +1348,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const replyUnsubscribers = {}; // Simpan fungsi unsubscribe untuk listener balasan
     const likeLocks = new Set(); // Mencegah flooding / rapid clicking pada tombol suka
 
-    let replyingToId = null; // Menyimpan ID pesan yang sedang dibalas
+    let replyingToId = null; // Menyimpan ID pesan utama yang sedang dibalas
+    let replyingToTargetName = ''; // Menyimpan nama target mention jika membalas sub-reply
+    let replyingToIsSubReply = false; // Menyimpan status apakah membalas sub-reply atau pesan utama
     let docIdToDelete = null; // Pindahkan ke sini agar nilainya tidak ter-reset saat modal konfirmasi muncul
     let parentIdForReply = null; // Menyimpan ID pesan utama jika yang dihapus adalah balasan
 
@@ -1481,7 +1487,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rMessage = rData.message || '';
         const rIsLong = rMessage.length > 200;
-        const rPreviewText = rIsLong ? rMessage.substring(0, 200) + '...' : rMessage;
+        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 220) : rMessage;
 
         let rFullDate = 'Baru saja';
         if (rData.timestamp) {
@@ -1499,14 +1505,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const safeName = escapeHTML(rData.name || 'Tamu');
         const safePreview = formatRichText(rPreviewText);
-        const safeReplyTo = escapeHTML(rData.replyTo || '');
 
-        const mentionHTML = rData.replyTo && rData.replyTo !== parentName
-            ? `<span class="reply-to-mention">${safeReplyTo}</span>`
+        // Aturan Tag / Mention:
+        // Tag @NamaTarget hanya muncul jika membalas balasan orang lain (sub-reply),
+        // dan tidak muncul jika membalas pesan komentar utama (parent).
+        const cleanParent = (parentName || '').trim().toLowerCase();
+        const cleanReplyTo = (rData.replyTo || '').replace(/^@/, '').trim();
+        const isParentTarget = cleanParent && cleanReplyTo.toLowerCase() === cleanParent;
+        const rawTarget = (!isParentTarget && cleanReplyTo) ? cleanReplyTo : '';
+        const mentionHTML = rawTarget
+            ? `<span class="reply-to-mention">@${escapeHTML(rawTarget)}</span>`
             : '';
 
         const replyItem = document.createElement('div');
         replyItem.id = `reply-${rDocId}`;
+        replyItem.dataset.parentName = parentName || '';
         replyItem.className = 'gb-reply-item fade-in-text';
         replyItem.style.marginBottom = '20px';
         replyItem.innerHTML = `
@@ -1514,15 +1527,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="gb-avatar"><i class="bi bi-person-circle"></i></div>
                 <div class="gb-info">
                     <div class="gb-top-row">
-                        <span class="gb-name">${safeName}</span>${rData.isMempelaiReply ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
+                        <span class="gb-name">${safeName}</span>${(rData.isMempelaiReply || rData.isMempelai) ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
                         <button class="delete-btn" data-id="${rDocId}" data-parent-id="${parentId}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
                 </div>
             </div>
-            <p class="gb-message">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
+            <p class="gb-message">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions" style="margin-top: -5px;">
-                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}">Balas</button>
+                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}" data-parent-name="${parentName}" data-is-subreply="true">Balas</button>
                 <button class="like-btn" data-id="${rDocId}" data-parent-id="${parentId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
                     <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
                 </button>
@@ -1533,7 +1546,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return replyItem;
     }
 
-    function updateReplyItemElement(existingReply, rDoc) {
+    function updateReplyItemElement(existingReply, rDoc, parentName = '') {
         const rData = rDoc.data();
         const rLikes = rData.likes || 0;
         const likedReplies = getSafeLocalStorageArray('liked_replies');
@@ -1541,7 +1554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rMessage = rData.message || '';
         const rIsLong = rMessage.length > 200;
-        const rPreviewText = rIsLong ? rMessage.substring(0, 200) + '...' : rMessage;
+        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 220) : rMessage;
 
         let rFullDate = 'Baru saja';
         if (rData.timestamp) {
@@ -1557,13 +1570,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const rNameEl = existingReply.querySelector('.gb-name');
+        const rHeader = existingReply.querySelector(':scope > .gb-header-row > .gb-info > .gb-top-row') || existingReply.querySelector('.gb-header-row > .gb-info > .gb-top-row');
+        const rNameEl = rHeader ? rHeader.querySelector('.gb-name') : existingReply.querySelector('.gb-name');
         if (rNameEl) rNameEl.textContent = rData.name || 'Tamu';
 
         const rTimeEl = existingReply.querySelector('.gb-time');
         if (rTimeEl) rTimeEl.textContent = rFullDate;
 
+        const effectiveParent = parentName || existingReply.dataset.parentName || '';
+        const cleanParent = effectiveParent.trim().toLowerCase();
+        const cleanReplyTo = (rData.replyTo || '').replace(/^@/, '').trim();
+        const isParentTarget = cleanParent && cleanReplyTo.toLowerCase() === cleanParent;
+        const rawTarget = (!isParentTarget && cleanReplyTo) ? cleanReplyTo : '';
+
         const rMsgContainer = existingReply.querySelector('.gb-message');
+        if (rMsgContainer) {
+            const mentionEl = rMsgContainer.querySelector('.reply-to-mention');
+
+            if (rawTarget) {
+                if (!mentionEl) {
+                    const newMention = document.createElement('span');
+                    newMention.className = 'reply-to-mention';
+                    newMention.textContent = `@${rawTarget}`;
+                    rMsgContainer.prepend(newMention);
+                } else {
+                    mentionEl.textContent = `@${rawTarget}`;
+                }
+            } else if (mentionEl) {
+                mentionEl.remove();
+            }
+        }
+
         const rMsgTextEl = rMsgContainer?.querySelector('.msg-text');
         if (rMsgTextEl) {
             const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
@@ -1573,6 +1610,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyTwemoji(rMsgTextEl);
             }
             if (rIsLong) rMsgTextEl.dataset.full = rMessage;
+        }
+
+        const rReplyBtn = existingReply.querySelector('.reply-btn');
+        if (rReplyBtn) {
+            rReplyBtn.dataset.name = rData.name || 'Tamu';
+            rReplyBtn.dataset.isSubreply = 'true';
         }
 
         const rLikeBtn = existingReply.querySelector('.like-btn');
@@ -1588,12 +1631,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (icon) icon.className = `bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
         }
 
-        const rVerifiedIcon = existingReply.querySelector('.verified-icon');
-        if (rData.isMempelaiReply && !rVerifiedIcon && rNameEl) {
+        const rVerifiedIcon = rHeader ? rHeader.querySelector('.verified-icon') : existingReply.querySelector('.verified-icon');
+        const isVerified = Boolean(rData.isMempelaiReply || rData.isMempelai);
+        if (isVerified && !rVerifiedIcon && rNameEl) {
             const icon = document.createElement('i');
             icon.className = 'bi bi-patch-check-fill verified-icon';
             rNameEl.after(icon);
-        } else if (!rData.isMempelaiReply && rVerifiedIcon) {
+        } else if (!isVerified && rVerifiedIcon) {
             rVerifiedIcon.remove();
         }
     }
@@ -1601,23 +1645,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', async (e) => {
         // 1. Klik Tombol Balas (Publik)
         const confirmModal = document.getElementById('custom-confirm-modal');
-        if (e.target.classList.contains('reply-btn')) {
-            const docId = e.target.dataset.id;
-            const docName = e.target.dataset.name;
+        if (e.target.classList.contains('reply-btn') || e.target.closest('.reply-btn')) {
+            const btn = e.target.classList.contains('reply-btn') ? e.target : e.target.closest('.reply-btn');
+            const docId = btn.dataset.id;
+            const docName = (btn.dataset.name || 'Tamu').trim();
+            const isSubReply = btn.dataset.isSubreply === 'true';
 
             replyingToId = docId;
+            replyingToIsSubReply = isSubReply;
+            replyingToTargetName = docName.replace(/^@/, '').trim();
 
             // Tampilkan indikator balas di form
             const indicator = document.getElementById('reply-mode-indicator');
             const nameSpan = document.getElementById('replying-to-name');
             indicator.style.display = 'flex';
-            nameSpan.innerText = docName;
+            nameSpan.innerText = `@${replyingToTargetName}`;
 
             // Scroll ke form
             document.querySelector('.attendance-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Fokus ke textarea ucapan
-            document.getElementById('att-message').placeholder = `Tulis balasan untuk ${docName}...`;
+            document.getElementById('att-message').placeholder = `Tulis balasan untuk @${replyingToTargetName}...`;
             document.getElementById('att-message').focus();
 
             // Sembunyikan input kehadiran & jumlah tamu saat mode balas
@@ -1627,8 +1675,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Klik Cancel Balas
-        if (e.target.id === 'cancel-reply') {
+        if (e.target.id === 'cancel-reply' || e.target.closest('#cancel-reply')) {
             replyingToId = null;
+            replyingToTargetName = '';
+            replyingToIsSubReply = false;
             toggleEmojiPicker(false);
             document.getElementById('reply-mode-indicator').style.display = 'none';
             document.getElementById('att-message').placeholder = "Tuliskan ucapan manis Anda...";
@@ -1868,6 +1918,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
+                    // Bersihkan listener balasan aktif jika ada
+                    if (replyUnsubscribers[docIdToDelete]) {
+                        replyUnsubscribers[docIdToDelete]();
+                        delete replyUnsubscribers[docIdToDelete];
+                    }
+
                     // 1. Otorisasi hapus pesan utama via private zero-leak sink
                     await setDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`), {
                         secret: adminSecretHash,
@@ -2004,7 +2060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 snapshot.docChanges().forEach((change) => {
                                     const rDoc = change.doc;
                                     const rDocId = rDoc.id;
-                                    const existingReply = document.getElementById(`reply-${rDocId}`);
+                                    const existingReply = replyContent.querySelector(`#reply-${rDocId}`) || document.getElementById(`reply-${rDocId}`);
 
                                     if (change.type === "added") {
                                         if (!existingReply) {
@@ -2012,7 +2068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             replyContent.appendChild(replyItem);
                                         }
                                     } else if (change.type === "modified" && existingReply) {
-                                        updateReplyItemElement(existingReply, rDoc);
+                                        updateReplyItemElement(existingReply, rDoc, parentName);
                                     } else if (change.type === "removed" && existingReply) {
                                         existingReply.remove();
                                     }
@@ -2085,7 +2141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
         const isLong = message.length > 200;
-        const previewText = isLong ? message.substring(0, 200) + '...' : message;
+        const previewText = isLong ? getTruncatedText(message, 220) : message;
         const likes = data.likes || 0;
         const isAlreadyLiked = likedMessages.includes(docId);
 
@@ -2123,9 +2179,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-            <p class="gb-message"><span class="msg-text">${safePreview}</span>${isLong ? '<button class="read-more-btn" data-expanded="false">Baca Selengkapnya</button>' : ''}</p>
+            <p class="gb-message"><span class="msg-text">${safePreview}</span>${isLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions">
-                <button class="reply-btn" data-id="${docId}" data-name="${safeName}">Balas</button>
+                <button class="reply-btn" data-id="${docId}" data-name="${safeName}" data-is-subreply="false">Balas</button>
                 <button class="like-btn" data-id="${docId}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
                     <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
                 </button>
@@ -2155,7 +2211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
         const isLong = message.length > 200;
-        const previewText = isLong ? message.substring(0, 200) + '...' : message;
+        const previewText = isLong ? getTruncatedText(message, 220) : message;
         const likes = data.likes || 0;
         const likedMessages = getSafeLocalStorageArray('liked_messages');
         const isAlreadyLiked = likedMessages.includes(docSnap.id);
@@ -2186,10 +2242,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const nameEl = existingItem.querySelector('.gb-name');
+        const mainHeader = existingItem.querySelector(':scope > .gb-header-row > .gb-info > .gb-top-row') || existingItem.querySelector('.gb-header-row > .gb-info > .gb-top-row');
+        const nameEl = mainHeader ? mainHeader.querySelector('.gb-name') : existingItem.querySelector('.gb-name');
         if (nameEl) nameEl.textContent = data.name;
 
-        const verifiedIcon = existingItem.querySelector('.verified-icon');
+        const verifiedIcon = mainHeader ? mainHeader.querySelector('.verified-icon') : null;
         if (data.isMempelai && !verifiedIcon && nameEl) {
             const icon = document.createElement('i');
             icon.className = 'bi bi-patch-check-fill verified-icon';
@@ -2198,16 +2255,16 @@ document.addEventListener('DOMContentLoaded', () => {
             verifiedIcon.remove();
         }
 
-        const badgeEl = existingItem.querySelector('.status-badge');
+        const badgeEl = mainHeader ? mainHeader.querySelector('.status-badge') : existingItem.querySelector('.status-badge');
         if (badgeEl) {
             badgeEl.textContent = data.status;
             badgeEl.className = `status-badge ${statusClass}`;
         }
 
-        const timeEl = existingItem.querySelector('.gb-time');
+        const timeEl = existingItem.querySelector(':scope > .gb-header-row > .gb-info > .gb-meta > .gb-time') || existingItem.querySelector('.gb-time');
         if (timeEl) timeEl.textContent = date;
 
-        const msgContainer = existingItem.querySelector('.gb-message');
+        const msgContainer = existingItem.querySelector(':scope > .gb-message') || existingItem.querySelector('.gb-message');
         const msgTextEl = msgContainer?.querySelector('.msg-text');
         if (msgTextEl) {
             const readMoreBtn = msgContainer.querySelector('.read-more-btn');
@@ -2219,7 +2276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isLong) msgTextEl.dataset.full = message;
         }
 
-        const likeBtn = existingItem.querySelector('.like-btn');
+        const likeBtn = existingItem.querySelector(':scope > .gb-actions > .like-btn') || existingItem.querySelector('.like-btn');
         if (likeBtn) {
             likeBtn.dataset.likes = likes;
             likeBtn.setAttribute('aria-label', isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini');
@@ -2232,9 +2289,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (icon) icon.className = `bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}`;
         }
 
-        const viewReplyBtn = existingItem.querySelector('.view-reply-btn');
+        const replyBtn = existingItem.querySelector(':scope > .gb-actions > .reply-btn') || existingItem.querySelector('.reply-btn');
+        if (replyBtn) {
+            replyBtn.dataset.name = data.name || 'Tamu';
+            replyBtn.dataset.isSubreply = 'false';
+        }
+
+        const viewReplyBtn = existingItem.querySelector(':scope > .reply-toggle-container > .view-reply-btn') || existingItem.querySelector('.view-reply-btn');
         if (viewReplyBtn) {
             viewReplyBtn.dataset.count = data.replyCount || 0;
+            viewReplyBtn.dataset.parentName = data.name || '';
             const replyContent = existingItem.querySelector('.gb-reply');
             const isVisible = replyContent && replyContent.style.display !== 'none';
             viewReplyBtn.innerHTML = isVisible
@@ -2249,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tempDiv.innerHTML = `
                 <div class="reply-toggle-container">
                     <div id="reply-content-${docSnap.id}" class="gb-reply fade-in-text" style="display: none;"></div>
-                    <button class="view-reply-btn" data-id="${docSnap.id}" data-count="${data.replyCount || 0}" data-parent-name="${data.name}">
+                    <button class="view-reply-btn" data-id="${docSnap.id}" data-count="${data.replyCount || 0}" data-parent-name="${escapeHTML(data.name || 'Tamu')}">
                         <i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya
                     </button>
                 </div>

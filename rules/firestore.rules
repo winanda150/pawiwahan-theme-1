@@ -128,8 +128,8 @@ service cloud.firestore {
         && data.message is string 
         && data.message.size() >= 2 && data.message.size() <= 500
         && data.replyTo is string 
-        && data.replyTo.size() >= 1 && data.replyTo.size() <= 50
-        && data.replyTo.matches('^[a-zA-Z0-9 .,\'\\-]{1,50}$')
+        && data.replyTo.size() >= 0 && data.replyTo.size() <= 50
+        && data.replyTo.matches('^[a-zA-Z0-9 .,\'\\-]{0,50}$')
         && data.isMempelaiReply is bool
         && data.likes == 0
         && data.timestamp == request.time

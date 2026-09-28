@@ -1544,6 +1544,12 @@ body:active {
     white-space: pre-line;
 }
 
+.gb-message::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
 .msg-text {
     display: inline;
     white-space: pre-line;
@@ -1706,13 +1712,19 @@ img.emoji {
     border: none;
     color: #bfa100;
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     padding: 0;
-    margin-left: 3px;
-    display: inline-block;
+    margin-left: 4px;
+    display: inline;
     vertical-align: baseline;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.read-more-btn:hover {
+    color: #8c7300;
+    text-decoration: underline;
 }
 
 .gb-actions {
@@ -2137,8 +2149,9 @@ img.emoji {
 .reply-to-mention {
     color: #bfa100;
     font-weight: 700;
-    font-size: 0.85rem;
-    margin-right: 6px;
+    font-size: 0.88rem;
+    margin-right: 5px;
+    display: inline;
     text-decoration: none;
 }
 
@@ -2274,16 +2287,10 @@ img.emoji {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease;
     z-index: 10;
     line-height: 1;
-}
-
-.btn-emoji-trigger:hover,
-.btn-emoji-trigger.active {
-    color: #d4af37;
-    background-color: rgba(212, 175, 55, 0.12);
-    transform: scale(1.15);
+    outline: none;
+    box-shadow: none;
 }
 
 .emoji-picker-dropdown {
@@ -2304,6 +2311,7 @@ img.emoji {
         opacity: 0;
         transform: translateY(8px) scale(0.96);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
