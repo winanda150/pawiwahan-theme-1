@@ -1097,12 +1097,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const docRef = doc(db, "messages", replyingToId);
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
                     const newReplyRef = doc(repliesRef);
+                    const isSubReply = Boolean(replyingToIsSubReply);
                     const targetName = (replyingToTargetName || (document.getElementById('replying-to-name')?.innerText || '')).replace(/^@/, '').trim() || 'Tamu';
 
                     const replyData = {
                         name: rawName,
                         message: rawMessage,
-                        replyTo: targetName,
+                        replyTo: isSubReply ? targetName : '',
                         isMempelaiReply: Boolean(isMempelai),
                         timestamp: serverTimestamp(),
                         likes: 0
@@ -1507,12 +1508,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const safePreview = formatRichText(rPreviewText);
 
         // Aturan Tag / Mention:
-        // Tag @NamaTarget hanya muncul jika membalas balasan orang lain (sub-reply),
-        // dan tidak muncul jika membalas pesan komentar utama (parent).
-        const cleanParent = (parentName || '').trim().toLowerCase();
+        // - Jika membalas di bagian dalam balasan (sub-reply), rData.replyTo terisi -> Tampilkan tag @NamaTarget
+        // - Jika membalas pesan komentar utama, rData.replyTo kosong -> Bersih tanpa tag
         const cleanReplyTo = (rData.replyTo || '').replace(/^@/, '').trim();
-        const isParentTarget = cleanParent && cleanReplyTo.toLowerCase() === cleanParent;
-        const rawTarget = (!isParentTarget && cleanReplyTo) ? cleanReplyTo : '';
+        const rawTarget = cleanReplyTo;
         const mentionHTML = rawTarget
             ? `<span class="reply-to-mention">@${escapeHTML(rawTarget)}</span>`
             : '';
@@ -1577,11 +1576,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const rTimeEl = existingReply.querySelector('.gb-time');
         if (rTimeEl) rTimeEl.textContent = rFullDate;
 
-        const effectiveParent = parentName || existingReply.dataset.parentName || '';
-        const cleanParent = effectiveParent.trim().toLowerCase();
         const cleanReplyTo = (rData.replyTo || '').replace(/^@/, '').trim();
-        const isParentTarget = cleanParent && cleanReplyTo.toLowerCase() === cleanParent;
-        const rawTarget = (!isParentTarget && cleanReplyTo) ? cleanReplyTo : '';
+        const rawTarget = cleanReplyTo;
 
         const rMsgContainer = existingReply.querySelector('.gb-message');
         if (rMsgContainer) {
