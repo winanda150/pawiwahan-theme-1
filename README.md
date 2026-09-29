@@ -77,6 +77,7 @@ Dibangun dengan arsitektur **Vanilla Web Technologies** tanpa ketergantungan fra
         <li><strong>Hybrid Form:</strong> Konfirmasi kehadiran (Hadir/Tidak Hadir), input jumlah tamu, dan ucapan doa restu.</li>
         <li><strong>Firebase Firestore Real-Time Feed:</strong> Ucapan baru langsung muncul secara instan tanpa perlu memuat ulang halaman (<em>zero refresh</em>).</li>
         <li><strong>Thread Balasan Bertingkat:</strong> Tamu dan mempelai dapat saling membalas ucapan dengan penanda <em>mention</em> otomatis.</li>
+        <li><strong>Emoji Picker & Twemoji Universal:</strong> Keyboard emoji interaktif dan rendering vektor emoji seragam ala WhatsApp (<em>cross-platform consistency</em>).</li>
         <li><strong>Heart Floating Reactions (Likes):</strong> Efek animasi hamburan hati beterbangan saat tamu memberikan "Suka" pada pesan atau balasan.</li>
         <li><strong>Kursor Paginasi Firestore:</strong> Navigasi per 10 pesan yang hemat kuota dan efisien.</li>
       </ul>
@@ -101,21 +102,23 @@ Website ini dilengkapi dengan **Mode Mempelai Tersembunyi** yang aman untuk memu
 ```mermaid
 flowchart TD
     A["Klik 5x Judul Konfirmasi & Doa Restu"] --> B["Pop-up Modal Password"]
-    B --> C{"Verifikasi SHA-256"}
+    B --> C{"Verifikasi SHA-256 + Anti-Timing Delay"}
     C -->|Valid| D["Mode Mempelai Aktif"]
-    C -->|Gagal| E["Shake Error Toast"]
-    D --> F["Sematkan Ucapan Teratas (Pin)"]
-    D --> G["Hapus Pesan & Balasan Spam"]
-    D --> H["Badge Verifikasi Resmi Mempelai"]
-    D --> I["Lihat Statistik Total Tamu Real-Time"]
+    C -->|Gagal < 5x| E["Shake Error Toast"]
+    C -->|Gagal >= 5x| F["Progressive Lockout 30s-300s"]
+    D --> G["Sematkan Ucapan Teratas (Pin)"]
+    D --> H["Hapus Pesan & Balasan Spam"]
+    D --> I["Badge Verifikasi Resmi Mempelai"]
+    D --> J["Lihat Statistik Total Tamu Real-Time"]
 ```
 
 ### Keunggulan Mode Mempelai:
 1. **Keamanan Kriptografi SHA-256:** Password diverifikasi menggunakan hashing satu arah (`Web Crypto API`), sehingga kata sandi asli tidak tersimpan dalam bentuk plain-text di kode sumber.
-2. **Sematkan Ucapan Favorit (*Pin Message*):** Tempatkan doa terindah dari keluarga atau tamu kehormatan di posisi paling atas dengan label khusus.
-3. **Lencana Resmi (*Verified Badge*):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (*Verified Badge*).
-4. **Moderasi Pesan (*Delete Action*):** Hapus ucapan atau balasan yang tidak sesuai dengan dialog konfirmasi khusus.
-5. **Live Guest Counter:** Memantau akumulasi total jumlah tamu yang menyatakan hadir secara real-time.
+2. **Anti-Brute Force & Progressive Lockout:** Proteksi keamanan dengan *artificial delay* 350ms (anti-timing attack) dan penangguhan akses bertingkat (30 detik hingga 5 menit jika gagal 5–10 kali).
+3. **Sematkan Ucapan Favorit (*Pin Message*):** Tempatkan doa terindah dari keluarga atau tamu kehormatan di posisi paling atas dengan label khusus.
+4. **Lencana Resmi (*Verified Badge*):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (*Verified Badge*).
+5. **Moderasi Pesan (*Delete Action*):** Hapus ucapan atau balasan yang tidak sesuai dengan dialog konfirmasi khusus.
+6. **Live Guest Counter:** Memantau akumulasi total jumlah tamu yang menyatakan hadir secara real-time langsung dari dokumen metadata/agregasi server.
 
 ---
 
@@ -125,6 +128,7 @@ flowchart TD
 | :--- | :--- | :--- |
 | **Core Architecture** | `HTML5`, `CSS3`, `JavaScript (ES6+)` | Struktur semantik, styling fleksibel tanpa framework, dan JavaScript modern modular. |
 | **Database & Backend** | `Google Firebase Cloud Firestore v10.7.1` | Penyimpanan data kehadiran, doa restu, likes, replies, dan statistik secara real-time. |
+| **Emoji & Vector Graphics** | `Twemoji (@twemoji/api) & emoji-picker-element` | Rendering emoji seragam ala WhatsApp dan keyboard pemilih emoji interaktif. |
 | **Typography** | `Google Fonts (Cinzel & Montserrat)` | Kombinasi font serif klasik bernuansa sakral dan sans-serif modern yang mudah dibaca. |
 | **Iconography** | `Bootstrap Icons v1.11.3` | Ikon web berbasis font vektor yang tajam dan ringan. |
 | **Scroll Animation** | `AOS (Animate On Scroll v2.3.4)` | Efek animasi bertahap (*fade*, *zoom*) yang disesuaikan per breakpoint layar. |
@@ -150,13 +154,14 @@ pawiwahan-theme-1/
 │   └── 📁 Photo Gallery/                # Galeri dokumentasi & prewedding (WebP)
 │       ├── Cover1.webp                  # Cover slide utama
 │       ├── Cover2.webp                  # Cover slide alternatif & galeri
-│       └── Foto1.webp ... Foto13.webp   # Koleksi 13 foto galeri interaktif
+│       └── Foto1.webp ... Foto12.webp   # Koleksi 12 foto galeri interaktif
 │
 ├── 📄 index.html                        # Struktur utama halaman, meta SEO, & modal
 ├── 🎨 style.css                         # Desain sistem, palet warna, responsivitas, & animasi
 ├── ⚡ script.js                          # Logika interaktif, Firestore real-time, & lightbox
-├── 📁 rules/                            # Konfigurasi keamanan & aturan database
-│   └── 🔒 firestore.rules               # Aturan keamanan Cloud Firestore (Security Rules)
+├── 📁 rules/                            # Konfigurasi keamanan & indeks database
+│   ├── 🔒 firestore.rules               # Aturan keamanan Cloud Firestore (Security Rules)
+│   └── 📑 firestore.indexes.json        # Pengaturan Composite Indexes Firestore
 ├── 🔧 firebase.json                     # Konfigurasi deployment Firebase CLI
 ├── ⚙️ sw.js                             # Service Worker untuk manajemen cache & mode offline
 ├── 📱 site.webmanifest                  # Konfigurasi PWA (nama aplikasi, icon, tema warna)
@@ -254,12 +259,17 @@ Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada 
 - **⚡ Batasan Operasi Dinamis (Anti-Bot):** Operasi *like* dan *reply count* dibatasi hanya $\pm 1$ per request serta mencegah nilai negatif.
 - **🚫 Global Wildcard Lockdown:** Mengunci seluruh koleksi lain di database selain yang diizinkan (`allow read, write: if false;`).
 
-### 🚀 Cara Menerapkan Security Rules:
+### 🚀 Cara Menerapkan Security Rules & Indexes:
 
 #### Opsi 1: Menggunakan Firebase CLI (Direkomendasikan)
-Jalankan perintah berikut di terminal root proyek:
+Jalankan perintah berikut di terminal root proyek untuk men-deploy *rules* dan *indexes* sekaligus:
 ```bash
+# Deploy Rules & Indexes sekaligus
+npx firebase deploy --only firestore
+
+# Atau deploy secara terpisah
 npx firebase deploy --only firestore:rules
+npx firebase deploy --only firestore:indexes
 ```
 
 #### Opsi 2: Menggunakan Firebase Console (Manual)
