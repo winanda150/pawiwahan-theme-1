@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pawiwahan-v9';
+const CACHE_NAME = 'pawiwahan-v10';
 const ASSETS_TO_CACHE = [
     './index.html',
     './style.css',

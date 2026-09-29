@@ -26,9 +26,9 @@ service cloud.firestore {
       return data.keys().hasOnly(['name', 'status', 'count', 'message', 'timestamp', 'likes', 'replyCount', 'isPinned', 'pinnedAt', 'isMempelai'])
         && data.name is string 
         && data.name.size() >= 2 && data.name.size() <= 50
-        && data.name.matches('^[a-zA-Z0-9 .,\'&\\-]{2,50}$')
+        && data.name.matches('^[a-zA-Z0-9 .,\'’&/()+\\-]{2,50}$')
         && data.message is string 
-        && data.message.size() >= 2 && data.message.size() <= 500
+        && data.message.size() >= 1 && data.message.size() <= 500
         && data.status in ['Hadir', 'Tidak Hadir']
         && data.count is int
         && (data.status == 'Tidak Hadir' ? data.count == 0 : (data.count >= 1 && data.count <= 10))
@@ -56,6 +56,8 @@ service cloud.firestore {
                             (('isPinned' in resource.data) && ('isPinned' in request.resource.data) && request.resource.data.isPinned == resource.data.isPinned);
       let pinnedAtMatches = (!('pinnedAt' in resource.data) && !('pinnedAt' in request.resource.data)) ||
                             (('pinnedAt' in resource.data) && ('pinnedAt' in request.resource.data) && request.resource.data.pinnedAt == resource.data.pinnedAt);
+      let replyCountMatches = (!('replyCount' in resource.data) && !('replyCount' in request.resource.data)) ||
+                              (('replyCount' in resource.data) && ('replyCount' in request.resource.data) && request.resource.data.replyCount == resource.data.replyCount);
 
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
         && request.resource.data.likes is int
@@ -67,7 +69,7 @@ service cloud.firestore {
         && request.resource.data.status == resource.data.status
         && request.resource.data.count == resource.data.count
         && request.resource.data.timestamp == resource.data.timestamp
-        && request.resource.data.replyCount == resource.data.replyCount
+        && replyCountMatches
         && isMempelaiMatches
         && isPinnedMatches
         && pinnedAtMatches;
@@ -82,6 +84,8 @@ service cloud.firestore {
                             (('isPinned' in resource.data) && ('isPinned' in request.resource.data) && request.resource.data.isPinned == resource.data.isPinned);
       let pinnedAtMatches = (!('pinnedAt' in resource.data) && !('pinnedAt' in request.resource.data)) ||
                             (('pinnedAt' in resource.data) && ('pinnedAt' in request.resource.data) && request.resource.data.pinnedAt == resource.data.pinnedAt);
+      let likesMatches = (!('likes' in resource.data) && !('likes' in request.resource.data)) ||
+                         (('likes' in resource.data) && ('likes' in request.resource.data) && request.resource.data.likes == resource.data.likes);
 
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
         && request.resource.data.replyCount is int
@@ -93,7 +97,7 @@ service cloud.firestore {
         && request.resource.data.status == resource.data.status
         && request.resource.data.count == resource.data.count
         && request.resource.data.timestamp == resource.data.timestamp
-        && request.resource.data.likes == resource.data.likes
+        && likesMatches
         && isMempelaiMatches
         && isPinnedMatches
         && pinnedAtMatches;
@@ -103,6 +107,10 @@ service cloud.firestore {
     function isValidPinUpdate(messageId) {
       let isMempelaiMatches = (!('isMempelai' in resource.data) && !('isMempelai' in request.resource.data)) ||
                               (('isMempelai' in resource.data) && ('isMempelai' in request.resource.data) && request.resource.data.isMempelai == resource.data.isMempelai);
+      let likesMatches = (!('likes' in resource.data) && !('likes' in request.resource.data)) ||
+                         (('likes' in resource.data) && ('likes' in request.resource.data) && request.resource.data.likes == resource.data.likes);
+      let replyCountMatches = (!('replyCount' in resource.data) && !('replyCount' in request.resource.data)) ||
+                              (('replyCount' in resource.data) && ('replyCount' in request.resource.data) && request.resource.data.replyCount == resource.data.replyCount);
 
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPinned', 'pinnedAt'])
         && request.resource.data.isPinned is bool
@@ -113,8 +121,8 @@ service cloud.firestore {
         && request.resource.data.status == resource.data.status
         && request.resource.data.count == resource.data.count
         && request.resource.data.timestamp == resource.data.timestamp
-        && request.resource.data.likes == resource.data.likes
-        && request.resource.data.replyCount == resource.data.replyCount
+        && likesMatches
+        && replyCountMatches
         && isMempelaiMatches;
     }
 
@@ -124,12 +132,12 @@ service cloud.firestore {
       return data.keys().hasOnly(['name', 'message', 'replyTo', 'isMempelaiReply', 'timestamp', 'likes'])
         && data.name is string 
         && data.name.size() >= 2 && data.name.size() <= 50
-        && data.name.matches('^[a-zA-Z0-9 .,\'&\\-]{2,50}$')
+        && data.name.matches('^[a-zA-Z0-9 .,\'’&/()+\\-]{2,50}$')
         && data.message is string 
-        && data.message.size() >= 2 && data.message.size() <= 500
+        && data.message.size() >= 1 && data.message.size() <= 500
         && data.replyTo is string 
         && data.replyTo.size() >= 0 && data.replyTo.size() <= 50
-        && data.replyTo.matches('^[a-zA-Z0-9 .,\'&\\-]{0,50}$')
+        && data.replyTo.matches('^[a-zA-Z0-9 .,\'’&/()+\\-]{0,50}$')
         && data.isMempelaiReply is bool
         && data.likes == 0
         && data.timestamp == request.time

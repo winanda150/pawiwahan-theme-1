@@ -365,8 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Logika Auto-Retry Loading Gambar ---
     // Fungsi ini akan mencoba memuat ulang gambar jika terjadi kesalahan jaringan atau gagal muat
     const initImageRetry = (img) => {
-        // Abaikan elemen gambar tanpa src valid atau yang masih kosong saat inisialisasi
-        if (!img || !img.getAttribute('src') || img.src === '' || img.src.startsWith('data:')) return;
+        if (!img) return;
 
         let retries = 0;
         const maxRetries = 10; // Jumlah maksimal percobaan ulang (10 kali)
@@ -396,8 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Terapkan mekanisme retry ke semua gambar yang memiliki atribut src valid
+    // Terapkan mekanisme retry ke semua gambar yang ada di HTML serta gambar Lightbox
     document.querySelectorAll('img[src]:not([src=""])').forEach(initImageRetry);
+    if (lightboxImg) initImageRetry(lightboxImg);
 
     // Ambil semua elemen gambar galeri yang ada di HTML
     const allGalleryImages = Array.from(document.querySelectorAll('.gallery-item img'));
@@ -808,11 +808,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusSelect = document.getElementById('att-status');
     const countGroup = document.getElementById('count-group');
 
-    // Filter input nama agar hanya karakter yang valid untuk nama/gelar (huruf, angka, spasi, titik, koma, petik, ampersand, tanda hubung)
+    // Filter input nama agar hanya karakter yang valid untuk nama/gelar (huruf, angka, spasi, titik, koma, petik, ampersand, plus, tanda hubung, garis miring, kurung)
     const nameInput = document.getElementById('att-name');
     if (nameInput) {
         nameInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^a-zA-Z0-9\s.,'&\\-]/g, '');
+            // Normalisasi otomatis tanda petik lengkung/smart punctuation khas iOS/Android/Mac ke karakter standar ASCII
+            this.value = this.value
+                .replace(/[‘’`]/g, "'")
+                .replace(/[“”]/g, "'")
+                .replace(/[–—]/g, '-')
+                .replace(/[^a-zA-Z0-9\s.,'&/()+\-]/g, '');
         });
     }
 
@@ -924,8 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;')
-            .replace(/`/g, '&#x60;');
+            .replace(/'/g, '&#039;');
     }
 
     // --- Helper Universal WhatsApp-Style Emoji Renderer ---
@@ -1068,18 +1072,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const submitBtn = hybridForm.querySelector('button[type="submit"]');
             if (isFormSubmitting) return;
 
-            // 1. Validasi Input Ketat (Selaras dengan Firestore Rules)
-            const rawName = (document.getElementById('att-name')?.value || '').trim();
+            // 1. Validasi Input Ketat (Selaras dengan Firestore Rules & Normalisasi Smart Punctuation)
+            const rawName = (document.getElementById('att-name')?.value || '')
+                .replace(/[‘’`]/g, "'")
+                .replace(/[“”]/g, "'")
+                .replace(/[–—]/g, '-')
+                .trim();
             const rawMessage = (document.getElementById('att-message')?.value || '').trim();
-            const validNameRegex = /^[a-zA-Z0-9 .,'&\\-]{2,50}$/;
+            const validNameRegex = /^[a-zA-Z0-9 .,'&/()+\-]{2,50}$/;
 
             if (rawName.length < 2 || rawName.length > 50 || !validNameRegex.test(rawName)) {
                 showToast('Mohon masukkan nama yang valid (2–50 karakter).', 'error');
                 return;
             }
 
-            if (rawMessage.length < 2 || rawMessage.length > 500) {
-                showToast('Mohon tuliskan ucapan doa restu antara 2 hingga 500 karakter.', 'error');
+            if (rawMessage.length < 1 || rawMessage.length > 500) {
+                showToast('Mohon tuliskan ucapan doa restu antara 1 hingga 500 karakter.', 'error');
                 return;
             }
 
@@ -1107,7 +1115,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const repliesRef = collection(db, "messages", replyingToId, "replies");
                     const newReplyRef = doc(repliesRef);
                     const isSubReply = Boolean(replyingToIsSubReply);
-                    const targetName = (replyingToTargetName || (document.getElementById('replying-to-name')?.innerText || '')).replace(/^@/, '').trim() || 'Tamu';
+                    const targetName = (replyingToTargetName || (document.getElementById('replying-to-name')?.innerText || ''))
+                        .replace(/^@/, '')
+                        .replace(/[‘’`]/g, "'")
+                        .replace(/[“”]/g, "'")
+                        .replace(/[–—]/g, '-')
+                        .trim() || 'Tamu';
 
                     const replyData = {
                         name: rawName,
@@ -2109,12 +2122,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             replyContent.innerHTML = '<p style="color: #dc3545; font-size: 0.8rem; margin: 5px 0;">Gagal memuat balasan.</p>';
                         });
                     }
+                    replyContent.style.display = 'block';
+                    btn.innerHTML = `<i class="bi bi-chevron-up"></i> Sembunyikan balasan`;
+                } else {
+                    // Sembunyikan dan bersihkan listener agar hemat memori & kuota
+                    if (replyUnsubscribers[docId]) {
+                        replyUnsubscribers[docId]();
+                        delete replyUnsubscribers[docId];
+                    }
+                    replyContent.style.display = 'none';
+                    replyContent.innerHTML = '';
+                    btn.innerHTML = `<i class="bi bi-arrow-return-right"></i> Lihat ${btn.dataset.count || 0} balasan lainnya`;
                 }
-
-                replyContent.style.display = isHidden ? 'block' : 'none';
-                btn.innerHTML = isHidden
-                    ? `<i class="bi bi-chevron-up"></i> Sembunyikan balasan`
-                    : `<i class="bi bi-arrow-return-right"></i> Lihat ${btn.dataset.count || 0} balasan lainnya`;
             }
         }
     });
@@ -2376,7 +2395,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const qPinned = query(collection(db, "messages"), where("isPinned", "==", true));
         unsubscribePinned = onSnapshot(qPinned, (snapshot) => {
             pinnedIds.clear();
-            if (!snapshot.metadata.hasPendingWrites) {
+            const hasStructuralChange = snapshot.docChanges().some(c => c.type === 'added' || c.type === 'removed');
+            if (!snapshot.metadata.hasPendingWrites && hasStructuralChange) {
                 updateTotalCount();
                 if (isMempelai) {
                     syncGuestCount();
@@ -2446,10 +2466,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getQueryForPage(page) {
+        const pageSize = 10 + (pinnedIds ? pinnedIds.size : 0);
         if (page === 1 || !pageCursors[page]) {
-            return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10));
+            return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(pageSize));
         }
-        return query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(pageCursors[page]), limit(10));
+        return query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(pageCursors[page]), limit(pageSize));
     }
 
     function loadGuestbook(page = 1) {
@@ -2473,16 +2494,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = getQueryForPage(currentPage);
 
         unsubscribeGb = onSnapshot(q, (snapshot) => {
-            if (!snapshot.metadata.hasPendingWrites) {
+            const hasStructuralChange = snapshot.docChanges().some(c => c.type === 'added' || c.type === 'removed');
+            if (!snapshot.metadata.hasPendingWrites && hasStructuralChange) {
                 updateTotalCount();
                 if (isMempelai) {
                     syncGuestCount();
                 }
             }
 
-            if (snapshot.empty) {
+            const unpinnedDocs = snapshot.docs.filter(docSnap => docSnap.data().isPinned !== true);
+
+            if (unpinnedDocs.length === 0) {
                 if (currentPage === 1) {
-                    updateTotalCount(0);
+                    updateTotalCount(pinnedIds ? pinnedIds.size : 0);
                     if (isMempelai) {
                         syncGuestCount(0);
                     }
@@ -2493,20 +2517,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Simpan cursor untuk halaman berikutnya (jika ada dokumen)
-            if (snapshot.docs.length > 0) {
-                pageCursors[currentPage + 1] = snapshot.docs[snapshot.docs.length - 1];
+            // Ambil maksimal 10 pesan reguler untuk ditampilkan pada halaman ini
+            const visibleDocs = unpinnedDocs.slice(0, 10);
+
+            // Simpan cursor untuk halaman berikutnya berdasarkan dokumen reguler terakhir
+            if (visibleDocs.length > 0) {
+                pageCursors[currentPage + 1] = visibleDocs[visibleDocs.length - 1];
             }
 
-            // Update status tombol navigasi (berikutnya aktif hanya jika ada 10 dokumen)
-            if (btnNextGb) btnNextGb.disabled = snapshot.size < 10;
+            // Update status tombol navigasi
+            if (btnNextGb) btnNextGb.disabled = unpinnedDocs.length <= 10 && snapshot.size < (10 + (pinnedIds ? pinnedIds.size : 0));
             if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
 
             if (isInitialLoad) {
-                // Bersihkan kontainer dan render hanya dokumen yang belum disematkan
+                // Bersihkan kontainer dan render dokumen reguler
                 targetList.innerHTML = '';
-                snapshot.docs.forEach((docSnap) => {
-                    if (docSnap.data().isPinned === true) return;
+                visibleDocs.forEach((docSnap) => {
                     const item = createMessageElement(docSnap, true, false);
                     targetList.appendChild(item);
                 });

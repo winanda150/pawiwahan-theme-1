@@ -441,8 +441,8 @@
                             <div class="form-group">
                                 <label for="att-name">Nama Lengkap</label>
                                 <input type="text" id="att-name" placeholder="Masukkan nama Anda" required
-                                    pattern="[A-Za-z0-9\s.,'&amp;\-]+"
-                                    title="Nama hanya boleh berisi huruf, angka, spasi, titik, koma, petik, ampersand (&amp;), atau tanda hubung"
+                                    pattern="[A-Za-z0-9\s.,'&amp;/()+\-]+"
+                                    title="Nama hanya boleh berisi huruf, angka, spasi, titik, koma, petik, ampersand (&amp;), tanda tambah (+), tanda hubung, garis miring, atau tanda kurung"
                                     maxlength="50">
                             </div>
                             <div class="form-row">
@@ -467,12 +467,14 @@
                             <div class="form-group emoji-field-group">
                                 <label for="att-message">Ucapan & Doa Restu</label>
                                 <div class="textarea-relative-wrapper">
-                                    <textarea id="att-message" placeholder="Tuliskan ucapan manis Anda..." rows="4" required
-                                        maxlength="500"></textarea>
-                                    <button type="button" id="btn-emoji-trigger" class="btn-emoji-trigger" aria-label="Buka keyboard emoji" title="Sisipkan Emoji">
+                                    <textarea id="att-message" placeholder="Tuliskan ucapan manis Anda..." rows="4"
+                                        required maxlength="500"></textarea>
+                                    <button type="button" id="btn-emoji-trigger" class="btn-emoji-trigger"
+                                        aria-label="Buka keyboard emoji" title="Sisipkan Emoji">
                                         <i class="bi bi-emoji-smile"></i>
                                     </button>
-                                    <div id="emoji-picker-dropdown" class="emoji-picker-dropdown" style="display: none;">
+                                    <div id="emoji-picker-dropdown" class="emoji-picker-dropdown"
+                                        style="display: none;">
                                         <emoji-picker class="light"></emoji-picker>
                                     </div>
                                 </div>
