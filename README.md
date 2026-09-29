@@ -298,7 +298,7 @@ Slate Grey       : #718096  ■■■■■■■ (Teks Deskripsi & Subjudul)
 ## 📱 Performa & Best Practices
 
 - ⚡ **Google Web Vitals Optimized:** Menggunakan format gambar generasi terbaru `.webp` yang dikompresi maksimal.
-- 🚀 **Preload & Asynchronous Assets:** Preload aset kritis (`Cover1.webp`, `wave.webp`), non-blocking font loading (`media="print" onload="this.media='all'"`).
+- 🚀 **Preload & Asynchronous Assets:** Preload aset kritis LCP (`Cover1.webp`), non-blocking font loading (`media="print" onload="this.media='all'"`).
 - 🛡️ **Anti-Inspect & Content Protection:** Mencegah klik kanan tak sengaja, drag gambar sembarangan, serta pintasan inspeksi elemen.
 - 📶 **PWA Service Worker:** Mendukung caching cerdas agar undangan tetap dapat dibuka dengan lancar meskipun sinyal tamu kurang stabil.
 
