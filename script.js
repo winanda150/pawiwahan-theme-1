@@ -19,8 +19,11 @@ const db = initializeFirestore(app, {
 });
 
 // --- FITUR ANTI-INSPECT & KLIK KANAN ---
-// Menghalangi menu klik kanan
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+// Menghalangi menu klik kanan (kecuali pada input/textarea agar pengguna dapat menempel teks/kata sandi)
+document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('input, textarea')) return;
+    e.preventDefault();
+});
 
 // Menghalangi penyeretan gambar (drag) menggunakan mouse
 document.addEventListener('dragstart', (e) => {
@@ -362,12 +365,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Logika Auto-Retry Loading Gambar ---
     // Fungsi ini akan mencoba memuat ulang gambar jika terjadi kesalahan jaringan atau gagal muat
     const initImageRetry = (img) => {
+        // Abaikan elemen gambar tanpa src valid atau yang masih kosong saat inisialisasi
+        if (!img || !img.getAttribute('src') || img.src === '' || img.src.startsWith('data:')) return;
+
         let retries = 0;
         const maxRetries = 10; // Jumlah maksimal percobaan ulang (10 kali)
 
         img.addEventListener('error', function handleError() {
+            if (!this.src || this.src === window.location.href || this.src.startsWith('data:')) return;
+
             // Mendapatkan URL asli tanpa parameter retry/timestamp sebelumnya
             const currentSrc = this.src.split(/[?&]retry=/)[0].split(/[?&]t=/)[0];
+            if (!currentSrc || currentSrc === window.location.href) return;
 
             if (retries < maxRetries) {
                 retries++;
@@ -387,8 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Terapkan mekanisme retry ke semua gambar (Galeri, Mempelai, Cover, dan Lightbox)
-    document.querySelectorAll('img').forEach(initImageRetry);
+    // Terapkan mekanisme retry ke semua gambar yang memiliki atribut src valid
+    document.querySelectorAll('img[src]:not([src=""])').forEach(initImageRetry);
 
     // Ambil semua elemen gambar galeri yang ada di HTML
     const allGalleryImages = Array.from(document.querySelectorAll('.gallery-item img'));
@@ -799,11 +808,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusSelect = document.getElementById('att-status');
     const countGroup = document.getElementById('count-group');
 
-    // Filter input nama agar hanya karakter yang valid untuk nama/gelar (huruf, spasi, titik, koma, petik, tanda hubung)
+    // Filter input nama agar hanya karakter yang valid untuk nama/gelar (huruf, angka, spasi, titik, koma, petik, ampersand, tanda hubung)
     const nameInput = document.getElementById('att-name');
     if (nameInput) {
         nameInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^a-zA-Z\s.,'\-]/g, '');
+            this.value = this.value.replace(/[^a-zA-Z0-9\s.,'&\\-]/g, '');
         });
     }
 
@@ -945,7 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
         safe = safe.replace(/`([^`\n]+?)`/g, '<code class="gb-inline-code">$1</code>');
 
         // 3. Spoiler / Pesan Rahasia (||spoiler||) - Sentuh/klik untuk membuka
-        safe = safe.replace(/\|\|([^|\n]+?)\|\|/g, '<span class="gb-spoiler" onclick="this.classList.toggle(\'revealed\')" title="Klik untuk membuka pesan rahasia">$1</span>');
+        safe = safe.replace(/\|\|([^|\n]+?)\|\|/g, '<span class="gb-spoiler" title="Klik untuk membuka pesan rahasia">$1</span>');
 
         // 4. Highlight / Penanda Teks (==highlight==)
         safe = safe.replace(/==([^=\n]+?)==/g, '<mark class="gb-highlight">$1</mark>');
@@ -1062,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Validasi Input Ketat (Selaras dengan Firestore Rules)
             const rawName = (document.getElementById('att-name')?.value || '').trim();
             const rawMessage = (document.getElementById('att-message')?.value || '').trim();
-            const validNameRegex = /^[a-zA-Z0-9 .,'\-]{2,50}$/;
+            const validNameRegex = /^[a-zA-Z0-9 .,'&\\-]{2,50}$/;
 
             if (rawName.length < 2 || rawName.length > 50 || !validNameRegex.test(rawName)) {
                 showToast('Mohon masukkan nama yang valid (2–50 karakter).', 'error');
@@ -1255,6 +1264,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const fullText = msgEl.dataset.full || '';
 
+            // Tandai status bahwa pesan ini sudah dibuka penuh agar tidak tertutup saat ada update real-time
+            msgEl.dataset.expanded = 'true';
+
             // Hapus class jika sudah ada untuk reset animasi
             msgEl.classList.remove('fade-in-text');
             void msgEl.offsetWidth; // Force reflow agar animasi bisa dipicu ulang
@@ -1286,6 +1298,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // 1. Ambil data instan dari dokumen metadata/totals (cepat, akurat, dan tidak membutuhkan composite index)
+        try {
+            const metaSnap = await getDoc(doc(db, "metadata", "totals"));
+            if (metaSnap.exists()) {
+                const total = metaSnap.data().totalGuests || 0;
+                guestCounter.innerText = Math.max(0, total);
+                return total;
+            }
+        } catch (metaErr) {
+            // Lanjut ke agregasi server jika metadata belum ada
+        }
+
+        // 2. Fallback: Rekonsiliasi langsung melalui agregasi server jika dokumen metadata belum ada
         try {
             const qHadir = query(collection(db, "messages"), where("status", "==", "Hadir"));
             const snapshot = await getAggregateFromServer(qHadir, {
@@ -1294,17 +1319,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = snapshot.data().totalGuests || 0;
             guestCounter.innerText = Math.max(0, total);
 
-            // Perbaiki dokumen metadata/totals jika ada selisih (misal sehabis hapus manual di console)
+            // Perbaiki dokumen metadata/totals
             try {
                 await setDoc(doc(db, "metadata", "totals"), {
                     totalGuests: total
                 }, { merge: true });
-            } catch (metaErr) {
-                // Abaikan jika ada pembatasan rules
+            } catch (saveErr) {
+                // Abaikan pembatasan rules
             }
             return total;
         } catch (error) {
-            console.warn("Gagal sinkronisasi agregasi tamu:", error);
+            // Jika composite index belum aktif di Firebase Console, gunakan default 0 tanpa melempar error
+            if (guestCounter && guestCounter.innerText === '') {
+                guestCounter.innerText = "0";
+            }
         }
     }
 
@@ -1600,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rMsgTextEl = rMsgContainer?.querySelector('.msg-text');
         if (rMsgTextEl) {
             const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
-            const rIsExpanded = rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true';
+            const rIsExpanded = rMsgTextEl.dataset.expanded === 'true' || (rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true');
             if (!rIsExpanded) {
                 rMsgTextEl.innerHTML = formatRichText(rPreviewText);
                 applyTwemoji(rMsgTextEl);
@@ -1639,6 +1667,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('click', async (e) => {
+        // 0. Toggle Spoiler / Pesan Rahasia
+        const spoiler = e.target.closest('.gb-spoiler');
+        if (spoiler) {
+            spoiler.classList.toggle('revealed');
+        }
+
         // 1. Klik Tombol Balas (Publik)
         const confirmModal = document.getElementById('custom-confirm-modal');
         if (e.target.classList.contains('reply-btn') || e.target.closest('.reply-btn')) {
@@ -2264,7 +2298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgTextEl = msgContainer?.querySelector('.msg-text');
         if (msgTextEl) {
             const readMoreBtn = msgContainer.querySelector('.read-more-btn');
-            const isExpanded = readMoreBtn && readMoreBtn.dataset.expanded === 'true';
+            const isExpanded = msgTextEl.dataset.expanded === 'true' || (readMoreBtn && readMoreBtn.dataset.expanded === 'true');
             if (!isExpanded) {
                 msgTextEl.innerHTML = formatRichText(previewText);
                 applyTwemoji(msgTextEl);

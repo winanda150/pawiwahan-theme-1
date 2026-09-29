@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pawiwahan-v8';
+const CACHE_NAME = 'pawiwahan-v9';
 const ASSETS_TO_CACHE = [
     './index.html',
     './style.css',
@@ -38,12 +38,14 @@ self.addEventListener('fetch', (event) => {
     // Abaikan permintaan non-GET dan scheme non-http (seperti chrome-extension)
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
-    // Abaikan permintaan Firebase/Google API/Analytics agar tidak konflik dengan real-time data
+    // Abaikan permintaan Firebase/Google API/Analytics serta streaming audio (.mp3 & Range Requests) agar tidak konflik di Safari/iOS
     if (
         event.request.url.includes('googleapis.com') ||
         event.request.url.includes('firebaseio.com') ||
         event.request.url.includes('google-analytics.com') ||
-        event.request.url.includes('googletagmanager.com')
+        event.request.url.includes('googletagmanager.com') ||
+        event.request.headers.get('range') ||
+        event.request.url.match(/\.mp3$/i)
     ) {
         return;
     }
@@ -68,14 +70,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Untuk media statis (gambar, audio, font): Cache First (super cepat dan hemat kuota)
+    // Untuk media statis (gambar, font, ikon): Cache First (super cepat dan hemat kuota)
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
                 return cachedResponse;
             }
             return fetch(event.request).then((response) => {
-                if (response && response.status === 200 && event.request.url.match(/\.(webp|jpg|jpeg|png|mp3|woff2|ico)$/)) {
+                if (response && response.status === 200 && event.request.url.match(/\.(webp|jpg|jpeg|png|woff2|ico)$/i)) {
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
