@@ -3179,7 +3179,7 @@ emoji-picker {
 
 @media (max-width: 359px) {
     .cover-content {
-        margin-bottom: 38vh;
+        margin-bottom: 20vh;
         /* Tambahan margin untuk layar sangat pendek agar teks tetap berada di atas ombak */
     }
 
