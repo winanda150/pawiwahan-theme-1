@@ -1,3 +1,19 @@
+/**
+ * ============================================================================
+ * 📶 PAWIWAHAN THEME 1 - SERVICE WORKER & SISTEM CACHING PWA
+ * ============================================================================
+ * Menyediakan ketahanan akses luring (offline), strategi caching bertingkat
+ * cerdas (Network-First untuk kode dinamis, Cache-First untuk aset media),
+ * serta pembersihan otomatis cache versi lama.
+ *
+ * @versi 10.0.0
+ * @penulis WinandaDev
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   01. DAFTAR ASET CACHE & KONFIGURASI
+   ========================================================================== */
 const CACHE_NAME = 'pawiwahan-v10';
 const ASSETS_TO_CACHE = [
     './index.html',
@@ -8,7 +24,14 @@ const ASSETS_TO_CACHE = [
     './Elemen/Elemen%20Pendukung/wave.webp'
 ];
 
-// Install Service Worker dan simpan aset dasar
+/* ==========================================================================
+   02. MANAJEMEN SIKLUS HIDUP SERVICE WORKER
+   ========================================================================== */
+
+/**
+ * Event: Install
+ * Menyimpan aset dasar ke dalam cache dan langsung mengaktifkan Service Worker.
+ */
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
@@ -18,7 +41,10 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Bersihkan cache versi lama saat service worker baru aktif
+/**
+ * Event: Activate
+ * Membersihkan cache versi usang secara otomatis saat Service Worker baru aktif.
+ */
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -33,12 +59,15 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Ambil aset dengan strategi yang tepat
+/* ==========================================================================
+   03. INTERSEPSI PERMINTAAN & ROUTER STRATEGI CACHE
+   ========================================================================== */
+
 self.addEventListener('fetch', (event) => {
-    // Abaikan permintaan non-GET dan scheme non-http (seperti chrome-extension)
+    // 1. Abaikan permintaan non-GET dan skema non-HTTP (misal chrome-extension)
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
-    // Abaikan permintaan Firebase/Google API/Analytics serta streaming audio (.mp3 & Range Requests) agar tidak konflik di Safari/iOS
+    // 2. Abaikan API eksternal, Firebase, Analytics, dan audio Range Requests (mencegah isu audio Safari/iOS)
     if (
         event.request.url.includes('googleapis.com') ||
         event.request.url.includes('firebaseio.com') ||
@@ -50,7 +79,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Untuk file kode (HTML, CSS, JS): Network First (selalu ambil versi terbaru dari server, fallback ke cache jika offline)
+    // 3. Strategi: Network-First untuk File Kode (HTML, CSS, JS) & Navigasi
+    // Memastikan user selalu mendapatkan update UI terbaru, dengan fallback cache saat offline.
     if (event.request.url.match(/\.(html|css|js)$/) || event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).then((networkResponse) => {
@@ -70,7 +100,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Untuk media statis (gambar, font, ikon): Cache First (super cepat dan hemat kuota)
+    // 4. Strategi: Cache-First untuk Media Statis (WebP, JPG, PNG, Font WOFF2, Favicon)
+    // Mengoptimalkan LCP, rendering super cepat, dan menghemat kuota internet pengguna.
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {

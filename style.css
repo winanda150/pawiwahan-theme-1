@@ -1,3 +1,31 @@
+/**
+ * ============================================================================
+ * 🎨 PAWIWAHAN THEME 1 - SISTEM DESAIN & LEMBAR GAYA (STYLE.CSS)
+ * ============================================================================
+ * Arsitektur: Variabel CSS, Scrollbar Kustom, Glassmorphism & Grid Responsif
+ * Palet Warna: Royal Gold (#d4af37), Deep Navy (#1a202c), Pure White (#ffffff)
+ *
+ * 📑 DAFTAR ISI MODUL:
+ * ----------------------------------------------------------------------------
+ * 01. RESET DASAR, TIPOGRAFI GLOBAL & SCROLLBAR
+ * 02. KONTROLER MUSIK LATAR & STATUS NOTIFIKASI HUD
+ * 03. COVER UTAMA, PARTIKEL EMAS & GELOMBANG OMBAK
+ * 04. PROFIL MEMPELAI & AYAT SUCI MANTRA RG VEDA
+ * 05. RANGKAIAN ACARA, GOOGLE MAPS/KALENDER & HITUNG MUNDUR
+ * 06. GALERI FOTO & GRID MASONRY MOMEN BAHAGIA
+ * 07. KONFIRMASI KEHADIRAN & BUKU TAMU REAL-TIME FIRESTORE
+ * 08. TANDA KASIH DIGITAL & PENGIRIMAN KADO FISIK
+ * 09. FOOTER UTAMA & TAUTAN MEDIA SOSIAL
+ * 10. SISTEM NOTIFIKASI TOAST & RESPON VISUAL
+ * 11. MODAL KONFIRMASI & AUTENTIKASI KHUSUS MEMPELAI
+ * 12. BREAKPOINT RESPONSIF (DESKTOP, TABLET, MOBILE, LANDSCAPE)
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   01. RESET DASAR, TIPOGRAFI GLOBAL & SCROLLBAR
+   ========================================================================== */
+
 /* Optimization for Bootstrap Icons Performance */
 @font-face {
     font-family: "bootstrap-icons";
@@ -95,6 +123,10 @@ body:active {
     box-shadow: none;
 }
 
+/* ==========================================================================
+   02. KONTROLER MUSIK LATAR & STATUS NOTIFIKASI HUD
+   ========================================================================== */
+
 /* Music Control Button */
 .music-control {
     position: fixed;
@@ -186,6 +218,10 @@ body:active {
         opacity: 0;
     }
 }
+
+/* ==========================================================================
+   03. COVER UTAMA, PARTIKEL EMAS & GELOMBANG OMBAK
+   ========================================================================== */
 
 /* Cover Section Styles */
 .cover {
@@ -525,6 +561,10 @@ body:active {
     }
 }
 
+/* ==========================================================================
+   04. PROFIL MEMPELAI & AYAT SUCI MANTRA RG VEDA
+   ========================================================================== */
+
 /* Mempelai Section Styles */
 .mempelai-section {
     padding: 40px 50px 0px;
@@ -764,6 +804,10 @@ body:active {
     color: #2c3e50;
     letter-spacing: 2px;
 }
+
+/* ==========================================================================
+   05. RANGKAIAN ACARA, GOOGLE MAPS/KALENDER & HITUNG MUNDUR
+   ========================================================================== */
 
 /* Event Section Styles */
 .event-section {
@@ -1016,6 +1060,10 @@ body:active {
     display: block;
     line-height: 1.3;
 }
+
+/* ==========================================================================
+   06. GALERI FOTO & GRID MASONRY MOMEN BAHAGIA
+   ========================================================================== */
 
 /* Gallery Section Styles */
 .gallery-section {
@@ -1299,6 +1347,10 @@ body:active {
 .gallery-item img {
     cursor: pointer;
 }
+
+/* ==========================================================================
+   07. KONFIRMASI KEHADIRAN & BUKU TAMU REAL-TIME FIRESTORE
+   ========================================================================== */
 
 /* Hybrid Attendance Section */
 .attendance-section {
@@ -1744,6 +1796,10 @@ img.emoji {
     cursor: pointer;
     padding: 0;
 }
+
+/* ==========================================================================
+   08. TANDA KASIH DIGITAL & PENGIRIMAN KADO FISIK
+   ========================================================================== */
 
 /* Gift Section Styles */
 .gift-section {
@@ -2382,6 +2438,10 @@ emoji-picker {
     display: block;
 }
 
+/* ==========================================================================
+   09. FOOTER UTAMA & TAUTAN MEDIA SOSIAL
+   ========================================================================== */
+
 /* Main Footer Styles */
 #main-footer {
     padding: 60px 50px 60px;
@@ -2501,6 +2561,10 @@ emoji-picker {
     letter-spacing: 0.5px;
 }
 
+/* ==========================================================================
+   10. SISTEM NOTIFIKASI TOAST & RESPON VISUAL
+   ========================================================================== */
+
 /* Toast Notification Styles */
 .toast-container {
     position: fixed;
@@ -2563,6 +2627,10 @@ emoji-picker {
         opacity: 0;
     }
 }
+
+/* ==========================================================================
+   11. MODAL KONFIRMASI & AUTENTIKASI KHUSUS MEMPELAI
+   ========================================================================== */
 
 /* Custom Confirmation Modal Styles */
 .custom-modal {
@@ -2844,6 +2912,10 @@ emoji-picker {
     position: relative;
     z-index: 1;
 }
+
+/* ==========================================================================
+   12. BREAKPOINT RESPONSIF (DESKTOP, TABLET, MOBILE, LANDSCAPE)
+   ========================================================================== */
 
 /* Mobile */
 @media (max-width: 767px) {

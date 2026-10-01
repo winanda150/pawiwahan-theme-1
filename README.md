@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
   <img src="https://img.shields.io/badge/Firebase_Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA" />
-  <img src="https://img.shields.io/badge/Responsive-Mobile--First-success?style=for-the-badge" alt="Responsive" />
+  <img src="https://img.shields.io/badge/Responsive-Desktop--First-success?style=for-the-badge" alt="Responsive" />
 </p>
 
 </div>

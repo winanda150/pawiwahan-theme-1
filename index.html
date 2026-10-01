@@ -1,7 +1,16 @@
+<!-- ==========================================================================
+     💍 PAWIWAHAN THEME 1 - APLIKASI WEB UNDANGAN PERNIKAHAN ADAT BALI
+     ==========================================================================
+     Arsitektur: HTML5 Semantik, Skala Viewport Dinamis, Optimasi SEO & JSON-LD
+     Dirancang & Dikembangkan dengan ❤️ oleh WinandaDev
+     ========================================================================== -->
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
+    <!-- ==========================================================================
+         01. METADATA HEAD, SEO OPENGRAPH & TWITTER CARD
+         ========================================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Undangan Pawiwahan | Edi & Winda</title>
@@ -44,6 +53,9 @@
         content="https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp">
     <meta name="twitter:image:alt" content="Foto Undangan Pernikahan Edi dan Winda">
 
+    <!-- ==========================================================================
+         02. MANIFEST PWA, FAVICON & PRELOAD PRIORITAS TINGGI
+         ========================================================================== -->
     <!-- Web App Manifest & Favicon -->
     <link rel="icon" href="Elemen/Elemen%20Pendukung/Icon.ico" type="image/x-icon">
     <link rel="manifest" href="site.webmanifest">
@@ -75,7 +87,9 @@
 
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
 
-    <!-- Schema.org JSON-LD Structured Data for Google Rich Results -->
+    <!-- ==========================================================================
+         03. DATA TERSTRUKTUR SCHEMA.ORG JSON-LD (GOOGLE RICH RESULTS)
+         ========================================================================== -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -168,12 +182,18 @@
 </head>
 
 <body>
+    <!-- ==========================================================================
+         04. KONTROLER MUSIK LATAR MENGAMBANG & STATUS NOTIFIKASI HUD
+         ========================================================================== -->
     <audio id="bg-music" src="Elemen/Elemen%20Pendukung/Music.mp3" preload="none" loop></audio>
     <button id="music-control" class="music-control" aria-label="Kontrol Musik">
         <i class="bi bi-volume-mute-fill"></i>
     </button>
     <span id="music-status-text" class="music-status-text">Music Off</span>
 
+    <!-- ==========================================================================
+         05. SECTION COVER UTAMA (BUKA UNDANGAN & PARTIKEL EMAS)
+         ========================================================================== -->
     <section id="cover" class="cover">
         <div class="cover-bg">
             <img src="Elemen/Photo%20Gallery/Cover1.webp" alt="Foto Cover Pernikahan Adat Bali Edi dan Winda"
@@ -195,7 +215,9 @@
         <div class="wave wave4"></div>
     </section>
 
-    <!-- Section Isi Undangan (Target Scroll) -->
+    <!-- ==========================================================================
+         06. PROFIL MEMPELAI & AYAT SUCI MANTRA RG VEDA
+         ========================================================================== -->
     <section id="main-content" class="mempelai-section">
         <div class="container text-center">
             <div class="opening-greeting">
@@ -261,6 +283,9 @@
         </div>
     </section>
 
+    <!-- ==========================================================================
+         07. RANGKAIAN ACARA, GOOGLE MAPS/KALENDER & HITUNG MUNDUR
+         ========================================================================== -->
     <section id="event-details" class="event-section">
         <div class="container text-center">
             <h2 class="cinzel-font section-title" data-aos="fade-up">Rangkaian Acara</h2>
@@ -369,7 +394,9 @@
         </div>
     </section>
 
-    <!-- Section Galeri -->
+    <!-- ==========================================================================
+         08. GALERI FOTO & GRID MASONRY MOMEN BAHAGIA
+         ========================================================================== -->
     <section id="gallery" class="gallery-section">
         <div class="container text-center">
             <h2 class="cinzel-font section-title" data-aos="fade-up">Momen Bahagia</h2>
@@ -419,7 +446,9 @@
         </div>
     </section>
 
-    <!-- Section Attendance (Hybrid RSVP & Guestbook) -->
+    <!-- ==========================================================================
+         09. KONFIRMASI KEHADIRAN & BUKU TAMU REAL-TIME FIRESTORE
+         ========================================================================== -->
     <section id="attendance" class="attendance-section">
         <div class="container">
             <h2 class="cinzel-font section-title text-center" data-aos="fade-up">Konfirmasi & Doa Restu</h2>
@@ -513,7 +542,9 @@
         </div>
     </section>
 
-    <!-- Section Wedding Gift -->
+    <!-- ==========================================================================
+         10. TANDA KASIH & PENGIRIMAN KADO FISIK (REKENING BANK)
+         ========================================================================== -->
     <section id="gift" class="gift-section">
         <div class="container text-center">
             <h2 class="cinzel-font section-title" data-aos="fade-up">Wedding Gift</h2>
@@ -589,7 +620,9 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- ==========================================================================
+         11. FOOTER UTAMA, MEDIA SOSIAL & HAK CIPTA
+         ========================================================================== -->
     <footer id="main-footer">
         <div class="container text-center">
             <div class="footer-top">
@@ -620,6 +653,9 @@
         </div>
     </footer>
 
+    <!-- ==========================================================================
+         12. MODAL OVERLAY, LIGHTBOX FOTO & KONTAINER NOTIFIKASI TOAST
+         ========================================================================== -->
     <!-- Lightbox untuk Galeri -->
     <div id="lightbox" class="lightbox">
         <div id="lightbox-counter" class="lightbox-counter"></div>
@@ -685,6 +721,9 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- ==========================================================================
+         13. SKRIP SISI KLIEN & PUSTAKA EKSTERNAL
+         ========================================================================== -->
     <!-- Twemoji for Universal WhatsApp-style Vector Emojis -->
     <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
     <!-- Emoji Keyboard Picker Element -->

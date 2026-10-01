@@ -1,3 +1,32 @@
+/**
+ * ============================================================================
+ * ⚡ PAWIWAHAN THEME 1 - MESIN JAVASCRIPT & LOGIKA INTERAKTIF (SCRIPT.JS)
+ * ============================================================================
+ * Arsitektur: Vanilla ES6+ Modular, Real-Time Firebase Firestore v10.7.1,
+ * Web Media Session API, Gestur Sentuh, Autentikasi Kriptografi SHA-256,
+ * serta Siklus Hidup Service Worker Progressive Web App (PWA).
+ *
+ * 📑 DAFTAR ISI MODUL:
+ * ----------------------------------------------------------------------------
+ * 01. INISIALISASI FIREBASE & KONEKSI CLOUD FIRESTORE
+ * 02. KEAMANAN SISI KLIEN & PROTEKSI ANTI-INSPECT
+ * 03. SINKRONISASI WAKTU SERVER & PENGHITUNG WAKTU GLOBAL
+ * 04. INISIALISASI DOM, PENYESUAIAN NAMA TAMU & ENGINE AOS
+ * 05. TATA LETAK COVER, PARTIKEL EMAS & KONTROLER MUSIK
+ * 06. PENGHITUNG WAKTU MUNDUR ACARA & SINKRONISASI REAL-TIME
+ * 07. LIGHTBOX GALERI FOTO (PINCH, ZOOM, PAN, SWIPE & AUTO-RETRY)
+ * 08. STATE FORMULIR HYBRID, KEYBOARD EMOJI & RICH TEXT FORMATTER
+ * 09. PENGIRIMAN DATA RSVP & SISTEM ANTI-SPAM
+ * 10. AKSES KHUSUS MEMPELAI (AUTENTIKASI SHA-256 & MODERASI)
+ * 11. BUKU TAMU REAL-TIME FIRESTORE, BALASAN BERTINGKAT & REAKSI SUKA
+ * 12. FUNGSI UTILITAS, SALIN PAPAN KLIP & REGISTRASI PWA SERVICE WORKER
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   01. INISIALISASI FIREBASE & KONEKSI CLOUD FIRESTORE
+   ========================================================================== */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -17,6 +46,10 @@ const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, {
     experimentalAutoDetectLongPolling: true,
 });
+
+/* ==========================================================================
+   02. KEAMANAN SISI KLIEN & PROTEKSI ANTI-INSPECT
+   ========================================================================== */
 
 // --- FITUR ANTI-INSPECT & KLIK KANAN ---
 // Menghalangi menu klik kanan (kecuali pada input/textarea agar pengguna dapat menempel teks/kata sandi)
@@ -47,6 +80,10 @@ if ('scrollRestoration' in history) {
 }
 window.scrollTo(0, 0); // Memaksa scroll ke posisi paling atas
 
+/* ==========================================================================
+   03. SINKRONISASI WAKTU SERVER & PENGHITUNG WAKTU GLOBAL
+   ========================================================================== */
+
 // Variabel untuk menyimpan selisih waktu server dan lokal
 let serverTimeOffset = 0;
 
@@ -72,6 +109,10 @@ async function syncTimeWithServer() {
         console.error("Gagal sinkronisasi waktu server, menggunakan waktu lokal:", e);
     }
 }
+
+/* ==========================================================================
+   04. INISIALISASI DOM, PENYESUAIAN NAMA TAMU & ENGINE AOS
+   ========================================================================== */
 
 // Logika Buka Undangan dan Putar Musik
 document.addEventListener('DOMContentLoaded', () => {
@@ -160,6 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCountdown();
         }
     });
+
+    /* ==========================================================================
+       05. TATA LETAK COVER, PARTIKEL EMAS & KONTROLER MUSIK
+       ========================================================================== */
 
     // --- Logika Sinkronisasi Layout Cover saat Rotasi Layar ---
     let lastWidth = window.innerWidth; // Melacak lebar untuk membedakan rotasi vs resize bar browser mobile
@@ -308,6 +353,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* ==========================================================================
+       06. PENGHITUNG WAKTU MUNDUR ACARA & SINKRONISASI REAL-TIME
+       ========================================================================== */
+
     // --- Logika Countdown ---
     const targetDate = new Date("2026-01-30T08:00:00+08:00").getTime(); // Waktu Mempelai (Tahun-Bulan-Tanggal)
     const daysEl = document.getElementById("days");
@@ -352,6 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
             syncTimeWithServer().then(() => updateCountdown());
         }
     });
+
+    /* ==========================================================================
+       07. LIGHTBOX GALERI FOTO (PINCH, ZOOM, PAN, SWIPE & AUTO-RETRY)
+       ========================================================================== */
 
     // --- Logika Lightbox Galeri ---
     const lightbox = document.getElementById('lightbox');
@@ -803,6 +856,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* ==========================================================================
+       08. STATE FORMULIR HYBRID, KEYBOARD EMOJI & RICH TEXT FORMATTER
+       ========================================================================== */
+
     // --- Logika Hybrid Form ---
     const hybridForm = document.getElementById('hybrid-form');
     const statusSelect = document.getElementById('att-status');
@@ -1053,6 +1110,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 
+    /* ==========================================================================
+       09. PENGIRIMAN DATA RSVP & SISTEM ANTI-SPAM
+       ========================================================================== */
+
     let isFormSubmitting = false;
 
     if (hybridForm) {
@@ -1293,6 +1354,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /* ==========================================================================
+       10. AKSES KHUSUS MEMPELAI (AUTENTIKASI SHA-256 & MODERASI)
+       ========================================================================== */
+
     // --- Logika Akses Khusus (Admin & Mempelai) ---
     let isMempelai = sessionStorage.getItem('isMempelai') === 'true' && !!sessionStorage.getItem('mKey');
 
@@ -1518,6 +1583,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    /* ==========================================================================
+       11. BUKU TAMU REAL-TIME FIRESTORE, BALASAN BERTINGKAT & REAKSI SUKA
+       ========================================================================== */
 
     // Inisialisasi tampilan jika sudah login di session sebelumnya
     function createReplyItemElement(rDoc, parentId, parentName) {
@@ -2681,6 +2750,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ro.observe(formContainer);
         window.addEventListener('resize', syncHeight);
     }
+
+    /* ==========================================================================
+       12. FUNGSI UTILITAS, SALIN PAPAN KLIP & REGISTRASI PWA SERVICE WORKER
+       ========================================================================== */
 
     // --- Logika Copy to Clipboard (dengan Fallback untuk WebView & Browser Lama) ---
     document.querySelectorAll('.btn-copy').forEach(btn => {
