@@ -63,7 +63,8 @@
     <!-- Resource Hints & Critical Preloads -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="image" href="Elemen/Photo%20Gallery/Cover1.webp" fetchpriority="high">
+    <link rel="preload" as="image" href="Elemen/Photo%20Gallery/Cover1-mobile.webp" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="Elemen/Photo%20Gallery/Cover1.webp" media="(min-width: 769px)" fetchpriority="high">
 
     <!-- Core Stylesheet (Immediate) -->
     <link rel="stylesheet" href="style.css">
@@ -85,7 +86,11 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     </noscript>
 
-    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+    <link rel="preload" as="style" href="https://unpkg.com/aos@next/dist/aos.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+    </noscript>
 
     <!-- ==========================================================================
          03. DATA TERSTRUKTUR SCHEMA.ORG JSON-LD (GOOGLE RICH RESULTS)
@@ -196,10 +201,13 @@
          ========================================================================== -->
     <section id="cover" class="cover">
         <div class="cover-bg">
-            <img src="Elemen/Photo%20Gallery/Cover1.webp" alt="Foto Cover Pernikahan Adat Bali Edi dan Winda"
-                class="bg-image img-1" fetchpriority="high">
+            <img src="Elemen/Photo%20Gallery/Cover1.webp"
+                srcset="Elemen/Photo%20Gallery/Cover1-mobile.webp 768w, Elemen/Photo%20Gallery/Cover1.webp 1920w"
+                sizes="100vw"
+                alt="Foto Cover Pernikahan Adat Bali Edi dan Winda"
+                class="bg-image img-1" fetchpriority="high" decoding="async">
             <img src="Elemen/Photo%20Gallery/Cover2.webp" alt="Foto Pasangan Mempelai Edi dan Winda"
-                class="bg-image img-2">
+                class="bg-image img-2" fetchpriority="low" decoding="async" loading="lazy">
         </div>
         <div id="particles-container" class="particles-container"></div>
         <div class="cover-content">
@@ -725,9 +733,7 @@
          13. SKRIP SISI KLIEN & PUSTAKA EKSTERNAL
          ========================================================================== -->
     <!-- Twemoji for Universal WhatsApp-style Vector Emojis -->
-    <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
-    <!-- Emoji Keyboard Picker Element -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js" defer></script>
     <script type="module" src="script.js"></script>
 </body>

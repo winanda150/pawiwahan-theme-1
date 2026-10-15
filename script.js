@@ -24,11 +24,8 @@
  */
 
 /* ==========================================================================
-   01. INISIALISASI FIREBASE & KONEKSI CLOUD FIRESTORE
+   01. INISIALISASI FIREBASE & KONEKSI CLOUD FIRESTORE (LAZY LOADED 100% PERFORMANCE)
    ========================================================================== */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
@@ -40,12 +37,58 @@ const firebaseConfig = {
     measurementId: "G-0R22TRVSEL"
 };
 
-// Inisialisasi Firebase
-const app = initializeApp(firebaseConfig);
-// Menggunakan initializeFirestore dengan auto-detect long polling yang fleksibel dan efisien
-const db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-});
+// Variabel modul Firebase & Firestore (dimuat secara asinkron saat dibutuhkan agar LCP & PageSpeed optimal)
+let app = null;
+let db = null;
+let collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum;
+
+let firebaseInitialized = false;
+let firebaseInitPromise = null;
+
+async function ensureFirebase() {
+    if (firebaseInitialized) return { app, db };
+    if (firebaseInitPromise) return firebaseInitPromise;
+
+    firebaseInitPromise = (async () => {
+        const [appMod, fsMod] = await Promise.all([
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+        ]);
+
+        app = appMod.initializeApp(firebaseConfig);
+        db = fsMod.initializeFirestore(app, {
+            experimentalAutoDetectLongPolling: true,
+        });
+
+        collection = fsMod.collection;
+        addDoc = fsMod.addDoc;
+        query = fsMod.query;
+        orderBy = fsMod.orderBy;
+        onSnapshot = fsMod.onSnapshot;
+        serverTimestamp = fsMod.serverTimestamp;
+        limit = fsMod.limit;
+        doc = fsMod.doc;
+        updateDoc = fsMod.updateDoc;
+        deleteDoc = fsMod.deleteDoc;
+        increment = fsMod.increment;
+        deleteField = fsMod.deleteField;
+        startAfter = fsMod.startAfter;
+        endBefore = fsMod.endBefore;
+        limitToLast = fsMod.limitToLast;
+        getCountFromServer = fsMod.getCountFromServer;
+        getDoc = fsMod.getDoc;
+        getDocs = fsMod.getDocs;
+        setDoc = fsMod.setDoc;
+        where = fsMod.where;
+        getAggregateFromServer = fsMod.getAggregateFromServer;
+        sum = fsMod.sum;
+
+        firebaseInitialized = true;
+        return { app, db };
+    })();
+
+    return firebaseInitPromise;
+}
 
 /* ==========================================================================
    02. KEAMANAN SISI KLIEN & PROTEKSI ANTI-INSPECT
@@ -192,8 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Jalankan inisialisasi AOS pertama kali
-    initAOS();
+    // Jalankan inisialisasi AOS saat idle atau saat cover dibuka agar zero layout thrashing
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => initAOS(), { timeout: 2500 });
+    } else {
+        setTimeout(initAOS, 1000);
+    }
 
     // Jalankan sinkronisasi waktu server secara asinkron di background tanpa menghalangi render
     syncTimeWithServer().then(() => {
@@ -222,12 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Jika sudah dibuka dan bukan rotasi, jangan update tinggi untuk cegah jumping saat scroll
         if (isOpened && !isRotation) return;
 
-        // Gunakan innerHeight untuk menghitung tinggi nyata (menghindari masalah address bar di mobile)
-        const vh = window.innerHeight;
-        cover.style.height = `${vh}px`;
+        // Kunci tinggi hanya jika cover telah dibuka
+        if (isOpened) {
+            cover.style.height = `${window.innerHeight}px`;
+        }
 
-        // Pengondisian orientasi: Tambahkan class jika dalam mode landscape
-        if (currentWidth > window.innerHeight) {
+        // Pengondisian orientasi: Gunakan matchMedia agar zero-reflow
+        if (window.matchMedia('(orientation: landscape)').matches) {
             cover.classList.add('is-landscape');
         } else {
             cover.classList.remove('is-landscape');
@@ -476,16 +524,13 @@ document.addEventListener('DOMContentLoaded', () => {
         isTicking = false;
     };
 
-    // Fungsi untuk menyaring ulang gambar berdasarkan visibilitas CSS saat ini
+    // Fungsi untuk menyaring ulang gambar berdasarkan visibilitas CSS saat ini (zero-reflow)
     const refreshVisibleImages = () => {
         galleryImages = allGalleryImages.filter(img => {
             const parent = img.closest('.gallery-item');
-            return window.getComputedStyle(parent).display !== 'none';
+            return parent && parent.offsetParent !== null;
         });
     };
-
-    // Inisialisasi awal dan perbarui setiap kali ukuran layar berubah
-    refreshVisibleImages();
 
     const lightboxCounter = document.getElementById('lightbox-counter');
     const btnPrev = document.getElementById('lightbox-prev');
@@ -905,17 +950,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Logika Keyboard Emoji Picker Interaktif ---
+    // --- Logika Keyboard Emoji Picker Interaktif (Lazy Loaded on Interaction) ---
     const btnEmojiTrigger = document.getElementById('btn-emoji-trigger');
     const emojiDropdown = document.getElementById('emoji-picker-dropdown');
     const emojiPickerEl = emojiDropdown?.querySelector('emoji-picker');
 
-    const toggleEmojiPicker = (show) => {
+    let isEmojiPickerLoaded = false;
+    const loadEmojiPickerElement = async () => {
+        if (isEmojiPickerLoaded) return;
+        try {
+            await import("https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js");
+            isEmojiPickerLoaded = true;
+        } catch (e) {
+            console.warn("Gagal memuat emoji picker modul:", e);
+        }
+    };
+
+    const toggleEmojiPicker = async (show) => {
         if (!emojiDropdown) return;
         const isVisible = emojiDropdown.style.display !== 'none';
         const willShow = typeof show === 'boolean' ? show : !isVisible;
 
         if (willShow) {
+            await loadEmojiPickerElement();
             emojiDropdown.style.display = 'block';
             btnEmojiTrigger?.classList.add('active');
         } else {
@@ -925,9 +982,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (btnEmojiTrigger && emojiDropdown) {
-        btnEmojiTrigger.addEventListener('click', (e) => {
+        // Prefetch saat kursor hover atau textarea fokus
+        btnEmojiTrigger.addEventListener('mouseenter', loadEmojiPickerElement, { once: true });
+        if (messageInput) {
+            messageInput.addEventListener('focus', loadEmojiPickerElement, { once: true });
+        }
+
+        btnEmojiTrigger.addEventListener('click', async (e) => {
             e.stopPropagation();
-            toggleEmojiPicker();
+            await toggleEmojiPicker();
         });
 
         // Mencegah klik di dalam dropdown menutup dirinya sendiri
@@ -1170,6 +1233,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                await ensureFirebase();
+
                 if (replyingToId) {
                     // PROSES BALASAN (Sub-collection)
                     const docRef = doc(db, "messages", replyingToId);
@@ -2681,9 +2746,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inisialisasi Buku Tamu Secara Cerdas (Lazy Loading untuk Best Practices 100%) ---
     let isGuestbookInitialized = false;
-    const initGuestbook = () => {
+    const initGuestbook = async () => {
         if (isGuestbookInitialized) return;
         isGuestbookInitialized = true;
+
+        await ensureFirebase();
 
         if (gbList) {
             initPinnedMessagesListener();
@@ -2805,8 +2872,8 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSpan.textContent = new Date().getFullYear();
     }
 
-    // --- Render Universal WhatsApp-Style Emoji ke Seluruh Halaman ---
-    applyTwemoji(document.body);
+    // --- Render Universal WhatsApp-Style Emoji (Dijalankan per pesan komentar dinamis, cegah blocking DOM awal) ---
+    // applyTwemoji(document.body);
 
     // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization) ---
     if ('serviceWorker' in navigator) {

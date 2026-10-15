@@ -29,8 +29,8 @@
 /* Optimization for Bootstrap Icons Performance */
 @font-face {
     font-family: "bootstrap-icons";
-    src: url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2?dd670306998385331030b5777227faac") format("woff2"),
-        url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff?dd670306998385331030b5777227faac") format("woff");
+    src: url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2?dd67030699838ea613ee6dbda90effa6") format("woff2"),
+        url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff?dd67030699838ea613ee6dbda90effa6") format("woff");
     font-display: swap;
 }
 
@@ -230,6 +230,7 @@ body:active {
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -439,7 +440,7 @@ body:active {
     left: 0;
     width: 100%;
     height: var(--wave-height);
-    background: url('Elemen/Elemen%20Pendukung/wave.webp');
+    background: url('data:image/webp;base64,UklGRuQCAABXRUJQVlA4WAoAAAAQAAAA/wQAgAAAQUxQSE0BAAABgOS2kSSp//9p9cxcawnLgcmImIDPJHK1n8WUe984eLwbBY9+b+CVbgi852WAd998jGPPMZ69xrz2GNPbXAxzVTHa7cScFxJD30EEsHcIY9cQzIIho61CXKuE5PYHGW4N4twV5LohSHgxEPU6IPQtQPrlhwWlhw5dhxcVhx/VhiiVhi9Vhjcdhj/VhUedhU5lhVUlhV3thGS1hGt9hHJFhHkVhH73n7/iwcTGQciqwcuOQc9ywdJWQdY2Qdoawd3+QOHewOW6wOmewO16wPFaQPY2QPoWwP7howYzRx9GjWIMGBWZK7oyTbRmhijQ4FClcaFVM0LBBoOuTQO1mwA6eOjo40GjnEeLrh4mint86PFxodfng56fBpr/5bELvigWxHfC2vjsWCifDwvn3bGWXhDH/8f/x//H/8f/x//H/8f/x//H/8f/x///FAUAVlA4IHABAADQKQCdASoABYEAPjEYjESiIaEQBAAgAwS0t3C7sI2gBPYB77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99YAAP7/94EAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
     background-size: var(--wave-width) var(--wave-height);
 }
 
