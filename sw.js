@@ -20,8 +20,7 @@ const ASSETS_TO_CACHE = [
     './style.css',
     './script.js',
     './site.webmanifest',
-    './Elemen/Photo%20Gallery/Cover1.webp',
-    './Elemen/Photo%20Gallery/Cover1-mobile.webp'
+    './Elemen/Photo%20Gallery/Cover1.webp'
 ];
 
 /* ==========================================================================
