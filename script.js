@@ -874,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .replace(/[‘’`]/g, "'")
                 .replace(/[“”]/g, "'")
                 .replace(/[–—]/g, '-')
-                .replace(/[^a-zA-Z0-9\s.,'&/()+\-]/g, '');
+                .replace(/[^a-zA-Z0-9\s.,'&\/()+\-]/g, '');
         });
     }
 
@@ -1140,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .replace(/[–—]/g, '-')
                 .trim();
             const rawMessage = (document.getElementById('att-message')?.value || '').trim();
-            const validNameRegex = /^[a-zA-Z0-9 .,'&/()+\-]{2,50}$/;
+            const validNameRegex = /^[a-zA-Z0-9 .,'&\/()+\-]{2,50}$/;
 
             if (rawName.length < 2 || rawName.length > 50 || !validNameRegex.test(rawName)) {
                 showToast('Mohon masukkan nama yang valid (2–50 karakter).', 'error');
