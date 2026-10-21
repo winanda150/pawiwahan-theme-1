@@ -36,6 +36,8 @@ Thumbs.db:encryptable
 # 4. Log Debug & Firebase CLI
 # ==========================================
 .firebase/
+firebase.json
+rules/
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*

@@ -36,9 +36,9 @@
     <meta property="og:description"
         content="Jumat, 30 Januari 2026 - Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu kepada kami.">
     <meta property="og:image"
-        content="https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp">
+        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
     <meta property="og:image:secure_url"
-        content="https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp">
+        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
     <meta property="og:image:type" content="image/webp">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -50,20 +50,20 @@
     <meta name="twitter:title" content="Undangan Pawiwahan | Edi & Winda">
     <meta name="twitter:description" content="Jumat, 30 Januari 2026 - Mohon doa restu pada acara pernikahan kami.">
     <meta name="twitter:image"
-        content="https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp">
+        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
     <meta name="twitter:image:alt" content="Foto Undangan Pernikahan Edi dan Winda">
 
     <!-- ==========================================================================
          02. MANIFEST PWA, FAVICON & PRELOAD PRIORITAS TINGGI
          ========================================================================== -->
     <!-- Web App Manifest & Favicon -->
-    <link rel="icon" href="Elemen/Elemen%20Pendukung/Icon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
     <link rel="manifest" href="site.webmanifest">
 
     <!-- Resource Hints & Critical Preloads -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="image" href="Elemen/Photo%20Gallery/Cover1.webp" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/gallery/cover-1.webp" fetchpriority="high">
 
     <!-- Core Stylesheet (Immediate) -->
     <link rel="stylesheet" href="style.css">
@@ -128,7 +128,7 @@
             }
           },
           "image": [
-            "https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp"
+            "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
           ],
           "organizer": {
             "@type": "Person",
@@ -167,7 +167,7 @@
             }
           },
           "image": [
-            "https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp"
+            "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
           ],
           "performer": [
             {
@@ -189,7 +189,7 @@
     <!-- ==========================================================================
          04. KONTROLER MUSIK LATAR MENGAMBANG & STATUS NOTIFIKASI HUD
          ========================================================================== -->
-    <audio id="bg-music" src="Elemen/Elemen%20Pendukung/Music.mp3" preload="none" loop></audio>
+    <audio id="bg-music" src="assets/audio/wedding-music.mp3" preload="none" loop></audio>
     <button id="music-control" class="music-control" aria-label="Kontrol Musik">
         <i class="bi bi-volume-mute-fill"></i>
     </button>
@@ -200,9 +200,9 @@
          ========================================================================== -->
     <section id="cover" class="cover">
         <div class="cover-bg">
-            <img src="Elemen/Photo%20Gallery/Cover1.webp" alt="Foto Cover Pernikahan Adat Bali Edi dan Winda"
+            <img src="assets/images/gallery/cover-1.webp" alt="Foto Cover Pernikahan Adat Bali Edi dan Winda"
                 class="bg-image img-1" fetchpriority="high" decoding="async">
-            <img src="Elemen/Photo%20Gallery/Cover2.webp" alt="Foto Pasangan Mempelai Edi dan Winda"
+            <img src="assets/images/gallery/cover-2.webp" alt="Foto Pasangan Mempelai Edi dan Winda"
                 class="bg-image img-2" fetchpriority="low" decoding="async" loading="lazy">
         </div>
         <div id="particles-container" class="particles-container"></div>
@@ -236,7 +236,7 @@
                 <!-- Mempelai Pria -->
                 <div class="mempelai-card" data-aos="fade-right">
                     <div class="mempelai-img-wrapper">
-                        <img src="Elemen/Foto%20Pasangan/Foto%20Mempelai%20Pria.webp"
+                        <img src="assets/images/couple/groom.webp"
                             alt="Foto Mempelai Pria I Putu Edi Pratama" class="mempelai-img" loading="lazy"
                             decoding="async">
                     </div>
@@ -257,7 +257,7 @@
                 <!-- Mempelai Wanita -->
                 <div class="mempelai-card" data-aos="fade-left">
                     <div class="mempelai-img-wrapper">
-                        <img src="Elemen/Foto%20Pasangan/Foto%20Mempelai%20Wanita.webp"
+                        <img src="assets/images/couple/bride.webp"
                             alt="Foto Mempelai Wanita Winda Aprilia Dewi" class="mempelai-img" loading="lazy"
                             decoding="async">
                     </div>
@@ -307,7 +307,7 @@
                                 <p>08.00 WITA - Selesai</p>
                             </div>
                             <div class="info-item">
-                                <p><span class="info-label">Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
+                                <p><span>Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
                                     Puri, Denpasar Timur</p>
                             </div>
                         </div>
@@ -337,7 +337,7 @@
                                 <p>18.00 WITA - Selesai</p>
                             </div>
                             <div class="info-item">
-                                <p><span class="info-label">Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
+                                <p><span>Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
                                     Puri, Denpasar Timur</p>
                             </div>
                         </div>
@@ -407,43 +407,43 @@
 
             <div class="gallery-grid mt-5">
                 <!-- 4 Landscape & 10 Portrait -->
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto1.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-01.webp"
                         alt="Foto Prewedding Edi & Winda - Busana Tradisional Adat Bali" loading="lazy"
                         decoding="async"></div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto2.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-02.webp"
                         alt="Foto Prewedding Edi & Winda - Senyuman Penuh Kebahagiaan" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item landscape" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Cover2.webp"
+                <div class="gallery-item landscape" data-aos="zoom-in"><img src="assets/images/gallery/cover-2.webp"
                         alt="Foto Prewedding Edi & Winda - Momen Kebersamaan Romantis" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto12.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-12.webp"
                         alt="Foto Prewedding Edi & Winda - Tatapan Kasih dan Cinta" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto6.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-06.webp"
                         alt="Foto Prewedding Edi & Winda - Busana Pengantin Elegan" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item landscape" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto3.webp"
+                <div class="gallery-item landscape" data-aos="zoom-in"><img src="assets/images/gallery/gallery-03.webp"
                         alt="Foto Prewedding Edi & Winda - Pose Anggun dan Menawan" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto4.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-04.webp"
                         alt="Foto Prewedding Edi & Winda - Momen Mesra Pasangan" loading="lazy" decoding="async"></div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto8.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-08.webp"
                         alt="Foto Prewedding Edi & Winda - Kehangatan Cinta Kasih" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto10.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-10.webp"
                         alt="Foto Prewedding Edi & Winda - Potret Keanggunan Mempelai" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item landscape" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto5.webp"
+                <div class="gallery-item landscape" data-aos="zoom-in"><img src="assets/images/gallery/gallery-05.webp"
                         alt="Foto Prewedding Edi & Winda - Pose Bahagia Momen Utama" loading="lazy" decoding="async">
                 </div>
                 <div class="gallery-item portrait momen11" data-aos="zoom-in"><img
-                        src="Elemen/Photo%20Gallery/Foto11.webp"
+                        src="assets/images/gallery/gallery-11.webp"
                         alt="Foto Prewedding Edi & Winda - Nuansa Klasik Budaya Bali" loading="lazy" decoding="async">
                 </div>
-                <div class="gallery-item portrait" data-aos="zoom-in"><img src="Elemen/Photo%20Gallery/Foto9.webp"
+                <div class="gallery-item portrait" data-aos="zoom-in"><img src="assets/images/gallery/gallery-09.webp"
                         alt="Foto Prewedding Edi & Winda - Keindahan Cinta Abadi" loading="lazy" decoding="async"></div>
                 <div class="gallery-item landscape momen13" data-aos="zoom-in"><img
-                        src="Elemen/Photo%20Gallery/Foto7.webp"
+                        src="assets/images/gallery/gallery-07.webp"
                         alt="Foto Prewedding Edi & Winda - Dokumentasi Momen Spesial" loading="lazy" decoding="async">
                 </div>
             </div>
@@ -514,7 +514,7 @@
                                     style="display: block; text-align: right; color: #999; margin-top: 5px;">0 /
                                     500</small>
                             </div>
-                            <button type="submit" class="btn-event w-100">Kirim Kehadiran & Ucapan</button>
+                            <button type="submit" class="btn-event">Kirim Kehadiran & Ucapan</button>
                         </form>
                     </div>
                 </div>
@@ -644,8 +644,6 @@
             <div class="footer-social" data-aos="fade-up" data-aos-delay="200" data-aos-offset="0">
                 <a href="https://www.instagram.com/wiinaandaa_" target="_blank" rel="noopener noreferrer"
                     class="social-instagram" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-                <a href="https://www.facebook.com/share/1E7HcpEHtH" target="_blank" rel="noopener noreferrer"
-                    class="social-facebook" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
                 <a href="https://wa.me/6285964393536" target="_blank" rel="noopener noreferrer" class="social-whatsapp"
                     aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
                 <a href="https://github.com/winanda150" target="_blank" rel="noopener noreferrer" class="social-github"

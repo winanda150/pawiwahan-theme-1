@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     artist: 'Edi & Winda',
                     album: 'Wedding Invitation',
                     artwork: [
-                        { src: 'Elemen/Photo%20Gallery/Foto5.webp', sizes: '512x512', type: 'image/webp' }
+                        { src: 'assets/images/gallery/gallery-05.webp', sizes: '512x512', type: 'image/webp' }
                     ]
                 });
 
@@ -1383,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Helper untuk pemotongan teks secara rapi pada batas kata
-    function getTruncatedText(str, maxLength = 200) {
+    function getTruncatedText(str, maxLength = 180) {
         if (!str || str.length <= maxLength) return str || '';
         const sub = str.substring(0, maxLength);
         const lastSpace = sub.lastIndexOf(' ');
@@ -1662,8 +1662,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const isReplyLiked = likedReplies.includes(rDocId);
 
         const rMessage = rData.message || '';
-        const rIsLong = rMessage.length > 200;
-        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 220) : rMessage;
+        const rIsLong = rMessage.length > 180;
+        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 180) : rMessage;
 
         let rFullDate = 'Baru saja';
         if (rData.timestamp) {
@@ -1727,8 +1727,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const isReplyLiked = likedReplies.includes(rDoc.id);
 
         const rMessage = rData.message || '';
-        const rIsLong = rMessage.length > 200;
-        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 220) : rMessage;
+        const rIsLong = rMessage.length > 180;
+        const rPreviewText = rIsLong ? getTruncatedText(rMessage, 180) : rMessage;
 
         let rFullDate = 'Baru saja';
         if (rData.timestamp) {
@@ -2323,8 +2323,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
-        const isLong = message.length > 200;
-        const previewText = isLong ? getTruncatedText(message, 220) : message;
+        const isLong = message.length > 180;
+        const previewText = isLong ? getTruncatedText(message, 180) : message;
         const likes = data.likes || 0;
         const isAlreadyLiked = likedMessages.includes(docId);
 
@@ -2393,8 +2393,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
-        const isLong = message.length > 200;
-        const previewText = isLong ? getTruncatedText(message, 220) : message;
+        const isLong = message.length > 180;
+        const previewText = isLong ? getTruncatedText(message, 180) : message;
         const likes = data.likes || 0;
         const likedMessages = getSafeLocalStorageArray('liked_messages');
         const isAlreadyLiked = likedMessages.includes(docSnap.id);

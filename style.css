@@ -440,7 +440,7 @@ body:active {
     left: 0;
     width: 100%;
     height: var(--wave-height);
-    background: url('data:image/webp;base64,UklGRuQCAABXRUJQVlA4WAoAAAAQAAAA/wQAgAAAQUxQSE0BAAABgOS2kSSp//9p9cxcawnLgcmImIDPJHK1n8WUe984eLwbBY9+b+CVbgi852WAd998jGPPMZ69xrz2GNPbXAxzVTHa7cScFxJD30EEsHcIY9cQzIIho61CXKuE5PYHGW4N4twV5LohSHgxEPU6IPQtQPrlhwWlhw5dhxcVhx/VhiiVhi9Vhjcdhj/VhUedhU5lhVUlhV3thGS1hGt9hHJFhHkVhH73n7/iwcTGQciqwcuOQc9ywdJWQdY2Qdoawd3+QOHewOW6wOmewO16wPFaQPY2QPoWwP7howYzRx9GjWIMGBWZK7oyTbRmhijQ4FClcaFVM0LBBoOuTQO1mwA6eOjo40GjnEeLrh4mint86PFxodfng56fBpr/5bELvigWxHfC2vjsWCifDwvn3bGWXhDH/8f/x//H/8f/x//H/8f/x//H/8f/x///FAUAVlA4IHABAADQKQCdASoABYEAPjEYjESiIaEQBAAgAwS0t3C7sI2gBPYB77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99YAAP7/94EAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+    background: url('assets/images/decorations/wave.webp');
     background-size: var(--wave-width) var(--wave-height);
 }
 
@@ -1862,14 +1862,6 @@ img.emoji {
     font-size: 1.15rem;
 }
 
-.gift-note {
-    font-size: 0.85rem;
-    color: #666;
-    margin-top: 25px;
-    font-style: italic;
-    line-height: 1.6;
-    text-align: left;
-}
 
 .gift-text {
     font-size: 0.95rem;
@@ -1996,14 +1988,6 @@ img.emoji {
     /* Penting untuk teks yang meluap dalam item flex */
 }
 
-.bank-number-row {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-}
 
 .bank-number {
     font-size: 1.2rem;
@@ -2054,33 +2038,6 @@ img.emoji {
     color: white;
 }
 
-.gift-address-card {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    border: 1px dashed #d4af37;
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.icon-address {
-    font-size: 3rem;
-    color: #d4af37;
-    margin-bottom: 20px;
-    display: block;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 .reply-btn:hover {
     text-decoration: underline;
@@ -2241,16 +2198,6 @@ img.emoji {
     color: #bfa100;
 }
 
-.reply-badge {
-    font-size: 0.6rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    font-weight: 700;
-    background: #bfa100;
-    color: #fff;
-    letter-spacing: 0.5px;
-}
 
 /* Reply Mode Indicator in Form */
 .reply-mode-bar {
@@ -2524,9 +2471,6 @@ emoji-picker {
     color: #E1306C;
 }
 
-.footer-social a.social-facebook {
-    color: #1877F2;
-}
 
 .footer-social a.social-whatsapp {
     color: #25D366;
@@ -2544,9 +2488,6 @@ emoji-picker {
     color: #fd5949;
 }
 
-.footer-social a.social-facebook:hover {
-    color: #145dbf;
-}
 
 .footer-social a.social-whatsapp:hover {
     color: #128C7E;

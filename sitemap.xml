@@ -7,20 +7,20 @@
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
         <image:image>
-            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Foto5.webp</image:loc>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp</image:loc>
             <image:title>Undangan Pawiwahan Edi dan Winda</image:title>
             <image:caption>Foto Pernikahan I Putu Edi Pratama dan Winda Aprilia Dewi</image:caption>
         </image:image>
         <image:image>
-            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Photo%20Gallery/Cover1.webp</image:loc>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/cover-1.webp</image:loc>
             <image:title>Cover Undangan Pawiwahan Edi dan Winda</image:title>
         </image:image>
         <image:image>
-            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Foto%20Pasangan/Foto%20Mempelai%20Pria.webp</image:loc>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/assets/images/couple/groom.webp</image:loc>
             <image:title>Mempelai Pria - I Putu Edi Pratama</image:title>
         </image:image>
         <image:image>
-            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/Elemen/Foto%20Pasangan/Foto%20Mempelai%20Wanita.webp</image:loc>
+            <image:loc>https://winanda150.github.io/pawiwahan-theme-1/assets/images/couple/bride.webp</image:loc>
             <image:title>Mempelai Wanita - Winda Aprilia Dewi</image:title>
         </image:image>
     </url>

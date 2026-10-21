@@ -3,7 +3,7 @@
 # 💍 PAWIWAHAN THEME 1
 ### *Exclusive Digital Balinese Wedding Invitation Web Application*
 
-![Pawiwahan Banner](Elemen/Elemen%20Pendukung/Pawiwahan-Theme-1.png)
+![Pawiwahan Banner](assets/images/decorations/preview-banner.png)
 
 <p align="center">
   <strong>Undangan Pernikahan Digital Adat Bali (Manusa Yadnya) Modern, Elegan, Interaktif, dan Terintegrasi Real-Time Cloud Firestore.</strong>
@@ -142,32 +142,35 @@ flowchart TD
 ```bash
 pawiwahan-theme-1/
 │
-├── 📁 Elemen/                           # Direktori aset statis & multimedia
-│   ├── 📁 Elemen Pendukung/             # Aset grafis pelengkap & audio
-│   │   ├── Icon.ico                     # Favicon & icon web
-│   │   ├── Music.mp3                    # Musik latar instrumen pernikahan
-│   │   ├── Pawiwahan-Theme-1.png        # Banner preview tema undangan
-│   │   └── wave.webp                    # Vektor gelombang dekorasi bawah
-│   ├── 📁 Foto Pasangan/                # Foto profil mempelai
-│   │   ├── Foto Mempelai Pria.webp      # Foto I Putu Edi Pratama
-│   │   └── Foto Mempelai Wanita.webp    # Foto Winda Aprilia Dewi
-│   └── 📁 Photo Gallery/                # Galeri dokumentasi & prewedding (WebP)
-│       ├── Cover1.webp                  # Cover slide utama
-│       ├── Cover2.webp                  # Cover slide alternatif & galeri
-│       └── Foto1.webp ... Foto12.webp   # Koleksi 12 foto galeri interaktif
+├── 📁 assets/                           # Direktori aset statis & multimedia
+│   ├── 📁 audio/                        # Musik latar instrumen pernikahan
+│   │   └── wedding-music.mp3
+│   ├── 📁 icons/                        # Favicon & icon web
+│   │   └── favicon.ico
+│   └── 📁 images/                       # Seluruh aset visual (WebP & PNG)
+│       ├── 📁 couple/                   # Foto profil mempelai (groom & bride)
+│       │   ├── groom.webp
+│       │   └── bride.webp
+│       ├── 📁 gallery/                  # Galeri foto momen bahagia & cover
+│       │   ├── cover-1.webp
+│       │   ├── cover-2.webp
+│       │   └── gallery-01.webp ... gallery-12.webp
+│       └── 📁 decorations/              # Ornamen visual & banner preview
+│           ├── wave.webp
+│           └── preview-banner.png
 │
 ├── 📄 index.html                        # Struktur utama halaman, meta SEO, & modal
 ├── 🎨 style.css                         # Desain sistem, palet warna, responsivitas, & animasi
 ├── ⚡ script.js                          # Logika interaktif, Firestore real-time, & lightbox
-├── 📁 rules/                            # Konfigurasi keamanan & indeks database
+├── 📁 rules/                            # (Lokal) Konfigurasi keamanan & indeks Firestore (diabaikan .gitignore)
 │   ├── 🔒 firestore.rules               # Aturan keamanan Cloud Firestore (Security Rules)
 │   └── 📑 firestore.indexes.json        # Pengaturan Composite Indexes Firestore
-├── 🔧 firebase.json                     # Konfigurasi deployment Firebase CLI
+├── 🔧 firebase.json                     # (Lokal) Konfigurasi deployment Firebase CLI (diabaikan .gitignore)
 ├── ⚙️ sw.js                             # Service Worker untuk manajemen cache & mode offline
 ├── 📱 site.webmanifest                  # Konfigurasi PWA (nama aplikasi, icon, tema warna)
 ├── 🗺️ sitemap.xml                       # Peta situs untuk pengindeksan mesin pencari (SEO)
 ├── 🤖 robots.txt                        # Pengaturan perayapan web crawler
-├── 🙈 .gitignore                        # Konfigurasi pengabaian file sementara Git (OS & IDE)
+├── 🙈 .gitignore                        # Konfigurasi pengabaian file Git ( OS, & IDE)
 └── 📘 README.md                         # Dokumentasi lengkap proyek
 ```
 
@@ -252,7 +255,7 @@ Untuk mengganti password dengan yang baru:
 
 ## 🛡️ Aturan Keamanan Firestore (Security Rules)
 
-Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada file [`rules/firestore.rules`](./rules/firestore.rules). Aturan ini dirancang dengan tingkat keamanan sangat ketat (*High-Level Security Lockdown*):
+Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada file `rules/firestore.rules`. File dan folder konfigurasi ini disimpan secara lokal dan dilindungi oleh `.gitignore` agar tidak terekspos secara publik di repositori GitHub. Aturan ini dirancang dengan tingkat keamanan sangat ketat (*High-Level Security Lockdown*):
 
 - **🛡️ Validasi Ketat Data Kehadiran & Anti-Spam:** Membatasi ukuran teks nama (1–50 karakter), pesan (1–500 karakter), integritas status (`Hadir` wajib 1–10 orang, `Tidak Hadir` wajib 0 orang), serta mengunci status pin awal.
 - **🔐 Otorisasi Bertingkat (*Dual-Tier Salted Token*):** Menjamin fitur sematkan (*pin/unpin*), hapus ucapan, dan centang verifikasi balasan mempelai (*blue badge*) hanya dapat dieksekusi oleh mempelai yang memegang kata sandi sah.
@@ -273,7 +276,7 @@ npx firebase deploy --only firestore:indexes
 ```
 
 #### Opsi 2: Menggunakan Firebase Console (Manual)
-1. Buka file [`rules/firestore.rules`](./rules/firestore.rules) lalu salin seluruh kodenya.
+1. Buka file lokal `rules/firestore.rules` di editor Anda lalu salin seluruh kodenya.
 2. Masuk ke [Firebase Console](https://console.firebase.google.com/) > Pilih Project Anda > **Firestore Database**.
 3. Buka tab **Rules**, tempelkan kode yang telah disalin, lalu klik tombol **Publish**.
 
@@ -298,7 +301,7 @@ Slate Grey       : #718096  ■■■■■■■ (Teks Deskripsi & Subjudul)
 ## 📱 Performa & Best Practices
 
 - ⚡ **Google Web Vitals Optimized:** Menggunakan format gambar generasi terbaru `.webp` yang dikompresi maksimal.
-- 🚀 **Preload & Asynchronous Assets:** Preload aset kritis LCP (`Cover1.webp`), non-blocking font loading (`media="print" onload="this.media='all'"`).
+- 🚀 **Preload & Asynchronous Assets:** Preload aset kritis LCP (`cover-1.webp`), non-blocking font loading (`media="print" onload="this.media='all'"`).
 - 🛡️ **Anti-Inspect & Content Protection:** Mencegah klik kanan tak sengaja, drag gambar sembarangan, serta pintasan inspeksi elemen.
 - 📶 **PWA Service Worker:** Mendukung caching cerdas agar undangan tetap dapat dibuka dengan lancar meskipun sinyal tamu kurang stabil.
 
@@ -317,9 +320,6 @@ Dibuat dengan penuh dedikasi dan cinta oleh **WinandaDev**.
   </a>
   <a href="https://wa.me/6285964393536" target="_blank">
     <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp" />
-  </a>
-  <a href="https://www.facebook.com/share/1E7HcpEHtH" target="_blank">
-    <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" />
   </a>
 </p>
 
