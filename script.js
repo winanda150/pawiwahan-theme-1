@@ -2282,15 +2282,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let aosRefreshTimer = null;
     let currentPage = 1;
     const pageCursors = [null]; // Menyimpan document cursor untuk setiap halaman: pageCursors[1] = null, pageCursors[2] = doc10, dst.
+    let lastRecordedMobileHeight = 0;
 
     async function updateTotalCount(forcedCount = null) {
         try {
             const counterEl = messageCounter || document.getElementById('message-counter');
+            const paginationControls = document.getElementById('pagination-controls');
+
             if (typeof forcedCount === 'number') {
                 if (counterEl) counterEl.innerText = forcedCount;
-                const paginationControls = document.getElementById('pagination-controls');
                 if (paginationControls) {
-                    paginationControls.style.display = forcedCount > 10 ? 'flex' : 'none';
+                    paginationControls.style.display = (currentPage > 1 || forcedCount > 10) ? 'flex' : 'none';
                 }
                 return forcedCount;
             }
@@ -2300,9 +2302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = snapshot.data().count;
             if (counterEl) counterEl.innerText = total;
 
-            const paginationControls = document.getElementById('pagination-controls');
             if (paginationControls) {
-                paginationControls.style.display = total > 10 ? 'flex' : 'none';
+                paginationControls.style.display = (currentPage > 1 || total > 10) ? 'flex' : 'none';
             }
             return total;
         } catch (error) {
@@ -2580,7 +2581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            pinnedContainer.style.display = 'flex';
+            pinnedContainer.style.display = currentPage === 1 ? 'flex' : 'none';
 
             // 3. Pastikan tidak ada duplikat di daftar pesan reguler
             sortedDocs.forEach(docSnap => {
@@ -2600,11 +2601,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getQueryForPage(page) {
-        const pageSize = 10 + (pinnedIds ? pinnedIds.size : 0);
+        const pinnedCount = (pinnedIds ? pinnedIds.size : 0);
+        const pageLimit = (page === 1) ? Math.max(1, 10 - pinnedCount) : 10;
+        const fetchLimit = pageLimit + pinnedCount + 1;
         if (page === 1 || !pageCursors[page]) {
-            return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(pageSize));
+            return query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(fetchLimit));
         }
-        return query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(pageCursors[page]), limit(pageSize));
+        return query(collection(db, "messages"), orderBy("timestamp", "desc"), startAfter(pageCursors[page]), limit(fetchLimit));
     }
 
     function loadGuestbook(page = 1) {
@@ -2617,9 +2620,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let isInitialLoad = true;
         const targetList = document.getElementById('regular-messages-list') || gbList;
 
+        const pinnedContainer = document.getElementById('pinned-messages-list');
+        if (pinnedContainer) {
+            pinnedContainer.style.display = (currentPage === 1 && pinnedIds && pinnedIds.size > 0) ? 'flex' : 'none';
+        }
+
+        // Pada tampilan mobile, pertahankan tinggi sebelumnya agar saat berpindah halaman tidak terjadi layout shift / mengecil tiba-tiba
+        if (window.innerWidth <= 767 && gbList) {
+            const h = gbList.offsetHeight;
+            if (h > lastRecordedMobileHeight) {
+                lastRecordedMobileHeight = h;
+            }
+            if (lastRecordedMobileHeight > 0) {
+                gbList.style.minHeight = `${lastRecordedMobileHeight}px`;
+            }
+        } else if (gbList) {
+            gbList.style.minHeight = '';
+        }
+
         // Reset list dan tampilkan spinner saat memuat halaman
         targetList.innerHTML = `
-            <div id="gb-loading" class="text-center" style="padding: 40px 0;">
+            <div id="gb-loading" class="text-center" style="padding: 40px 0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <div class="spinner" style="margin: 0 auto;"></div>
                 <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
             </div>
@@ -2637,10 +2658,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const unpinnedDocs = snapshot.docs.filter(docSnap => docSnap.data().isPinned !== true);
+            const pinnedCount = (pinnedIds ? pinnedIds.size : 0);
+            const pageLimit = (currentPage === 1) ? Math.max(1, 10 - pinnedCount) : 10;
 
             if (unpinnedDocs.length === 0) {
                 if (currentPage === 1) {
-                    updateTotalCount(pinnedIds ? pinnedIds.size : 0);
+                    updateTotalCount(pinnedCount);
                     if (isMempelai) {
                         syncGuestCount(0);
                     }
@@ -2648,11 +2671,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
                 if (btnNextGb) btnNextGb.disabled = true;
                 if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
+                const paginationControls = document.getElementById('pagination-controls');
+                if (paginationControls && currentPage === 1) {
+                    paginationControls.style.display = 'none';
+                }
                 return;
             }
 
-            // Ambil maksimal 10 pesan reguler untuk ditampilkan pada halaman ini
-            const visibleDocs = unpinnedDocs.slice(0, 10);
+            // Ambil maksimal pesan reguler sesuai kuota (Halaman 1: 10 - pinned, Halaman selanjutnya: 10)
+            const visibleDocs = unpinnedDocs.slice(0, pageLimit);
 
             // Simpan cursor untuk halaman berikutnya berdasarkan dokumen reguler terakhir
             if (visibleDocs.length > 0) {
@@ -2660,8 +2687,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Update status tombol navigasi
-            if (btnNextGb) btnNextGb.disabled = unpinnedDocs.length <= 10 && snapshot.size < (10 + (pinnedIds ? pinnedIds.size : 0));
-            if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
+            const hasNextPage = unpinnedDocs.length > pageLimit;
+            const isNextDisabled = !hasNextPage;
+            const isPrevDisabled = currentPage === 1;
+
+            if (btnNextGb) btnNextGb.disabled = isNextDisabled;
+            if (btnPrevGb) btnPrevGb.disabled = isPrevDisabled;
+
+            const paginationControls = document.getElementById('pagination-controls');
+            if (paginationControls) {
+                if (currentPage > 1 || hasNextPage) {
+                    paginationControls.style.display = 'flex';
+                } else {
+                    paginationControls.style.display = 'none';
+                }
+            }
+
+            const pageIndicator = document.getElementById('page-indicator');
+            if (pageIndicator) {
+                pageIndicator.textContent = `Halaman ${currentPage}`;
+            }
 
             if (isInitialLoad) {
                 // Bersihkan kontainer dan render dokumen reguler
@@ -2671,6 +2716,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetList.appendChild(item);
                 });
                 isInitialLoad = false;
+
+                // Rekam dan kunci tinggi di tampilan mobile
+                if (window.innerWidth <= 767 && gbList) {
+                    requestAnimationFrame(() => {
+                        const h = gbList.offsetHeight;
+                        if (h > lastRecordedMobileHeight) {
+                            lastRecordedMobileHeight = h;
+                        }
+                        if (lastRecordedMobileHeight > 0) {
+                            gbList.style.minHeight = `${lastRecordedMobileHeight}px`;
+                        }
+                    });
+                } else if (gbList) {
+                    gbList.style.minHeight = '';
+                }
             } else {
                 // Real-time update untuk halaman saat ini
                 snapshot.docChanges().forEach((change) => {
@@ -2691,7 +2751,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const referenceNode = targetList.children[change.newIndex];
                                 targetList.insertBefore(item, referenceNode);
                             }
-                            if (targetList.children.length > 10) {
+                            if (targetList.children.length > pageLimit) {
                                 targetList.lastElementChild?.remove();
                             }
                         }
@@ -2759,6 +2819,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnNextGb && !btnNextGb.dataset.listenerAttached) {
                 btnNextGb.dataset.listenerAttached = "true";
                 btnNextGb.addEventListener('click', () => {
+                    if (btnNextGb.disabled) return;
+                    if (window.innerWidth <= 767 && gbList) {
+                        const h = gbList.offsetHeight;
+                        if (h > lastRecordedMobileHeight) lastRecordedMobileHeight = h;
+                        if (lastRecordedMobileHeight > 0) gbList.style.minHeight = `${lastRecordedMobileHeight}px`;
+                    }
                     loadGuestbook(currentPage + 1);
                     gbList.scrollTop = 0;
                 });
@@ -2767,12 +2833,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnPrevGb && !btnPrevGb.dataset.listenerAttached) {
                 btnPrevGb.dataset.listenerAttached = "true";
                 btnPrevGb.addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        loadGuestbook(currentPage - 1);
-                        gbList.scrollTop = 0;
+                    if (btnPrevGb.disabled || currentPage <= 1) return;
+                    if (window.innerWidth <= 767 && gbList) {
+                        const h = gbList.offsetHeight;
+                        if (h > lastRecordedMobileHeight) lastRecordedMobileHeight = h;
+                        if (lastRecordedMobileHeight > 0) gbList.style.minHeight = `${lastRecordedMobileHeight}px`;
                     }
+                    loadGuestbook(currentPage - 1);
+                    gbList.scrollTop = 0;
                 });
             }
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 767 && gbList) {
+                    gbList.style.minHeight = '';
+                } else if (window.innerWidth <= 767 && gbList && lastRecordedMobileHeight > 0) {
+                    gbList.style.minHeight = `${lastRecordedMobileHeight}px`;
+                }
+            });
         }
     };
 

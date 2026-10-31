@@ -963,6 +963,22 @@ body:active {
     color: #bfa100;
 }
 
+/* Status Nonaktif (Disabled) untuk Tombol Event & Paginasi */
+.btn-event:disabled,
+.btn-event[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    box-shadow: none;
+}
+
+.btn-event.outline:disabled,
+.btn-event.outline[disabled] {
+    background: transparent;
+    color: #9e9e9e;
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
 /* Countdown Styles */
 .countdown-container {
     display: flex;
@@ -3105,7 +3121,8 @@ emoji-picker {
 
     .guestbook-list {
         max-height: 400px;
-        /* Batasi tinggi list di mobile agar tetap bisa di-scroll */
+        transition: min-height 0.25s ease;
+        /* Batasi tinggi list di mobile agar tetap bisa di-scroll dan transisi mulus */
     }
 
     .attendance-card {
