@@ -2621,9 +2621,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetList = document.getElementById('regular-messages-list') || gbList;
 
         const pinnedContainer = document.getElementById('pinned-messages-list');
-        if (pinnedContainer) {
-            pinnedContainer.style.display = (currentPage === 1 && pinnedIds && pinnedIds.size > 0) ? 'flex' : 'none';
-        }
+        if (btnNextGb) btnNextGb.disabled = true;
+        if (btnPrevGb) btnPrevGb.disabled = true;
 
         // Pada tampilan mobile, pertahankan tinggi sebelumnya agar saat berpindah halaman tidak terjadi layout shift / mengecil tiba-tiba
         if (window.innerWidth <= 767 && gbList) {
@@ -2638,17 +2637,52 @@ document.addEventListener('DOMContentLoaded', () => {
             gbList.style.minHeight = '';
         }
 
-        // Reset list dan tampilkan spinner saat memuat halaman
-        targetList.innerHTML = `
-            <div id="gb-loading" class="text-center" style="padding: 40px 0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <div class="spinner" style="margin: 0 auto;"></div>
-                <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
-            </div>
-        `;
+        // Tampilkan loading spinner hanya jika kontainer belum memiliki pesan sebelumnya (pemuatan perdana)
+        // Jika sudah ada pesan (navigasi antar halaman), redupkan konten sebelumnya agar transisi halus tanpa flicker
+        const hasExistingMessages = targetList.children.length > 0 && !targetList.querySelector('#gb-loading') && !targetList.querySelector('.empty-msg');
+        
+        if (pinnedContainer) {
+            if (currentPage === 1) {
+                if (hasExistingMessages) {
+                    pinnedContainer.style.opacity = '0.35';
+                    pinnedContainer.style.transition = 'opacity 0.2s ease';
+                }
+                pinnedContainer.style.display = (pinnedIds && pinnedIds.size > 0) ? 'flex' : 'none';
+            } else {
+                pinnedContainer.style.display = 'none';
+            }
+        }
+
+        let spinnerTimer = null;
+        if (hasExistingMessages) {
+            targetList.style.opacity = '0.35';
+            targetList.style.transition = 'opacity 0.2s ease';
+            spinnerTimer = setTimeout(() => {
+                if (isInitialLoad) {
+                    targetList.innerHTML = `
+                        <div id="gb-loading" class="text-center" style="padding: 40px 0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <div class="spinner" style="margin: 0 auto;"></div>
+                            <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
+                        </div>
+                    `;
+                    targetList.style.opacity = '1';
+                }
+            }, 250);
+        } else {
+            targetList.innerHTML = `
+                <div id="gb-loading" class="text-center" style="padding: 40px 0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="color: #999; margin-top: 15px; font-size: 0.9rem; font-style: italic;">Memuat ucapan...</p>
+                </div>
+            `;
+            targetList.style.opacity = '1';
+        }
 
         const q = getQueryForPage(currentPage);
 
         unsubscribeGb = onSnapshot(q, (snapshot) => {
+            if (spinnerTimer) clearTimeout(spinnerTimer);
+
             const hasStructuralChange = snapshot.docChanges().some(c => c.type === 'added' || c.type === 'removed');
             if (!snapshot.metadata.hasPendingWrites && hasStructuralChange) {
                 updateTotalCount();
@@ -2662,17 +2696,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const pageLimit = (currentPage === 1) ? Math.max(1, 10 - pinnedCount) : 10;
 
             if (unpinnedDocs.length === 0) {
+                const totalCounterVal = parseInt(document.getElementById('message-counter')?.innerText || '0', 10);
+
+                // Cegah kedipan: Jangan pernah tampilkan pesan kosong jika kontainer sudah memiliki pesan sebelumnya,
+                // jika total ucapan di sistem > 0, atau jika snapshot berasal dari cache / transisi awal
+                if (hasExistingMessages || totalCounterVal > 0 || snapshot.metadata.fromCache) {
+                    if (currentPage > 1 && !snapshot.metadata.fromCache && totalCounterVal <= 0) {
+                        loadGuestbook(currentPage - 1);
+                    }
+                    return;
+                }
+
+                if (currentPage > 1) {
+                    // Jika halaman berikutnya memang kosong dari server, otomatis kembali ke halaman sebelumnya
+                    loadGuestbook(currentPage - 1);
+                    return;
+                }
+
                 if (currentPage === 1) {
                     updateTotalCount(pinnedCount);
                     if (isMempelai) {
                         syncGuestCount(0);
                     }
                 }
-                targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+
+                // Tampilkan pesan kosong hanya jika benar-benar tidak ada pesan sama sekali (termasuk pesan sematan)
+                if (pinnedCount === 0) {
+                    targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+                } else {
+                    targetList.innerHTML = '';
+                }
+
+                targetList.style.opacity = '1';
                 if (btnNextGb) btnNextGb.disabled = true;
-                if (btnPrevGb) btnPrevGb.disabled = currentPage === 1;
+                if (btnPrevGb) btnPrevGb.disabled = true;
                 const paginationControls = document.getElementById('pagination-controls');
-                if (paginationControls && currentPage === 1) {
+                if (paginationControls) {
                     paginationControls.style.display = 'none';
                 }
                 return;
@@ -2715,6 +2774,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const item = createMessageElement(docSnap, true, false);
                     targetList.appendChild(item);
                 });
+                targetList.style.opacity = '1';
+                if (pinnedContainer && currentPage === 1) {
+                    pinnedContainer.style.display = (pinnedIds && pinnedIds.size > 0) ? 'flex' : 'none';
+                    pinnedContainer.style.opacity = '1';
+                }
                 isInitialLoad = false;
 
                 // Rekam dan kunci tinggi di tampilan mobile
@@ -2788,8 +2852,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         existingItem.remove();
                         const pinnedContainer = document.getElementById('pinned-messages-list');
                         const hasPinned = pinnedContainer && pinnedContainer.children.length > 0 && pinnedContainer.style.display !== 'none';
-                        if (targetList.children.length === 0 && !hasPinned) {
-                            targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+                        if (targetList.children.length === 0) {
+                            if (currentPage > 1) {
+                                loadGuestbook(currentPage - 1);
+                            } else if (!hasPinned) {
+                                targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
+                            }
                         }
                     }
                 });
@@ -2820,6 +2888,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnNextGb.dataset.listenerAttached = "true";
                 btnNextGb.addEventListener('click', () => {
                     if (btnNextGb.disabled) return;
+                    btnNextGb.disabled = true;
+                    if (btnPrevGb) btnPrevGb.disabled = true;
                     if (window.innerWidth <= 767 && gbList) {
                         const h = gbList.offsetHeight;
                         if (h > lastRecordedMobileHeight) lastRecordedMobileHeight = h;
@@ -2834,6 +2904,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnPrevGb.dataset.listenerAttached = "true";
                 btnPrevGb.addEventListener('click', () => {
                     if (btnPrevGb.disabled || currentPage <= 1) return;
+                    btnPrevGb.disabled = true;
+                    if (btnNextGb) btnNextGb.disabled = true;
                     if (window.innerWidth <= 767 && gbList) {
                         const h = gbList.offsetHeight;
                         if (h > lastRecordedMobileHeight) lastRecordedMobileHeight = h;
