@@ -193,7 +193,7 @@ _Source code_ template undangan digital ini merupakan karya orisinal yang dikemb
 
 ### 1. Manajemen Konten Terpusat (`config.js`)
 
-Aplikasi ini menerapkan arsitektur _Single Source of Truth_. Seluruh konten acara — mulai dari identitas kedua mempelai, kutipan sakral (_mantra_), rangkaian upacara, integrasi Google Maps & Kalender, nomor rekening tanda kasih, hingga kredensial Firebase — dikonfigurasi secara terpusat melalui berkas **`config.js`**.
+Aplikasi ini menerapkan arsitektur _Single Source of Truth_. Seluruh konten acara — mulai dari identitas kedua mempelai, rangkaian upacara, integrasi Google Maps & Kalender, nomor rekening tanda kasih, hingga kredensial Firebase — dikonfigurasi secara terpusat melalui berkas **`config.js`**. (Adapun ayat suci mantra Rg Veda bersifat baku dan dikelola langsung secara statis pada `index.html`).
 
 Mesin hidrasi data bawaan akan secara otomatis memetakan nilai-nilai konfigurasi tersebut ke seluruh antarmuka pengguna tanpa memerlukan modifikasi manual pada struktur markup `index.html`:
 

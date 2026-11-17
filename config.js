@@ -56,16 +56,7 @@ const WEDDING_CONFIG = {
     },
 
     // ------------------------------------------------------------------------
-    // 03. AYAT SUCI / MANTRA PERNIKAHAN
-    // ------------------------------------------------------------------------
-    mantra: {
-        sanskrit: '"Ihaiva stam ma vi yaustam, visvam ayur <br> vyasnutam, kridantau putrair naptrbhih, modamanau sve grhe."',
-        translation: '"Wahai pasangan suami-isteri, semoga kalian tetap bersatu dan tidak pernah terpisahkan. Semoga kalian mencapai hidup penuh kebahagiaan, tinggal di rumah yang penuh kegembiraan bersama seluruh keturunanmu."',
-        source: "- Rg Veda X.85.42 -"
-    },
-
-    // ------------------------------------------------------------------------
-    // 04. RANGKAIAN ACARA & COUNTDOWN TIMER
+    // 03. RANGKAIAN ACARA & COUNTDOWN TIMER
     // ------------------------------------------------------------------------
     events: {
         // Target tanggal & jam untuk timer hitung mundur (Format ISO: YYYY-MM-DDTHH:mm:ss+Zona)
@@ -108,7 +99,7 @@ const WEDDING_CONFIG = {
     },
 
     // ------------------------------------------------------------------------
-    // 05. TANDA KASIH DIGITAL (REKENING) & HADIAH FISIK
+    // 04. TANDA KASIH DIGITAL (REKENING) & HADIAH FISIK
     // ------------------------------------------------------------------------
     gifts: {
         bankAccounts: [
@@ -133,7 +124,7 @@ const WEDDING_CONFIG = {
     },
 
     // ------------------------------------------------------------------------
-    // 06. FOOTER, UCAPAN PENUTUP & SOSIAL MEDIA
+    // 05. FOOTER, UCAPAN PENUTUP & SOSIAL MEDIA
     // ------------------------------------------------------------------------
     footer: {
         closingGreeting: "Om Shanti Shanti Shanti Om",
@@ -148,7 +139,7 @@ const WEDDING_CONFIG = {
     },
 
     // ------------------------------------------------------------------------
-    // 07. KONFIGURASI KEAMANAN & FIREBASE (OPSIONAL / DEFAULT)
+    // 06. KONFIGURASI KEAMANAN & FIREBASE (OPSIONAL / DEFAULT)
     // ------------------------------------------------------------------------
     security: {
         // Hash SHA-256 dari kata sandi Mode Mempelai
