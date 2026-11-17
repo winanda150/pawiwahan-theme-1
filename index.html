@@ -10,48 +10,51 @@
 <head>
     <!-- ==========================================================================
          01. METADATA HEAD, SEO OPENGRAPH & TWITTER CARD
+         Catatan: Browser akan otomatis menyelaraskan judul & meta dengan config.js.
+         Untuk WhatsApp / Facebook Link Preview (crawler media sosial), sesuaikan
+         nilai tag statis di bawah ini sesuai kebutuhan klien/proyek Anda.
          ========================================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Undangan Pawiwahan | Edi & Winda</title>
+    <title>Undangan Pawiwahan | Upacara & Resepsi Pernikahan</title>
     <meta name="description"
-        content="Undangan Pernikahan Digital Edi & Winda. Mohon doa restu dan kehadiran Bapak/Ibu/Saudara/i pada hari bahagia kami, Jumat, 30 Januari 2026 di Denpasar, Bali.">
+        content="Undangan Pernikahan Digital. Mohon doa restu dan kehadiran Bapak/Ibu/Saudara/i pada hari bahagia kami.">
     <meta name="keywords"
-        content="Undangan Pernikahan, Pawiwahan Bali, Edi dan Winda, Pernikahan Bali, Undangan Digital, Manusa Yadnya">
-    <meta name="author" content="Edi & Winda">
+        content="Undangan Pernikahan, Pawiwahan Bali, Undangan Digital, Manusa Yadnya, Wedding Invitation">
+    <meta name="author" content="Pawiwahan Wedding">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="theme-color" content="#1a202c">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://winanda150.github.io/pawiwahan-theme-1/">
+    <!-- Canonical URL (Sesuaikan dengan domain deployment Anda) -->
+    <link rel="canonical" href="./">
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook / WhatsApp Preview -->
     <meta property="og:type" content="website">
     <meta property="og:locale" content="id_ID">
-    <meta property="og:site_name" content="Undangan Pawiwahan Edi & Winda">
-    <meta property="og:url" content="https://winanda150.github.io/pawiwahan-theme-1/">
-    <meta property="og:title" content="Undangan Pawiwahan | Edi & Winda">
+    <meta property="og:site_name" content="Undangan Pawiwahan">
+    <meta property="og:url" content="./">
+    <meta property="og:title" content="Undangan Pawiwahan | Upacara & Resepsi Pernikahan">
     <meta property="og:description"
-        content="Jumat, 30 Januari 2026 - Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu kepada kami.">
+        content="Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu kepada kami.">
     <meta property="og:image"
-        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
+        content="assets/images/gallery/gallery-05.webp">
     <meta property="og:image:secure_url"
-        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
+        content="assets/images/gallery/gallery-05.webp">
     <meta property="og:image:type" content="image/webp">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Foto Undangan Pernikahan Edi dan Winda">
+    <meta property="og:image:alt" content="Foto Undangan Pernikahan">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://winanda150.github.io/pawiwahan-theme-1/">
-    <meta name="twitter:title" content="Undangan Pawiwahan | Edi & Winda">
-    <meta name="twitter:description" content="Jumat, 30 Januari 2026 - Mohon doa restu pada acara pernikahan kami.">
+    <meta name="twitter:url" content="./">
+    <meta name="twitter:title" content="Undangan Pawiwahan | Upacara & Resepsi Pernikahan">
+    <meta name="twitter:description" content="Mohon doa restu pada acara pernikahan kami.">
     <meta name="twitter:image"
-        content="https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp">
-    <meta name="twitter:image:alt" content="Foto Undangan Pernikahan Edi dan Winda">
+        content="assets/images/gallery/gallery-05.webp">
+    <meta name="twitter:image:alt" content="Foto Undangan Pernikahan">
 
     <!-- ==========================================================================
          02. MANIFEST PWA, FAVICON & PRELOAD PRIORITAS TINGGI
@@ -64,6 +67,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="image" href="assets/images/gallery/cover-1.webp" fetchpriority="high">
+
+    <!-- Centralized Wedding Data Configuration -->
+    <script src="config.js"></script>
 
     <!-- Core Stylesheet (Immediate) -->
     <link rel="stylesheet" href="style.css">
@@ -96,92 +102,92 @@
          ========================================================================== -->
     <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@graph": [
+    "@context": "https://schema.org",
+    "@graph": [
         {
-          "@type": "WebSite",
-          "@id": "https://winanda150.github.io/pawiwahan-theme-1/#website",
-          "url": "https://winanda150.github.io/pawiwahan-theme-1/",
-          "name": "Undangan Pawiwahan Edi & Winda",
-          "description": "Undangan Pernikahan Digital Upacara Pawiwahan I Putu Edi Pratama & Winda Aprilia Dewi",
-          "inLanguage": "id"
+            "@type": "WebSite",
+            "@id": "https://winanda150.github.io/pawiwahan-theme-1/#website",
+            "url": "https://winanda150.github.io/pawiwahan-theme-1/",
+            "name": "Undangan Pawiwahan Edi & Winda",
+            "description": "Undangan Pernikahan Digital Upacara Pawiwahan I Putu Edi Pratama & Winda Aprilia Dewi",
+            "inLanguage": "id"
         },
         {
-          "@type": "Event",
-          "@id": "https://winanda150.github.io/pawiwahan-theme-1/#event-pawiwahan",
-          "name": "Upacara Pawiwahan Edi & Winda",
-          "description": "Upacara Manusa Yadnya Pawiwahan Putra dan Putri kami: I Putu Edi Pratama & Winda Aprilia Dewi",
-          "startDate": "2026-01-30T08:00:00+08:00",
-          "endDate": "2026-01-30T14:00:00+08:00",
-          "eventStatus": "https://schema.org/EventScheduled",
-          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-          "location": {
-            "@type": "Place",
-            "name": "Kediaman Mempelai Pria",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "Jl. Siulan No 52, Penatih Dangin Puri",
-              "addressLocality": "Denpasar Timur",
-              "addressRegion": "Bali",
-              "postalCode": "80238",
-              "addressCountry": "ID"
-            }
-          },
-          "image": [
-            "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
-          ],
-          "organizer": {
-            "@type": "Person",
-            "name": "I Putu Edi Pratama & Winda Aprilia Dewi"
-          },
-          "performer": [
-            {
-              "@type": "Person",
-              "name": "I Putu Edi Pratama"
+            "@type": "Event",
+            "@id": "https://winanda150.github.io/pawiwahan-theme-1/#event-pawiwahan",
+            "name": "Upacara Pawiwahan Edi & Winda",
+            "description": "Upacara Manusa Yadnya Pawiwahan Putra dan Putri kami: I Putu Edi Pratama & Winda Aprilia Dewi",
+            "startDate": "2026-01-30T08:00:00+08:00",
+            "endDate": "2026-01-30T14:00:00+08:00",
+            "eventStatus": "https://schema.org/EventScheduled",
+            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+            "location": {
+                "@type": "Place",
+                "name": "Kediaman Mempelai Pria",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Jl. Siulan No 52, Penatih Dangin Puri",
+                    "addressLocality": "Denpasar Timur",
+                    "addressRegion": "Bali",
+                    "postalCode": "80238",
+                    "addressCountry": "ID"
+                }
             },
-            {
-              "@type": "Person",
-              "name": "Winda Aprilia Dewi"
-            }
-          ]
+            "image": [
+                "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
+            ],
+            "organizer": {
+                "@type": "Person",
+                "name": "I Putu Edi Pratama & Winda Aprilia Dewi"
+            },
+            "performer": [
+                {
+                    "@type": "Person",
+                    "name": "I Putu Edi Pratama"
+                },
+                {
+                    "@type": "Person",
+                    "name": "Winda Aprilia Dewi"
+                }
+            ]
         },
         {
-          "@type": "Event",
-          "@id": "https://winanda150.github.io/pawiwahan-theme-1/#event-resepsi",
-          "name": "Resepsi Pernikahan Edi & Winda",
-          "description": "Resepsi Pernikahan I Putu Edi Pratama & Winda Aprilia Dewi",
-          "startDate": "2026-01-30T18:00:00+08:00",
-          "endDate": "2026-01-30T22:00:00+08:00",
-          "eventStatus": "https://schema.org/EventScheduled",
-          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-          "location": {
-            "@type": "Place",
-            "name": "Kediaman Mempelai Pria",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "Jl. Siulan No 52, Penatih Dangin Puri",
-              "addressLocality": "Denpasar Timur",
-              "addressRegion": "Bali",
-              "postalCode": "80238",
-              "addressCountry": "ID"
-            }
-          },
-          "image": [
-            "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
-          ],
-          "performer": [
-            {
-              "@type": "Person",
-              "name": "I Putu Edi Pratama"
+            "@type": "Event",
+            "@id": "https://winanda150.github.io/pawiwahan-theme-1/#event-resepsi",
+            "name": "Resepsi Pernikahan Edi & Winda",
+            "description": "Resepsi Pernikahan I Putu Edi Pratama & Winda Aprilia Dewi",
+            "startDate": "2026-01-30T18:00:00+08:00",
+            "endDate": "2026-01-30T22:00:00+08:00",
+            "eventStatus": "https://schema.org/EventScheduled",
+            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+            "location": {
+                "@type": "Place",
+                "name": "Kediaman Mempelai Pria",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Jl. Siulan No 52, Penatih Dangin Puri",
+                    "addressLocality": "Denpasar Timur",
+                    "addressRegion": "Bali",
+                    "postalCode": "80238",
+                    "addressCountry": "ID"
+                }
             },
-            {
-              "@type": "Person",
-              "name": "Winda Aprilia Dewi"
-            }
-          ]
+            "image": [
+                "https://winanda150.github.io/pawiwahan-theme-1/assets/images/gallery/gallery-05.webp"
+            ],
+            "performer": [
+                {
+                    "@type": "Person",
+                    "name": "I Putu Edi Pratama"
+                },
+                {
+                    "@type": "Person",
+                    "name": "Winda Aprilia Dewi"
+                }
+            ]
         }
-      ]
-    }
+    ]
+}
     </script>
 </head>
 
@@ -207,8 +213,8 @@
         </div>
         <div id="particles-container" class="particles-container"></div>
         <div class="cover-content">
-            <h1 class="cinzel-font">Edi & Winda</h1>
-            <p class="event-date">Jumat, 30 Januari 2026</p>
+            <h1 class="cinzel-font" data-bind="couple.shortName">Mempelai Pria & Wanita</h1>
+            <p class="event-date" data-bind="couple.dateDisplay">Hari & Tanggal Acara</p>
             <p class="recipient-text">Kepada Bapak/Ibu/Saudara/i,</p>
             <h2 id="guest-name" class="guest-name">Tamu Undangan</h2>
             <button class="open-btn" id="btn-open">Buka Undangan</button>
@@ -225,8 +231,8 @@
     <section id="main-content" class="mempelai-section">
         <div class="container text-center">
             <div class="opening-greeting">
-                <h2 class="cinzel-font" data-aos="fade-up">Om Swastyastu</h2>
-                <p data-aos="fade-up" data-aos-delay="200">Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi
+                <h2 class="cinzel-font" data-aos="fade-up" data-bind="mempelai.greeting">Om Swastyastu</h2>
+                <p data-aos="fade-up" data-aos-delay="200" data-bind="mempelai.openingText">Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi
                     Wasa/Tuhan Yang Maha Esa kami bermaksud
                     mengundang Bapak/Ibu/Saudara/i pada Upacara Manusa Yadnya Pawiwahan (Pernikahan) Putra dan Putri
                     kami.</p>
@@ -237,19 +243,19 @@
                 <div class="mempelai-card" data-aos="fade-right">
                     <div class="mempelai-img-wrapper">
                         <img src="assets/images/couple/groom.webp"
-                            alt="Foto Mempelai Pria I Putu Edi Pratama" class="mempelai-img" loading="lazy"
-                            decoding="async">
+                            alt="Foto Mempelai Pria" class="mempelai-img" loading="lazy"
+                            decoding="async" data-bind-src="mempelai.groom.photo" data-bind-alt="mempelai.groom.alt">
                     </div>
-                    <h3 class="cinzel-font name">I Putu Edi Pratama</h3>
+                    <h3 class="cinzel-font name" data-bind="mempelai.groom.fullName">Nama Mempelai Pria</h3>
                     <div class="parents">
-                        <p class="intro">Putra pertama dari pasangan</p>
+                        <p class="intro" data-bind="mempelai.groom.order">Putra dari pasangan</p>
                         <div class="parent-names">
-                            <strong>Bapak I Made Mudita</strong>
+                            <strong data-bind="mempelai.groom.father">Bapak Mempelai Pria</strong>
                             <span class="parent-divider">&</span>
-                            <strong>Ibu Putu Novita Dewi</strong>
+                            <strong data-bind="mempelai.groom.mother">Ibu Mempelai Pria</strong>
                         </div>
                     </div>
-                    <p class="address">Jl. Siulan No 52, Penatih Dangin Puri, Kec. Denpasar Timur</p>
+                    <p class="address" data-bind="mempelai.groom.address">Alamat Kediaman Mempelai Pria</p>
                 </div>
 
                 <div class="divider cinzel-font">&</div>
@@ -258,31 +264,31 @@
                 <div class="mempelai-card" data-aos="fade-left">
                     <div class="mempelai-img-wrapper">
                         <img src="assets/images/couple/bride.webp"
-                            alt="Foto Mempelai Wanita Winda Aprilia Dewi" class="mempelai-img" loading="lazy"
-                            decoding="async">
+                            alt="Foto Mempelai Wanita" class="mempelai-img" loading="lazy"
+                            decoding="async" data-bind-src="mempelai.bride.photo" data-bind-alt="mempelai.bride.alt">
                     </div>
-                    <h3 class="cinzel-font name">Winda Aprilia Dewi</h3>
+                    <h3 class="cinzel-font name" data-bind="mempelai.bride.fullName">Nama Mempelai Wanita</h3>
                     <div class="parents">
-                        <p class="intro">Putri kedua dari pasangan</p>
+                        <p class="intro" data-bind="mempelai.bride.order">Putri dari pasangan</p>
                         <div class="parent-names">
-                            <strong>Bapak Fatur R</strong>
+                            <strong data-bind="mempelai.bride.father">Bapak Mempelai Wanita</strong>
                             <span class="parent-divider">&</span>
-                            <strong>Ibu Asri Eka Yanti</strong>
+                            <strong data-bind="mempelai.bride.mother">Ibu Mempelai Wanita</strong>
                         </div>
                     </div>
-                    <p class="address">Jl. Pidada 9, Ubung, Kec. Denpasar Barat</p>
+                    <p class="address" data-bind="mempelai.bride.address">Alamat Kediaman Mempelai Wanita</p>
                 </div>
             </div>
 
             <div class="mantra-box mt-5" data-aos="zoom-in">
                 <i class="bi bi-brightness-high mantra-icon"></i>
-                <p class="mantra-sanskrit">"Ihaiva stam ma vi yaustam, visvam ayur <br> vyasnutam, kridantau putrair
+                <p class="mantra-sanskrit" data-bind-html="mantra.sanskrit">"Ihaiva stam ma vi yaustam, visvam ayur <br> vyasnutam, kridantau putrair
                     naptrbhih, modamanau sve grhe."</p>
                 <hr class="mantra-divider">
-                <p class="mantra-translation">"Wahai pasangan suami-isteri, semoga kalian tetap bersatu dan tidak pernah
+                <p class="mantra-translation" data-bind="mantra.translation">"Wahai pasangan suami-isteri, semoga kalian tetap bersatu dan tidak pernah
                     terpisahkan. Semoga kalian mencapai hidup penuh kebahagiaan, tinggal di rumah yang penuh kegembiraan
                     bersama seluruh keturunanmu."</p>
-                <p class="mantra-source cinzel-font">- Rg Veda X.85.42 -</p>
+                <p class="mantra-source cinzel-font" data-bind="mantra.source">- Rg Veda X.85.42 -</p>
             </div>
         </div>
     </section>
@@ -294,62 +300,26 @@
         <div class="container text-center">
             <h2 class="cinzel-font section-title" data-aos="fade-up">Rangkaian Acara</h2>
             <div class="event-grid mt-5">
-                <!-- Acara 1: Pawiwahan -->
+                <!-- Kartu Acara Placeholder (Otomatis dirender & disinkronkan oleh config.js) -->
                 <div class="event-card" data-aos="fade-up" data-aos-delay="200">
                     <div class="event-arch">
                         <i class="bi bi-flower1 event-icon-top"></i>
-                        <h3 class="cinzel-font">Pawiwahan</h3>
+                        <h3 class="cinzel-font">Upacara Acara</h3>
                         <div class="event-info">
                             <div class="info-item">
-                                <p>Jumat, 30 Januari 2026</p>
+                                <p>Hari, Tanggal Bulan Tahun</p>
                             </div>
                             <div class="info-item">
-                                <p>08.00 WITA - Selesai</p>
+                                <p>00.00 WITA - Selesai</p>
                             </div>
                             <div class="info-item">
-                                <p><span>Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
-                                    Puri, Denpasar Timur</p>
+                                <p><span>Bertempat di</span><br>Alamat Lokasi Acara</p>
                             </div>
                         </div>
                         <div class="event-buttons">
-                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Pawiwahan+Edi+dan+Winda&dates=20260130T000000Z/20260130T040000Z&details=Upacara+Manusa+Yadnya+Pawiwahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
-                                target="_blank" rel="noopener noreferrer" class="btn-event"
-                                aria-label="Simpan Jadwal Pawiwahan ke Kalender"><i class="bi bi-calendar-plus"></i>
-                                Simpan
-                                Kalender</a>
-                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
-                                rel="noopener noreferrer" class="btn-event outline"><i class="bi bi-geo-alt-fill"></i>
-                                Lihat Lokasi</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Acara 2: Resepsi -->
-                <div class="event-card" data-aos="fade-up" data-aos-delay="400">
-                    <div class="event-arch">
-                        <i class="bi bi-stars event-icon-top"></i>
-                        <h3 class="cinzel-font">Resepsi</h3>
-                        <div class="event-info">
-                            <div class="info-item">
-                                <p>Jumat, 30 Januari 2026</p>
-                            </div>
-                            <div class="info-item">
-                                <p>18.00 WITA - Selesai</p>
-                            </div>
-                            <div class="info-item">
-                                <p><span>Bertempat di</span><br>Jl. Siulan No 52, Penatih Dangin
-                                    Puri, Denpasar Timur</p>
-                            </div>
-                        </div>
-                        <div class="event-buttons">
-                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Resepsi+Edi+dan+Winda&dates=20260130T100000Z/20260130T140000Z&details=Resepsi+Pernikahan+Putu+Edi+Pratama+dan+Winda+Aprilia+Dewi&location=Jl.+Siulan+No+52,+Penatih+Dangin+Puri,+Denpasar+Timur"
-                                target="_blank" rel="noopener noreferrer" class="btn-event"
-                                aria-label="Simpan Jadwal Resepsi ke Kalender"><i class="bi bi-calendar-plus"></i>
-                                Simpan
-                                Kalender</a>
-                            <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank"
-                                rel="noopener noreferrer" class="btn-event outline"><i class="bi bi-geo-alt-fill"></i>
-                                Lihat Lokasi</a>
+                            <a href="#" target="_blank" rel="noopener noreferrer" class="btn-event"
+                                aria-label="Simpan Jadwal ke Kalender"><i class="bi bi-calendar-plus"></i> Simpan Kalender</a>
+                            <a href="#" target="_blank" rel="noopener noreferrer" class="btn-event outline"><i class="bi bi-geo-alt-fill"></i> Lihat Lokasi</a>
                         </div>
                     </div>
                 </div>
@@ -376,7 +346,7 @@
             </div>
 
             <div class="closing-text mt-5" data-aos="fade-up">
-                <p>Merupakan suatu kebahagiaan dan kehormatan bagi kami, apabila Bapak/Ibu/Saudara/i, berkenan hadir
+                <p data-bind="events.closingText">Merupakan suatu kebahagiaan dan kehormatan bagi kami, apabila Bapak/Ibu/Saudara/i, berkenan hadir
                     untuk memberikan doa restu. Atas kehadiran dan doa restunya kami ucapkan terima kasih.</p>
             </div>
 
@@ -384,14 +354,14 @@
                 <p class="cinzel-font" data-aos="fade-up">Kami Yang Berbahagia<br>Keluarga</p>
                 <div class="family-names mt-5" data-aos="fade-up" data-aos-delay="200">
                     <div class="family-side">
-                        <strong>Bapak I Made Mudita</strong>
+                        <strong data-bind="mempelai.groom.father">Bapak Mempelai Pria</strong>
                         <span class="family-amp">&</span>
-                        <strong>Ibu Putu Novita Dewi</strong>
+                        <strong data-bind="mempelai.groom.mother">Ibu Mempelai Pria</strong>
                     </div>
                     <div class="family-side">
-                        <strong>Bapak Fatur R</strong>
+                        <strong data-bind="mempelai.bride.father">Bapak Mempelai Wanita</strong>
                         <span class="family-amp">&</span>
-                        <strong>Ibu Asri Eka Yanti</strong>
+                        <strong data-bind="mempelai.bride.mother">Ibu Mempelai Wanita</strong>
                     </div>
                 </div>
             </div>
@@ -561,28 +531,15 @@
                         <h3 class="cinzel-font">Digital Tanda Kasih</h3>
                     </div>
                     <div class="bank-card-container-stacked">
-                        <!-- Kartu Bank 1 -->
+                        <!-- Kartu Bank Placeholder (Otomatis dirender & disinkronkan oleh config.js) -->
                         <div class="bank-card">
-                            <div class="bank-logo">BANK BCA</div>
+                            <div class="bank-logo">NAMA BANK</div>
                             <div class="bank-details-flex-wrapper">
                                 <div class="bank-number-display">
-                                    <div class="bank-number">7630456123</div>
+                                    <div class="bank-number">0000000000</div>
                                 </div>
-                                <div class="bank-name">I Putu Edi Pratama</div>
-                                <button class="btn-copy" data-copy="7630456123">
-                                    <i class="bi bi-copy"></i> Salin Nomor
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Kartu Bank 2 -->
-                        <div class="bank-card">
-                            <div class="bank-logo">BANK MANDIRI</div>
-                            <div class="bank-details-flex-wrapper">
-                                <div class="bank-number-display">
-                                    <div class="bank-number">0812345678</div>
-                                </div>
-                                <div class="bank-name">Winda Aprilia Dewi</div>
-                                <button class="btn-copy" data-copy="0812345678">
+                                <div class="bank-name">Nama Pemilik Rekening</div>
+                                <button class="btn-copy" data-copy="0000000000" aria-label="Salin nomor rekening">
                                     <i class="bi bi-copy"></i> Salin Nomor
                                 </button>
                             </div>
@@ -596,7 +553,7 @@
                         <i class="bi bi-gift"></i>
                         <h3 class="cinzel-font">Hadiah Fisik</h3>
                     </div>
-                    <p class="gift-text">Jika anda ingin memberikan hadiah fisik atau kado, mohon alamatkan ke alamat
+                    <p class="gift-text" data-bind="gifts.physicalGift.description">Jika anda ingin memberikan hadiah fisik atau kado, mohon alamatkan ke alamat
                         rumah kami.</p>
 
                     <div class="address-box">
@@ -604,19 +561,18 @@
                             <i class="bi bi-house-door"></i>
                             <div>
                                 <strong>Alamat Pengiriman</strong>
-                                <p>Jl. Siulan No. 52, Penatih Dangin Puri, Kec. Denpasar Timur, Kota Denpasar, Bali
-                                    80238</p>
+                                <p data-bind="gifts.physicalGift.address">Alamat Pengiriman Kado Fisik</p>
                             </div>
                         </div>
                         <div class="address-item">
                             <i class="bi bi-person-check"></i>
                             <div>
                                 <strong>Penerima</strong>
-                                <p>Edi & Winda (Pawiwahan Office)</p>
+                                <p data-bind="gifts.physicalGift.recipient">Nama Penerima Kado</p>
                             </div>
                         </div>
                         <a href="https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA" target="_blank" rel="noopener noreferrer"
-                            class="btn-map">
+                            class="btn-map" data-bind-href="gifts.physicalGift.mapsUrl">
                             <i class="bi bi-geo-alt-fill"></i> Lihat Lokasi
                         </a>
                     </div>
@@ -632,12 +588,12 @@
         <div class="container text-center">
             <div class="footer-top">
                 <i class="bi bi-envelope-heart footer-top-icon" data-aos="fade-up" data-aos-offset="0"></i>
-                <p class="footer-thankyou cinzel-font" data-aos="fade-up" data-aos-delay="50" data-aos-offset="0">Om
+                <p class="footer-thankyou cinzel-font" data-aos="fade-up" data-aos-delay="50" data-aos-offset="0" data-bind="footer.closingGreeting">Om
                     Shanti Shanti Shanti Om</p>
-                <p class="footer-description" data-aos="fade-up" data-aos-delay="100" data-aos-offset="0">Suatu
+                <p class="footer-description" data-aos="fade-up" data-aos-delay="100" data-aos-offset="0" data-bind="footer.thankYouMessage">Suatu
                     kehormatan dan kebahagiaan bagi kami, jika Anda bersedia hadir dan memberikan restu kepada kami.</p>
-                <h3 class="footer-names cinzel-font" data-aos="fade-up" data-aos-delay="150" data-aos-offset="0">Edi &
-                    Winda</h3>
+                <h3 class="footer-names cinzel-font" data-aos="fade-up" data-aos-delay="150" data-aos-offset="0" data-bind="couple.shortName">Mempelai Pria &
+                    Wanita</h3>
             </div>
 
             <p class="footer-made-by" data-aos="fade-up" data-aos-delay="150" data-aos-offset="0">Made with <i
@@ -652,7 +608,7 @@
             </div>
 
             <p class="footer-copyright" data-aos="fade-up" data-aos-delay="300" data-aos-offset="0">&copy; <span
-                    id="current-year"></span> Edi & Winda. All Rights Reserved.</p>
+                    id="current-year"></span> <span data-bind="couple.shortName">Mempelai Pria & Wanita</span>. All Rights Reserved.</p>
         </div>
     </footer>
 

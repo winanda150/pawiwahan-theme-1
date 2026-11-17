@@ -27,15 +27,10 @@
    01. INISIALISASI FIREBASE & KONEKSI CLOUD FIRESTORE (LAZY LOADED 100% PERFORMANCE)
    ========================================================================== */
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
-    authDomain: "pawiwahan-theme-1.firebaseapp.com",
-    projectId: "pawiwahan-theme-1",
-    storageBucket: "pawiwahan-theme-1.firebasestorage.app",
-    messagingSenderId: "714291588176",
-    appId: "1:714291588176:web:addd15e45c498bd565b555",
-    measurementId: "G-0R22TRVSEL"
-};
+// Konfigurasi Firebase diambil murni dari config.js (Single Source of Truth)
+const firebaseConfig = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.firebase)
+    ? WEDDING_CONFIG.firebase
+    : null;
 
 // Variabel modul Firebase & Firestore (dimuat secara asinkron saat dibutuhkan agar LCP & PageSpeed optimal)
 let app = null;
@@ -47,6 +42,10 @@ let firebaseInitPromise = null;
 
 async function ensureFirebase() {
     if (firebaseInitialized) return { app, db };
+    if (!firebaseConfig || !firebaseConfig.apiKey) {
+        console.warn("⚠️ Konfigurasi Firebase belum ditentukan di config.js. Fitur RSVP & Buku Tamu real-time dinonaktifkan.");
+        return { app: null, db: null };
+    }
     if (firebaseInitPromise) return firebaseInitPromise;
 
     firebaseInitPromise = (async () => {
@@ -177,6 +176,214 @@ document.addEventListener('DOMContentLoaded', () => {
             musicStatusText.classList.remove('show');
         }, 2000);
     };
+
+    // --- HELPER SANITASI & ENCODING GLOBAL (ZERO HOISTING RISK) ---
+    function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Helper sanitasi HTML aman untuk [data-bind-html] (XSS-Safe: hanya izinkan format teks aman)
+    function sanitizeHTML(str) {
+        if (typeof str !== 'string') return '';
+        const temp = document.createElement('div');
+        temp.innerHTML = str;
+        const dangerous = temp.querySelectorAll('script, iframe, object, embed, link, style, form, input, button, textarea');
+        dangerous.forEach(el => el.remove());
+        const allEls = temp.querySelectorAll('*');
+        allEls.forEach(el => {
+            const attrs = Array.from(el.attributes);
+            for (const attr of attrs) {
+                if (attr.name.startsWith('on') || attr.value.trim().toLowerCase().startsWith('javascript:')) {
+                    el.removeAttribute(attr.name);
+                }
+            }
+        });
+        return temp.innerHTML;
+    }
+
+    // --- 00. ENGINE HYDRATION DARI CONFIG.JS ---
+    const applyWeddingConfig = () => {
+        const cfg = typeof WEDDING_CONFIG !== 'undefined' ? WEDDING_CONFIG : null;
+        if (!cfg) return;
+
+        // 0. Sinkronkan Judul Dokumen, Meta Deskripsi & Open Graph (Browser & Webview)
+        if (cfg.couple?.shortName) {
+            document.title = `Undangan Pawiwahan | ${cfg.couple.shortName}`;
+            const metaOgTitle = document.querySelector('meta[property="og:title"]');
+            if (metaOgTitle) metaOgTitle.setAttribute('content', `Undangan Pawiwahan | ${cfg.couple.shortName}`);
+            const metaTwTitle = document.querySelector('meta[name="twitter:title"]');
+            if (metaTwTitle) metaTwTitle.setAttribute('content', `Undangan Pawiwahan | ${cfg.couple.shortName}`);
+            const metaSiteName = document.querySelector('meta[property="og:site_name"]');
+            if (metaSiteName) metaSiteName.setAttribute('content', `Undangan Pawiwahan ${cfg.couple.shortName}`);
+            const metaAuthor = document.querySelector('meta[name="author"]');
+            if (metaAuthor) metaAuthor.setAttribute('content', cfg.couple.shortName);
+        }
+        if (cfg.couple?.fullName) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            const descContent = `Undangan Pernikahan Digital ${cfg.couple.fullName}. Mohon doa restu dan kehadiran Bapak/Ibu/Saudara/i pada hari bahagia kami.`;
+            if (metaDesc) metaDesc.setAttribute('content', descContent);
+            const metaOgDesc = document.querySelector('meta[property="og:description"]');
+            if (metaOgDesc) metaOgDesc.setAttribute('content', descContent);
+            const metaTwDesc = document.querySelector('meta[name="twitter:description"]');
+            if (metaTwDesc) metaTwDesc.setAttribute('content', descContent);
+        }
+        if (cfg.couple?.coverImage) {
+            const metaOgImg = document.querySelector('meta[property="og:image"]');
+            if (metaOgImg) metaOgImg.setAttribute('content', cfg.couple.coverImage);
+            const metaOgImgSec = document.querySelector('meta[property="og:image:secure_url"]');
+            if (metaOgImgSec) metaOgImgSec.setAttribute('content', cfg.couple.coverImage);
+            const metaTwImg = document.querySelector('meta[name="twitter:image"]');
+            if (metaTwImg) metaTwImg.setAttribute('content', cfg.couple.coverImage);
+        }
+
+        // 1. Sinkronkan teks sederhana dengan atribut [data-bind]
+        document.querySelectorAll('[data-bind]').forEach(el => {
+            const keyPath = el.getAttribute('data-bind').split('.');
+            let val = cfg;
+            for (const key of keyPath) {
+                if (val && typeof val === 'object' && key in val) {
+                    val = val[key];
+                } else {
+                    val = null;
+                    break;
+                }
+            }
+            if (val !== null && val !== undefined) {
+                el.textContent = val;
+            }
+        });
+
+        // 2. Sinkronkan konten HTML dengan [data-bind-html] (Aman dari XSS)
+        document.querySelectorAll('[data-bind-html]').forEach(el => {
+            const keyPath = el.getAttribute('data-bind-html').split('.');
+            let val = cfg;
+            for (const key of keyPath) {
+                if (val && typeof val === 'object' && key in val) {
+                    val = val[key];
+                } else {
+                    val = null;
+                    break;
+                }
+            }
+            if (val !== null && val !== undefined) {
+                el.innerHTML = sanitizeHTML(String(val));
+            }
+        });
+
+        // 3. Sinkronkan atribut gambar [data-bind-src] dan [data-bind-alt]
+        document.querySelectorAll('[data-bind-src]').forEach(el => {
+            const keyPath = el.getAttribute('data-bind-src').split('.');
+            let val = cfg;
+            for (const key of keyPath) {
+                if (val && typeof val === 'object' && key in val) {
+                    val = val[key];
+                } else {
+                    val = null;
+                    break;
+                }
+            }
+            if (val) el.src = val;
+        });
+
+        document.querySelectorAll('[data-bind-alt]').forEach(el => {
+            const keyPath = el.getAttribute('data-bind-alt').split('.');
+            let val = cfg;
+            for (const key of keyPath) {
+                if (val && typeof val === 'object' && key in val) {
+                    val = val[key];
+                } else {
+                    val = null;
+                    break;
+                }
+            }
+            if (val) el.alt = val;
+        });
+
+        // 4. Sinkronkan tautan [data-bind-href]
+        document.querySelectorAll('[data-bind-href]').forEach(el => {
+            const keyPath = el.getAttribute('data-bind-href').split('.');
+            let val = cfg;
+            for (const key of keyPath) {
+                if (val && typeof val === 'object' && key in val) {
+                    val = val[key];
+                } else {
+                    val = null;
+                    break;
+                }
+            }
+            if (val) el.href = val;
+        });
+
+        // 5. Sinkronkan Audio Musik Latar
+        if (cfg.couple?.bgMusic && music) {
+            music.src = cfg.couple.bgMusic;
+        }
+
+        // 6. Render Dinamis Kartu Rekening Bank (Mendukung jumlah bank fleksibel)
+        const bankContainer = document.querySelector('.bank-card-container-stacked');
+        if (bankContainer && Array.isArray(cfg.gifts?.bankAccounts) && cfg.gifts.bankAccounts.length > 0) {
+            bankContainer.innerHTML = cfg.gifts.bankAccounts.map(b => `
+                <div class="bank-card">
+                    <div class="bank-logo">${escapeHTML(b.bank || '')}</div>
+                    <div class="bank-details-flex-wrapper">
+                        <div class="bank-number-display">
+                            <div class="bank-number">${escapeHTML(b.number || '')}</div>
+                        </div>
+                        <div class="bank-name">${escapeHTML(b.holder || '')}</div>
+                        <button class="btn-copy" data-copy="${escapeHTML(b.number || '')}" aria-label="Salin nomor rekening ${escapeHTML(b.bank || '')}">
+                            <i class="bi bi-copy"></i> Salin Nomor
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 7. Render Dinamis Kartu Rangkaian Acara (Generate Link Google Calendar & Maps Otomatis)
+        const eventGrid = document.querySelector('.event-grid');
+        if (eventGrid && Array.isArray(cfg.events?.list) && cfg.events.list.length > 0) {
+            eventGrid.innerHTML = cfg.events.list.map((ev, idx) => {
+                const cal = ev.calendar || {};
+                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cal.title || ev.title)}&dates=${encodeURIComponent(cal.dates || '')}&details=${encodeURIComponent(cal.details || '')}&location=${encodeURIComponent(cal.location || ev.address || '')}`;
+                const delay = (idx + 1) * 200;
+                return `
+                    <div class="event-card" data-aos="fade-up" data-aos-delay="${delay}">
+                        <div class="event-arch">
+                            <i class="bi ${escapeHTML(ev.icon || 'bi-calendar-event')} event-icon-top"></i>
+                            <h3 class="cinzel-font">${escapeHTML(ev.title)}</h3>
+                            <div class="event-info">
+                                <div class="info-item">
+                                    <p>${escapeHTML(ev.dayDate)}</p>
+                                </div>
+                                <div class="info-item">
+                                    <p>${escapeHTML(ev.time)}</p>
+                                </div>
+                                <div class="info-item">
+                                    <p><span>Bertempat di</span><br>${escapeHTML(ev.address)}</p>
+                                </div>
+                            </div>
+                            <div class="event-buttons">
+                                <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-event" aria-label="Simpan Jadwal ${escapeHTML(ev.title)} ke Kalender">
+                                    <i class="bi bi-calendar-plus"></i> Simpan Kalender
+                                </a>
+                                <a href="${escapeHTML(ev.mapsUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn-event outline" aria-label="Lihat Lokasi ${escapeHTML(ev.title)} di Google Maps">
+                                    <i class="bi bi-geo-alt-fill"></i> Lihat Lokasi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    };
+
+    // Terapkan data konfigurasi segera saat DOM siap
+    applyWeddingConfig();
 
     // --- Logika untuk mengambil nama tamu dari URL (Segera dieksekusi agar layout stabil sejak awal) ---
     const guestNameElement = document.getElementById('guest-name');
@@ -313,12 +520,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Konfigurasi Media Session
             if ('mediaSession' in navigator) {
+                const coverArt = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.coverImage)
+                    ? WEDDING_CONFIG.couple.coverImage
+                    : 'assets/images/gallery/gallery-05.webp';
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: 'Undangan Pawiwahan',
-                    artist: 'Edi & Winda',
+                    artist: (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.shortName) ? WEDDING_CONFIG.couple.shortName : 'Undangan Pernikahan',
                     album: 'Wedding Invitation',
                     artwork: [
-                        { src: 'assets/images/gallery/gallery-05.webp', sizes: '512x512', type: 'image/webp' }
+                        { src: coverArt, sizes: '512x512', type: 'image/webp' }
                     ]
                 });
 
@@ -405,8 +615,16 @@ document.addEventListener('DOMContentLoaded', () => {
        06. PENGHITUNG WAKTU MUNDUR ACARA & SINKRONISASI REAL-TIME
        ========================================================================== */
 
-    // --- Logika Countdown ---
-    const targetDate = new Date("2026-01-30T08:00:00+08:00").getTime(); // Waktu Mempelai (Tahun-Bulan-Tanggal)
+    // --- Logika Countdown (Sinkron Otomatis dengan WEDDING_CONFIG.events.countdownTarget) ---
+    const getCountdownTargetDate = () => {
+        const rawTarget = (typeof WEDDING_CONFIG !== 'undefined') ? WEDDING_CONFIG.events?.countdownTarget : null;
+        if (rawTarget) {
+            const parsed = new Date(rawTarget).getTime();
+            if (!isNaN(parsed)) return parsed;
+        }
+        return new Date("2026-01-30T08:00:00+08:00").getTime();
+    };
+    const targetDate = getCountdownTargetDate();
     const daysEl = document.getElementById("days");
     const hoursEl = document.getElementById("hours");
     const minsEl = document.getElementById("minutes");
@@ -1041,17 +1259,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Helper Sanitasi HTML Global (Pencegahan XSS Ketat) ---
-    function escapeHTML(str) {
-        if (str === null || str === undefined) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
     // --- Helper Universal WhatsApp-Style Emoji Renderer ---
     function applyTwemoji(el) {
         if (typeof twemoji !== 'undefined' && el) {
@@ -1203,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .replace(/[–—]/g, '-')
                 .trim();
             const rawMessage = (document.getElementById('att-message')?.value || '').trim();
-            const validNameRegex = /^[a-zA-Z0-9 .,'&\/()+\-]{2,50}$/;
+            const validNameRegex = /^[a-zA-Z0-9 .,'’&\/()+\-]{2,50}$/;
 
             if (rawName.length < 2 || rawName.length > 50 || !validNameRegex.test(rawName)) {
                 showToast('Mohon masukkan nama yang valid (2–50 karakter).', 'error');
@@ -1259,12 +1466,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Otorisasi via private zero-leak sink jika dalam mode mempelai
                     if (isMempelai) {
-                        const mKey = sessionStorage.getItem('mKey') || "";
-                        const adminSecretHash = await generateAdminToken(mKey);
-                        await setDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`), {
-                            secret: adminSecretHash,
-                            timestamp: serverTimestamp()
-                        });
+                        const adminSecretHash = await getAdminToken();
+                        if (adminSecretHash) {
+                            await setDoc(doc(db, "admin_actions", `${newReplyRef.id}_reply`), {
+                                secret: adminSecretHash,
+                                timestamp: serverTimestamp()
+                            });
+                        }
                     }
 
                     try {
@@ -1313,12 +1521,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Otorisasi via private zero-leak sink jika dalam mode mempelai
                     if (isMempelai) {
-                        const mKey = sessionStorage.getItem('mKey') || "";
-                        const adminSecretHash = await generateAdminToken(mKey);
-                        await setDoc(doc(db, "admin_actions", `${newDocRef.id}_create`), {
-                            secret: adminSecretHash,
-                            timestamp: serverTimestamp()
-                        });
+                        const adminSecretHash = await getAdminToken();
+                        if (adminSecretHash) {
+                            await setDoc(doc(db, "admin_actions", `${newDocRef.id}_create`), {
+                                secret: adminSecretHash,
+                                timestamp: serverTimestamp()
+                            });
+                        }
                     }
 
                     try {
@@ -1424,11 +1633,41 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================================== */
 
     // --- Logika Akses Khusus (Admin & Mempelai) ---
-    let isMempelai = sessionStorage.getItem('isMempelai') === 'true' && !!sessionStorage.getItem('mKey');
+    let isMempelai = sessionStorage.getItem('isMempelai') === 'true' && (!!sessionStorage.getItem('mToken') || !!sessionStorage.getItem('mKey'));
 
     // Inisialisasi status tampilan mempelai jika sudah login di session sebelumnya
     if (isMempelai) {
         document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
+    }
+
+    // Helper Kriptografi SHA-256 untuk keamanan kata sandi
+    async function sha256(str) {
+        const buffer = new TextEncoder().encode(str);
+        const digest = await crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Token Otorisasi Server Berlapis (HMAC-style Salted Token)
+    const ADMIN_SALT = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.security?.adminSalt)
+        ? WEDDING_CONFIG.security.adminSalt
+        : "@pawiwahan-secure-backend-key";
+
+    async function generateAdminToken(plainPass) {
+        return await sha256(plainPass + ADMIN_SALT);
+    }
+
+    // Helper Aman Mengambil Token Mempelai (Tanpa Menyimpan Plaintext di Storage)
+    async function getAdminToken() {
+        let token = sessionStorage.getItem('mToken');
+        if (!token) {
+            const legacyKey = sessionStorage.getItem('mKey');
+            if (legacyKey) {
+                token = await generateAdminToken(legacyKey);
+                sessionStorage.setItem('mToken', token);
+                sessionStorage.removeItem('mKey');
+            }
+        }
+        return token || null;
     }
 
     // Fungsi untuk menghitung dan menyinkronkan total tamu riil langsung dari database
@@ -1441,51 +1680,61 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 1. Ambil data instan dari dokumen metadata/totals (cepat, akurat, dan tidak membutuhkan composite index)
         try {
-            const metaSnap = await getDoc(doc(db, "metadata", "totals"));
-            if (metaSnap.exists()) {
-                const total = metaSnap.data().totalGuests || 0;
-                guestCounter.innerText = Math.max(0, total);
-                return total;
-            }
-        } catch (metaErr) {
-            // Lanjut ke agregasi server jika metadata belum ada
-        }
+            await ensureFirebase();
+            if (!db) return;
 
-        // 2. Fallback: Rekonsiliasi langsung melalui agregasi server jika dokumen metadata belum ada
-        try {
-            const qHadir = query(collection(db, "messages"), where("status", "==", "Hadir"));
-            const snapshot = await getAggregateFromServer(qHadir, {
-                totalGuests: sum('count')
-            });
-            const total = snapshot.data().totalGuests || 0;
-            guestCounter.innerText = Math.max(0, total);
-
-            // Perbaiki dokumen metadata/totals
+            // 1. Ambil data instan dari dokumen metadata/totals (cepat, akurat, dan tidak membutuhkan composite index)
             try {
-                await setDoc(doc(db, "metadata", "totals"), {
-                    totalGuests: total
-                }, { merge: true });
-            } catch (saveErr) {
-                // Abaikan pembatasan rules
+                const metaSnap = await getDoc(doc(db, "metadata", "totals"));
+                if (metaSnap.exists()) {
+                    const total = metaSnap.data().totalGuests || 0;
+                    guestCounter.innerText = Math.max(0, total);
+                    return total;
+                }
+            } catch (metaErr) {
+                // Lanjut ke agregasi server jika metadata belum ada
             }
-            return total;
-        } catch (error) {
-            // Jika composite index belum aktif di Firebase Console, gunakan default 0 tanpa melempar error
-            if (guestCounter && guestCounter.innerText === '') {
-                guestCounter.innerText = "0";
+
+            // 2. Fallback: Rekonsiliasi langsung melalui agregasi server jika dokumen metadata belum ada
+            try {
+                const qHadir = query(collection(db, "messages"), where("status", "==", "Hadir"));
+                const snapshot = await getAggregateFromServer(qHadir, {
+                    totalGuests: sum('count')
+                });
+                const total = snapshot.data().totalGuests || 0;
+                guestCounter.innerText = Math.max(0, total);
+
+                // Perbaiki dokumen metadata/totals
+                try {
+                    await setDoc(doc(db, "metadata", "totals"), {
+                        totalGuests: total
+                    }, { merge: true });
+                } catch (saveErr) {
+                    // Abaikan pembatasan rules
+                }
+                return total;
+            } catch (error) {
+                if (guestCounter && guestCounter.innerText === '') {
+                    guestCounter.innerText = "0";
+                }
             }
+        } catch (fbErr) {
+            console.warn("Guest counter sync note:", fbErr);
         }
     }
 
     // Fungsi untuk memantau total tamu secara real-time (Privat untuk Mempelai)
-    function initGuestCounter() {
+    async function initGuestCounter() {
         const guestStatsWrapper = document.getElementById('guest-stats-wrapper');
         const guestCounter = document.getElementById('guest-counter');
 
         if (isMempelai && guestStatsWrapper && guestCounter) {
             guestStatsWrapper.style.display = 'inline';
+
+            await ensureFirebase();
+            if (!db) return;
+
             // Jalankan sinkronisasi agregasi riil pertama kali
             syncGuestCount();
 
@@ -1503,20 +1752,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initGuestCounter(); // Jalankan saat halaman dimuat (untuk cek session)
 
-    // Helper Kriptografi SHA-256 untuk keamanan kata sandi
-    async function sha256(str) {
-        const buffer = new TextEncoder().encode(str);
-        const digest = await crypto.subtle.digest('SHA-256', buffer);
-        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // Token Otorisasi Server Berlapis (HMAC-style Salted Token)
-    async function generateAdminToken(plainPass) {
-        return await sha256(plainPass + "@pawiwahan-secure-backend-key-2026");
-    }
-
-    // Hash SHA-256 dari kata sandi Mempelai (Level 1: Verifikasi Frontend)
-    const MEMPELAI_HASH = "e58fb6b9713fea3141744cbf988eb1852d68816e16f9615ad2621b6e16377a47";
+    // Hash SHA-256 dari kata sandi Mempelai (Level 1: Verifikasi Frontend, diambil dari config.js)
+    const MEMPELAI_HASH = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.security?.mempelaiHash)
+        ? WEDDING_CONFIG.security.mempelaiHash
+        : "";
     const replyUnsubscribers = {}; // Simpan fungsi unsubscribe untuk listener balasan
     const likeLocks = new Set(); // Mencegah flooding / rapid clicking pada tombol suka
 
@@ -1590,15 +1829,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Constant Artificial delay 350ms untuk mencegah automated rapid script cracking & timing attack
             await new Promise(res => setTimeout(res, 350));
-            const inputHash = await sha256(pass);
+            const plainHash = await sha256(pass);
+            const saltedToken = await generateAdminToken(pass);
 
-            if (inputHash === MEMPELAI_HASH) {
+            // Verifikasi terhadap hash plain ATAU hash salted token dari config
+            if (MEMPELAI_HASH && (plainHash === MEMPELAI_HASH || saltedToken === MEMPELAI_HASH)) {
                 authFailedAttempts = 0;
                 localStorage.removeItem('auth_lockout_until');
                 localStorage.removeItem('auth_total_fails');
                 isMempelai = true;
                 sessionStorage.setItem('isMempelai', 'true');
-                sessionStorage.setItem('mKey', pass);
+                sessionStorage.setItem('mToken', saltedToken);
+                sessionStorage.removeItem('mKey'); // Hapus password plaintext demi keamanan
                 document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                 initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
                 showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
@@ -1996,8 +2238,8 @@ document.addEventListener('DOMContentLoaded', () => {
             docIdToDelete = deleteBtn.dataset.id;
             parentIdForReply = deleteBtn.dataset.parentId || null;
 
-            const mKey = sessionStorage.getItem('mKey');
-            if (!isMempelai || !mKey) {
+            const adminToken = await getAdminToken();
+            if (!isMempelai || !adminToken) {
                 showToast("Sesi telah berakhir. Silakan masuk kembali untuk melanjutkan.", "error");
                 openAuthModal();
                 return;
@@ -2020,14 +2262,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.id === 'btn-delete-confirm' && docIdToDelete) {
             try {
-                const mKey = sessionStorage.getItem('mKey');
-                if (!mKey) {
+                const adminSecretHash = await getAdminToken();
+                if (!adminSecretHash) {
                     showToast("Sesi autentikasi telah kedaluwarsa. Silakan verifikasi ulang kata sandi Anda.", "error");
                     openAuthModal();
                     confirmModal.classList.remove('show');
                     return;
                 }
-                const adminSecretHash = await generateAdminToken(mKey);
 
                 if (parentIdForReply) {
                     const replyRef = doc(db, "messages", parentIdForReply, "replies", docIdToDelete);
@@ -2146,8 +2387,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const docId = pinBtn.dataset.id;
             const isCurrentlyPinned = pinBtn.dataset.pinned === 'true';
 
-            const mKey = sessionStorage.getItem('mKey');
-            if (!isMempelai || !mKey) {
+            const adminSecretHash = await getAdminToken();
+            if (!isMempelai || !adminSecretHash) {
                 showToast("Sesi telah berakhir. Silakan masuk kembali untuk menyematkan ucapan.", "error");
                 openAuthModal();
                 return;
@@ -2155,7 +2396,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pinBtn.disabled = true;
             try {
-                const adminSecretHash = await generateAdminToken(mKey);
                 const msgRef = doc(db, "messages", docId);
                 // Otorisasi aksi pin/unpin via private zero-leak sink
                 await setDoc(doc(db, "admin_actions", `${docId}_pin`), {
@@ -2879,6 +3119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isGuestbookInitialized = true;
 
         await ensureFirebase();
+        if (!db) return;
 
         if (gbList) {
             initPinnedMessagesListener();
@@ -2972,48 +3213,50 @@ document.addEventListener('DOMContentLoaded', () => {
        12. FUNGSI UTILITAS, SALIN PAPAN KLIP & REGISTRASI PWA SERVICE WORKER
        ========================================================================== */
 
-    // --- Logika Copy to Clipboard (dengan Fallback untuk WebView & Browser Lama) ---
-    document.querySelectorAll('.btn-copy').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const textToCopy = btn.dataset.copy;
+    // --- Logika Copy to Clipboard dengan Event Delegation (Mendukung Kartu Dinamis dari config.js) ---
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-copy');
+        if (!btn) return;
 
-            const handleSuccess = () => {
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check2"></i> Berhasil!';
-                showToast('Nomor rekening berhasil disalin ke papan klip!');
-                setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
-            };
+        const textToCopy = btn.dataset.copy;
+        if (!textToCopy) return;
 
-            const handleFallback = (text) => {
-                try {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    textArea.style.position = "fixed";
-                    textArea.style.left = "-999999px";
-                    textArea.style.top = "-999999px";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    const successful = document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    if (successful) {
-                        handleSuccess();
-                    } else {
-                        showToast('Gagal menyalin nomor rekening. Silakan salin secara manual.', 'error');
-                    }
-                } catch (err) {
+        const handleSuccess = () => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check2"></i> Berhasil!';
+            showToast('Nomor rekening berhasil disalin ke papan klip!');
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+        };
+
+        const handleFallback = (text) => {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (successful) {
+                    handleSuccess();
+                } else {
                     showToast('Gagal menyalin nomor rekening. Silakan salin secara manual.', 'error');
                 }
-            };
-
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(textToCopy)
-                    .then(handleSuccess)
-                    .catch(() => handleFallback(textToCopy));
-            } else {
-                handleFallback(textToCopy);
+            } catch (err) {
+                showToast('Gagal menyalin nomor rekening. Silakan salin secara manual.', 'error');
             }
-        });
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(handleSuccess)
+                .catch(() => handleFallback(textToCopy));
+        } else {
+            handleFallback(textToCopy);
+        }
     });
 
     // --- Update Tahun Copyright Otomatis ---

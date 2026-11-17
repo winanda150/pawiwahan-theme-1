@@ -159,6 +159,7 @@ pawiwahan-theme-1/
 │           ├── wave.webp
 │           └── preview-banner.png
 │
+├── 🛠️ config.js                        # PUSAT KONFIGURASI UTAMA (Single Source of Truth seluruh konten)
 ├── 📄 index.html                        # Struktur utama halaman, meta SEO, & modal
 ├── 🎨 style.css                         # Desain sistem, palet warna, responsivitas, & animasi
 ├── ⚡ script.js                          # Logika interaktif, Firestore real-time, & lightbox
@@ -207,14 +208,41 @@ npx serve .
 
 ## ⚙️ Panduan Kustomisasi & Konfigurasi
 
-### 1. Mengubah Data Pasangan & Jadwal Acara
-Buka file `index.html`:
-- **Nama Mempelai & Judul:** Cari tag `<title>` dan elemen `h1.cinzel-font`.
-- **Rangkaian Acara:** Edit bagian `<section id="event-details">` untuk mengubah tanggal, waktu, dan alamat.
-- **Link Google Calendar & Maps:** Perbarui atribut `href` pada tombol jadwal dan lokasi acara.
-- **Data Rekening Bank:** Perbarui nomor rekening dan nama pemilik pada `<section id="gift">`.
+### 1. Mengubah Seluruh Data Undangan (Pusat Data Tunggal `config.js`)
+Anda **TIDAK PERLU lagi mengedit file `index.html` yang panjang**! Seluruh informasi acara, nama kedua mempelai, tanggal, foto, countdown, mantra, nomor rekening, hingga alamat kado fisik kini terpusat di **`config.js`**:
 
-### 2. Mengatur URL Parameter Nama Tamu
+```javascript
+window.WEDDING_CONFIG = {
+    couple: {
+        shortName: "Edi & Winda",
+        dateDisplay: "Jumat, 30 Januari 2026",
+        bgMusic: "assets/audio/wedding-music.mp3",
+        // ...
+    },
+    mempelai: {
+        groom: { fullName: "I Putu Edi Pratama", ... },
+        bride: { fullName: "Winda Aprilia Dewi", ... }
+    },
+    events: {
+        countdownTarget: "2026-01-30T08:00:00+08:00",
+        list: [ ... ] // Jadwal acara, maps, dan kalender otomatis
+    },
+    gifts: {
+        bankAccounts: [ ... ], // Otomatis membuat kartu rekening & tombol salin
+        physicalGift: { ... }
+    }
+};
+```
+
+### 2. Mengatur Judul & Pratinjau WhatsApp di `index.html` (Opsional)
+Untuk pratinjau kartu saat link dibagikan di WhatsApp/Facebook, sesuaikan baris `<title>` dan `<meta property="og:title">` di bagian `<head>` file `index.html`:
+```html
+<title>Undangan Pawiwahan | Nama Pasangan</title>
+<meta property="og:title" content="Undangan Pawiwahan | Nama Pasangan">
+```
+*(Seluruh isi tampilan halaman web di dalam browser akan selalu otomatis terisi dari `config.js`).*
+
+### 3. Mengatur URL Parameter Nama Tamu
 Kirim tautan undangan kepada tamu dengan menyematkan query parameter `?to=`:
 ```text
 https://domain-anda.com/?to=Nama+Tamu+Undangan
@@ -222,34 +250,34 @@ Contoh:
 https://domain-anda.com/?to=Bapak+I+Wayan+Sudira,+S.T.+%26+Keluarga
 ```
 
-### 3. Mengganti Konfigurasi Firebase
-Buka file `script.js` dan ganti objek `firebaseConfig` dengan project Firebase Anda sendiri:
+### 4. Mengganti Konfigurasi Firebase
+Buka file `config.js` dan sesuaikan objek `firebase`:
 ```javascript
-const firebaseConfig = {
+firebase: {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
     projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
     messagingSenderId: "YOUR_SENDER_ID",
     appId: "YOUR_APP_ID",
     measurementId: "YOUR_MEASUREMENT_ID"
-};
+}
 ```
 
-### 4. Mengubah Password Mode Mempelai
-Password diverifikasi melalui sistem otorisasi dua tingkat (*Dual-Tier Salted Token*): `MEMPELAI_HASH` di `script.js` untuk otentikasi login, serta token bertingkat pada fungsi `getAdminSecretHash()` di Firestore Rules.
+### 5. Mengubah Password Mode Mempelai
+Password diverifikasi melalui sistem otorisasi dua tingkat (*Dual-Tier Salted Token*): `security.mempelaiHash` di `config.js` untuk otentikasi login frontend, serta token bertingkat pada fungsi `getAdminSecretHash()` di Firestore Rules.
 Untuk mengganti password dengan yang baru:
 1. Buka console browser (`F12`) dan jalankan skrip generator berikut:
    ```javascript
    async function generateBothHashes(pass) {
        const hash1 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass)))).map(b => b.toString(16).padStart(2, '0')).join('');
-       const hash2 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass + "@pawiwahan-secure-backend-key-2026")))).map(b => b.toString(16).padStart(2, '0')).join('');
-       console.log("MEMPELAI_HASH (script.js):", hash1);
+       const hash2 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass + "@pawiwahan-secure-backend-key")))).map(b => b.toString(16).padStart(2, '0')).join('');
+       console.log("mempelaiHash (config.js):", hash1);
        console.log("getAdminSecretHash (Firestore Rules):", hash2);
    }
    generateBothHashes("PasswordBaruAnda");
    ```
-2. Tempelkan `hash1` ke variabel `MEMPELAI_HASH` di `script.js` dan `hash2` ke fungsi `getAdminSecretHash()` di `rules/firestore.rules` atau Firestore Security Rules Anda.
+2. Tempelkan `hash1` ke properti `security.mempelaiHash` di `config.js` dan `hash2` ke fungsi `getAdminSecretHash()` di `rules/firestore.rules` atau Firestore Security Rules Anda.
 
 ---
 

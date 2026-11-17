@@ -14,9 +14,10 @@
 /* ==========================================================================
    01. DAFTAR ASET CACHE & KONFIGURASI
    ========================================================================== */
-const CACHE_NAME = 'pawiwahan-v13';
+const CACHE_NAME = 'pawiwahan-v16';
 const ASSETS_TO_CACHE = [
     './index.html',
+    './config.js',
     './style.css',
     './script.js',
     './site.webmanifest',
