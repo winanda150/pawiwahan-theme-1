@@ -135,7 +135,7 @@ flowchart TD
 | **Iconography**             | `Bootstrap Icons v1.11.3`                       | Ikon web berbasis font vektor yang tajam dan ringan.                                             |
 | **Scroll Animation**        | `AOS (Animate On Scroll v2.3.4)`                | Efek animasi bertahap (_fade_, _zoom_) yang disesuaikan per breakpoint layar.                    |
 | **PWA & Offline**           | `Service Worker (sw.js) & Web App Manifest`     | Caching cerdas (_Cache-First_ untuk media, _Network-First_ untuk script) dan instalasi aplikasi. |
-| **Structured Data**         | `Schema.org JSON-LD`                            | Metadata SEO lengkap untuk hasil pencarian Google Rich Results (_Event_, _Place_, _Person_).     |
+| **Social Preview & SEO**    | `Open Graph & Twitter Cards`                    | Metadata pratinjau sosial optimal untuk link WhatsApp, Facebook, dan Telegram.                   |
 
 ---
 
@@ -170,9 +170,6 @@ pawiwahan-theme-1/
 │   └── 📑 firestore.indexes.json        # Pengaturan Composite Indexes Firestore
 ├── 🔧 firebase.json                     # (Lokal) Konfigurasi deployment Firebase CLI (diabaikan .gitignore)
 ├── ⚙️ sw.js                             # Service Worker untuk manajemen cache & mode offline
-├── 📱 site.webmanifest                  # Konfigurasi PWA (nama aplikasi, icon, tema warna)
-├── 🗺️ sitemap.xml                       # Peta situs untuk pengindeksan mesin pencari (SEO)
-├── 🤖 robots.txt                        # Pengaturan perayapan web crawler
 ├── 🙈 .gitignore                        # Konfigurasi pengabaian file Git ( OS, & IDE)
 └── 📘 README.md                         # Dokumentasi lengkap proyek
 ```
@@ -213,7 +210,10 @@ window.WEDDING_CONFIG = {
         bride: { fullName: "Winda Aprilia Dewi", ... }
     },
     events: {
-        countdownTarget: "2026-01-30T08:00:00+08:00",
+        countdown: {
+            date: "2026-01-30", // Tanggal acara (YYYY-MM-DD)
+            time: "08:00"       // Jam mulai acara (WITA)
+        },
         list: [ ... ] // Rangkaian acara, maps, & kalender otomatis
     },
     gifts: {

@@ -263,6 +263,31 @@ body:active {
     width: 100%;
     height: 100%;
     z-index: -1;
+    background-color: #121820;
+    overflow: hidden;
+}
+
+/* Skeleton Loading Shimmer untuk Background Cover */
+.cover-bg.skeleton {
+    background: linear-gradient(
+        90deg,
+        #0d1117 0%,
+        #161f2c 25%,
+        #253347 50%,
+        #161f2c 75%,
+        #0d1117 100%
+    );
+    background-size: 200% 100%;
+    animation: coverSkeletonShimmer 2.2s infinite linear;
+}
+
+@keyframes coverSkeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .cover-content {
@@ -296,19 +321,26 @@ body:active {
     object-position: top;
     filter: brightness(0.7);
     /* Membuat teks lebih mudah dibaca */
-    transition: opacity 1s ease-in-out;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
 }
 
 /* Strategi Stacking: img-1 jadi base, img-2 yang memudar */
 .img-1 {
     z-index: 1;
+}
+
+.img-1.loaded {
     opacity: 1;
-    /* Selalu terlihat */
     animation: kenBurnsBase 10s infinite alternate;
 }
 
 .img-2 {
     z-index: 2;
+    opacity: 0;
+}
+
+.img-2.loaded {
     animation: kenBurnsTop 10s infinite alternate, fadeEffect 10s infinite alternate;
 }
 

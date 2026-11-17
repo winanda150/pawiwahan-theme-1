@@ -224,9 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const metaAuthor = document.querySelector('meta[name="author"]');
             if (metaAuthor) metaAuthor.setAttribute('content', cfg.couple.shortName);
         }
-        if (cfg.couple?.fullName) {
+        const coupleFullName = cfg.couple?.fullName || (cfg.mempelai?.groom?.fullName && cfg.mempelai?.bride?.fullName ? `${cfg.mempelai.groom.fullName} & ${cfg.mempelai.bride.fullName}` : '');
+        if (coupleFullName) {
             const metaDesc = document.querySelector('meta[name="description"]');
-            const descContent = `Undangan Pernikahan Digital ${cfg.couple.fullName}. Mohon doa restu dan kehadiran Bapak/Ibu/Saudara/i pada hari bahagia kami.`;
+            const descContent = `Undangan Pernikahan Digital ${coupleFullName}. Mohon doa restu dan kehadiran Bapak/Ibu/Saudara/i pada hari bahagia kami.`;
             if (metaDesc) metaDesc.setAttribute('content', descContent);
             const metaOgDesc = document.querySelector('meta[property="og:description"]');
             if (metaOgDesc) metaOgDesc.setAttribute('content', descContent);
@@ -268,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 3. Sinkronkan atribut gambar [data-bind-src] dan [data-bind-alt]
+        // 3. Sinkronkan atribut gambar [data-bind-src] dan [data-bind-alt] (Mendukung Loading Skeleton)
         document.querySelectorAll('[data-bind-src]').forEach(el => {
             const keyPath = el.getAttribute('data-bind-src').split('.');
             let val = cfg;
@@ -280,7 +281,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 }
             }
-            if (val) el.src = val;
+            if (val) {
+                if (el.tagName.toLowerCase() === 'img') {
+                    const onImageLoad = () => {
+                        el.classList.add('loaded');
+                        const coverBg = el.closest('.cover-bg');
+                        if (coverBg) coverBg.classList.remove('skeleton');
+                    };
+
+                    el.addEventListener('load', onImageLoad, { once: true });
+                    el.addEventListener('error', () => {
+                        const coverBg = el.closest('.cover-bg');
+                        if (coverBg) coverBg.classList.remove('skeleton');
+                    }, { once: true });
+
+                    el.src = val;
+
+                    if (el.complete && el.naturalWidth > 0) {
+                        onImageLoad();
+                    }
+                } else {
+                    el.src = val;
+                }
+            }
         });
 
         document.querySelectorAll('[data-bind-alt]').forEach(el => {
@@ -612,14 +635,50 @@ document.addEventListener('DOMContentLoaded', () => {
        06. PENGHITUNG WAKTU MUNDUR ACARA & SINKRONISASI REAL-TIME
        ========================================================================== */
 
-    // --- Logika Countdown (Sinkron Otomatis dengan WEDDING_CONFIG.events.countdownTarget) ---
+    // --- Logika Countdown (Mendukung events.countdown terpisah dan events.countdownTarget) ---
     const getCountdownTargetDate = () => {
-        const rawTarget = (typeof WEDDING_CONFIG !== 'undefined') ? WEDDING_CONFIG.events?.countdownTarget : null;
-        if (rawTarget) {
-            const parsed = new Date(rawTarget).getTime();
+        const eventsConfig = (typeof WEDDING_CONFIG !== 'undefined') ? WEDDING_CONFIG.events : null;
+        if (!eventsConfig) return 0;
+
+        // 1. Format Ramah Pengguna: events.countdown { date, time, timezone }
+        if (eventsConfig.countdown && typeof eventsConfig.countdown === 'object') {
+            const cd = eventsConfig.countdown;
+            const dateStr = (cd.date || '').trim();
+            if (!dateStr) return 0;
+
+            let timeStr = (cd.time || '08:00').trim();
+            if (timeStr.split(':').length === 2) timeStr += ':00';
+
+            let tzOffset = '+08:00'; // Default WITA (Bali)
+            const tzUpper = String(cd.timezone || '').trim().toUpperCase();
+            if (tzUpper === 'WIB') tzOffset = '+07:00';
+            else if (tzUpper === 'WITA') tzOffset = '+08:00';
+            else if (tzUpper === 'WIT') tzOffset = '+09:00';
+            else if (tzUpper.startsWith('+') || tzUpper.startsWith('-')) tzOffset = tzUpper;
+
+            const isoString = `${dateStr}T${timeStr}${tzOffset}`;
+            const parsed = new Date(isoString).getTime();
             if (!isNaN(parsed)) return parsed;
         }
-        return new Date("2026-01-30T08:00:00+08:00").getTime();
+
+        // 2. Fallback: Format String Tunggal (countdownTarget)
+        const rawTarget = eventsConfig.countdownTarget;
+        if (rawTarget && typeof rawTarget === 'string') {
+            const trimmed = rawTarget.trim();
+            if (trimmed.includes('T') && (trimmed.includes('+') || trimmed.endsWith('Z'))) {
+                const parsed = new Date(trimmed).getTime();
+                if (!isNaN(parsed)) return parsed;
+            }
+            const parts = trimmed.split(/[\sT]+/);
+            const datePart = parts[0];
+            let timePart = parts[1] || '08:00';
+            if (timePart.split(':').length === 2) timePart += ':00';
+            const isoString = `${datePart}T${timePart}+08:00`;
+            const parsed = new Date(isoString).getTime();
+            if (!isNaN(parsed)) return parsed;
+        }
+
+        return 0;
     };
     const targetDate = getCountdownTargetDate();
     const daysEl = document.getElementById("days");
@@ -629,6 +688,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let countdownInterval;
 
     function updateCountdown() {
+        if (!targetDate) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (daysEl) daysEl.innerText = "00";
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minsEl) minsEl.innerText = "00";
+            if (secsEl) secsEl.innerText = "00";
+            return;
+        }
+
         // Gunakan waktu lokal yang sudah dikoreksi dengan offset server
         const correctedNow = Date.now() + serverTimeOffset;
         const distance = targetDate - correctedNow;
@@ -1644,10 +1712,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Token Otorisasi Server Berlapis (HMAC-style Salted Token)
+    // Token Otorisasi Server Berlapis (HMAC-style Salted Token, diambil dari config.js)
     const ADMIN_SALT = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.security?.adminSalt)
         ? WEDDING_CONFIG.security.adminSalt
-        : "@pawiwahan-secure-backend-key";
+        : "";
 
     async function generateAdminToken(plainPass) {
         return await sha256(plainPass + ADMIN_SALT);

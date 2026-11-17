@@ -17,15 +17,10 @@ const WEDDING_CONFIG = {
     // ------------------------------------------------------------------------
     couple: {
         shortName: "Edi & Winda",
-        groomNickname: "Edi",
-        brideNickname: "Winda",
         dateDisplay: "Jumat, 30 Januari 2026",
         bgMusic: "assets/audio/wedding-music.mp3",
-        // Gambar sampul halaman cover undangan (rasio portrait/vertikal)
         coverImage1: "assets/images/gallery/cover-1.webp",
         coverImage2: "assets/images/gallery/cover-2.webp",
-        // Gambar thumbnail pemutar musik di lockscreen / notification bar smartphone (rasio 1:1 persegi)
-        // Catatan: Pratinjau tautan media sosial (WhatsApp/Open Graph) dikonfigurasi langsung pada tag <meta> di index.html
         mediaSessionCover: "assets/images/gallery/gallery-05.webp",
     },
 
@@ -33,8 +28,6 @@ const WEDDING_CONFIG = {
     // 02. PROFIL MEMPELAI (PRIA & WANITA)
     // ------------------------------------------------------------------------
     mempelai: {
-        greeting: "Om Swastyastu",
-        openingText: "Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi Wasa/Tuhan Yang Maha Esa kami bermaksud mengundang Bapak/Ibu/Saudara/i pada Upacara Manusa Yadnya Pawiwahan (Pernikahan) Putra dan Putri kami.",
         groom: {
             fullName: "I Putu Edi Pratama",
             order: "Putra pertama dari pasangan",
@@ -59,9 +52,11 @@ const WEDDING_CONFIG = {
     // 03. RANGKAIAN ACARA & COUNTDOWN TIMER
     // ------------------------------------------------------------------------
     events: {
-        // Target tanggal & jam untuk timer hitung mundur (Format ISO: YYYY-MM-DDTHH:mm:ss+Zona)
-        countdownTarget: "2026-01-30T08:00:00+08:00",
-        closingText: "Merupakan suatu kebahagiaan dan kehormatan bagi kami, apabila Bapak/Ibu/Saudara/i, berkenan hadir untuk memberikan doa restu. Atas kehadiran dan doa restunya kami ucapkan terima kasih.",
+        // Pengaturan Target Timer Hitung Mundur (Waktu WITA Bali)
+        countdown: {
+            date: "2026-01-30", // Tanggal acara (Format: YYYY-MM-DD)
+            time: "08:00"       // Jam mulai acara (Format: HH:MM:SS)
+        },
         list: [
             {
                 id: "pawiwahan",
@@ -69,7 +64,6 @@ const WEDDING_CONFIG = {
                 icon: "bi-flower1",
                 dayDate: "Jumat, 30 Januari 2026",
                 time: "08.00 WITA - Selesai",
-                locationName: "Kediaman Mempelai Pria",
                 address: "Jl. Siulan No 52, Penatih Dangin Puri, Denpasar Timur",
                 mapsUrl: "https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA",
                 calendar: {
@@ -85,7 +79,6 @@ const WEDDING_CONFIG = {
                 icon: "bi-stars",
                 dayDate: "Jumat, 30 Januari 2026",
                 time: "18.00 WITA - Selesai",
-                locationName: "Kediaman Mempelai Pria",
                 address: "Jl. Siulan No 52, Penatih Dangin Puri, Denpasar Timur",
                 mapsUrl: "https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA",
                 calendar: {
@@ -115,8 +108,6 @@ const WEDDING_CONFIG = {
             }
         ],
         physicalGift: {
-            title: "Hadiah Fisik",
-            description: "Jika anda ingin memberikan hadiah fisik atau kado, mohon alamatkan ke alamat rumah kami.",
             recipient: "Edi & Winda (Pawiwahan Office)",
             address: "Jl. Siulan No. 52, Penatih Dangin Puri, Kec. Denpasar Timur, Kota Denpasar, Bali 80238",
             mapsUrl: "https://maps.app.goo.gl/GoNmSRC1TNZwYQiWA"
@@ -124,22 +115,7 @@ const WEDDING_CONFIG = {
     },
 
     // ------------------------------------------------------------------------
-    // 05. FOOTER, UCAPAN PENUTUP & SOSIAL MEDIA
-    // ------------------------------------------------------------------------
-    footer: {
-        closingGreeting: "Om Shanti Shanti Shanti Om",
-        thankYouMessage: "Suatu kehormatan dan kebahagiaan bagi kami, jika Anda bersedia hadir dan memberikan restu kepada kami.",
-        madeByText: "Made with",
-        creatorName: "WinandaDev",
-        socials: {
-            instagram: "https://www.instagram.com/wiinaandaa_",
-            whatsapp: "https://wa.me/6285964393536",
-            github: "https://github.com/winanda150"
-        }
-    },
-
-    // ------------------------------------------------------------------------
-    // 06. KONFIGURASI KEAMANAN & FIREBASE (OPSIONAL / DEFAULT)
+    // 05. KONFIGURASI KEAMANAN & FIREBASE (OPSIONAL / DEFAULT)
     // ------------------------------------------------------------------------
     security: {
         // Hash SHA-256 dari kata sandi Mode Mempelai
@@ -148,14 +124,6 @@ const WEDDING_CONFIG = {
         adminSalt: "@pawiwahan-secure-backend-key"
     },
 
-    /**
-     * CATATAN KEAMANAN FIREBASE:
-     * Kredensial Firebase Web (apiKey, projectId, dsb.) secara standar memang berada di sisi klien (publik).
-     * Seluruh keamanan basis data (baca/tulis/hapus/pin/like) diproteksi secara ketat oleh Cloud Firestore
-     * Security Rules (lihat file rules/firestore.rules) dengan otorisasi berbasis zero-trust & token timestamp.
-     * Untuk menghubungkan proyek ke Firebase klien baru, ganti konfigurasi di bawah ini dengan config baru
-     * dari Firebase Console proyek Anda.
-     */
     firebase: {
         apiKey: "AIzaSyBfSALZx3_bnG4GI7djWenNDM5UjHZLuPM",
         authDomain: "pawiwahan-theme-1.firebaseapp.com",
