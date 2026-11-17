@@ -203,6 +203,9 @@ window.WEDDING_CONFIG = {
         shortName: "Edi & Winda",
         dateDisplay: "Jumat, 30 Januari 2026",
         bgMusic: "assets/audio/wedding-music.mp3",
+        coverImage1: "assets/images/gallery/cover-1.webp", // Sampul utama (portrait)
+        coverImage2: "assets/images/gallery/cover-2.webp",
+        mediaSessionCover: "assets/images/gallery/gallery-05.webp", // Artwork pemutar musik lockscreen HP (1:1)
         // ...
     },
     mempelai: {
@@ -222,11 +225,14 @@ window.WEDDING_CONFIG = {
 
 ### 2. Penyesuaian Metadata Pratinjau Sosial (Open Graph & SEO)
 
-Meskipun antarmuka web secara otomatis disinkronkan oleh `config.js`, perayap media sosial (_crawlers_) seperti WhatsApp dan Facebook membaca metadata statis sebelum JavaScript dieksekusi. Sesuaikan tag berikut pada bagian `<head>` berkas `index.html` sebelum deployment:
+Meskipun antarmuka web dan thumbnail audio disinkronkan oleh `config.js`, perayap media sosial (_crawlers_) seperti WhatsApp, Facebook, dan Telegram membaca metadata HTML statis sebelum JavaScript dieksekusi. Oleh karena itu, sesuaikan tag berikut pada bagian `<head>` berkas `index.html` sebelum publikasi link:
 
 ```html
 <title>Undangan Pawiwahan | Nama Pasangan</title>
 <meta property="og:title" content="Undangan Pawiwahan | Nama Pasangan" />
+<meta property="og:description" content="Deskripsi undangan pernikahan..." />
+<meta property="og:image" content="assets/images/gallery/gallery-05.webp" />
+<meta property="og:image:secure_url" content="assets/images/gallery/gallery-05.webp" />
 ```
 
 ### 3. Personalisasi Nama Tamu Dinamis (URL Parameter)

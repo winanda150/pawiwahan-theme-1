@@ -233,14 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const metaTwDesc = document.querySelector('meta[name="twitter:description"]');
             if (metaTwDesc) metaTwDesc.setAttribute('content', descContent);
         }
-        if (cfg.couple?.coverImage) {
-            const metaOgImg = document.querySelector('meta[property="og:image"]');
-            if (metaOgImg) metaOgImg.setAttribute('content', cfg.couple.coverImage);
-            const metaOgImgSec = document.querySelector('meta[property="og:image:secure_url"]');
-            if (metaOgImgSec) metaOgImgSec.setAttribute('content', cfg.couple.coverImage);
-            const metaTwImg = document.querySelector('meta[name="twitter:image"]');
-            if (metaTwImg) metaTwImg.setAttribute('content', cfg.couple.coverImage);
-        }
 
         // 1. Sinkronkan teks sederhana dengan atribut [data-bind]
         document.querySelectorAll('[data-bind]').forEach(el => {
@@ -520,9 +512,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Konfigurasi Media Session
             if ('mediaSession' in navigator) {
-                const coverArt = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.coverImage)
-                    ? WEDDING_CONFIG.couple.coverImage
-                    : 'assets/images/gallery/gallery-05.webp';
+                const coverArt = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.mediaSessionCover)
+                    ? WEDDING_CONFIG.couple.mediaSessionCover
+                    : (typeof WEDDING_CONFIG !== 'undefined' && (WEDDING_CONFIG.couple?.coverImage1 || WEDDING_CONFIG.couple?.coverImage))
+                        ? (WEDDING_CONFIG.couple.coverImage1 || WEDDING_CONFIG.couple.coverImage)
+                        : 'assets/images/gallery/gallery-05.webp';
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: 'Undangan Pawiwahan',
                     artist: (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.shortName) ? WEDDING_CONFIG.couple.shortName : 'Undangan Pernikahan',

@@ -21,8 +21,12 @@ const WEDDING_CONFIG = {
         brideNickname: "Winda",
         dateDisplay: "Jumat, 30 Januari 2026",
         bgMusic: "assets/audio/wedding-music.mp3",
+        // Gambar sampul halaman cover undangan (rasio portrait/vertikal)
         coverImage1: "assets/images/gallery/cover-1.webp",
         coverImage2: "assets/images/gallery/cover-2.webp",
+        // Gambar thumbnail pemutar musik di lockscreen / notification bar smartphone (rasio 1:1 persegi)
+        // Catatan: Pratinjau tautan media sosial (WhatsApp/Open Graph) dikonfigurasi langsung pada tag <meta> di index.html
+        mediaSessionCover: "assets/images/gallery/gallery-05.webp",
     },
 
     // ------------------------------------------------------------------------
