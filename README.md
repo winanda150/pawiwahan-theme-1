@@ -1,7 +1,8 @@
 <div align="center">
 
 # 💍 PAWIWAHAN THEME 1
-### *Exclusive Digital Balinese Wedding Invitation Web Application*
+
+### _Exclusive Digital Balinese Wedding Invitation Web Application_
 
 ![Pawiwahan Banner](assets/images/decorations/preview-banner.png)
 
@@ -22,9 +23,9 @@
 
 ## 📖 Tentang Proyek
 
-**Pawiwahan Theme 1** adalah template undangan pernikahan digital bertema adat Bali yang dirancang dengan memadukan nilai kesakralan tradisi Hindu Bali (*Manusa Yadnya*) dan estetika web modern. Mengusung palet warna emas mewah (*Royal Gold*), tipografi *Cinzel Serif*, elemen gelombang dinamis, serta efek partikel gemerlap, platform ini memberikan impresi pertama yang hangat, megah, dan berkesan bagi para tamu undangan.
+**Pawiwahan Theme 1** adalah template undangan pernikahan digital bertema adat Bali yang dirancang dengan memadukan nilai kesakralan tradisi Hindu Bali (_Manusa Yadnya_) dan estetika web modern. Mengusung palet warna emas mewah (_Royal Gold_), tipografi _Cinzel Serif_, elemen gelombang dinamis, serta efek partikel gemerlap, platform ini memberikan impresi pertama yang hangat, megah, dan berkesan bagi para tamu undangan.
 
-Dibangun dengan arsitektur **Vanilla Web Technologies** tanpa ketergantungan framework berat, situs ini menawarkan kecepatan muat maksimal (*high performance*), dukungan *Progressive Web App* (PWA) untuk akses luring (*offline*), serta sistem interaksi buku tamu real-time tanpa reload berkat integrasi **Google Cloud Firestore**.
+Dibangun dengan arsitektur **Vanilla Web Technologies** tanpa ketergantungan framework berat, situs ini menawarkan kecepatan muat maksimal (_high performance_), dukungan _Progressive Web App_ (PWA) untuk akses luring (_offline_), serta sistem interaksi buku tamu real-time tanpa reload berkat integrasi **Google Cloud Firestore**.
 
 ---
 
@@ -113,27 +114,28 @@ flowchart TD
 ```
 
 ### Keunggulan Mode Mempelai:
+
 1. **Keamanan Kriptografi SHA-256:** Password diverifikasi menggunakan hashing satu arah (`Web Crypto API`), sehingga kata sandi asli tidak tersimpan dalam bentuk plain-text di kode sumber.
-2. **Anti-Brute Force & Progressive Lockout:** Proteksi keamanan dengan *artificial delay* 350ms (anti-timing attack) dan penangguhan akses bertingkat (30 detik hingga 5 menit jika gagal 5–10 kali).
-3. **Sematkan Ucapan Favorit (*Pin Message*):** Tempatkan doa terindah dari keluarga atau tamu kehormatan di posisi paling atas dengan label khusus.
-4. **Lencana Resmi (*Verified Badge*):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (*Verified Badge*).
-5. **Moderasi Pesan (*Delete Action*):** Hapus ucapan atau balasan yang tidak sesuai dengan dialog konfirmasi khusus.
+2. **Anti-Brute Force & Progressive Lockout:** Proteksi keamanan dengan _artificial delay_ 350ms (anti-timing attack) dan penangguhan akses bertingkat (30 detik hingga 5 menit jika gagal 5–10 kali).
+3. **Sematkan Ucapan Favorit (_Pin Message_):** Tempatkan doa terindah dari keluarga atau tamu kehormatan di posisi paling atas dengan label khusus.
+4. **Lencana Resmi (_Verified Badge_):** Balasan yang dikirim oleh mempelai otomatis mendapatkan centang biru verifikasi (_Verified Badge_).
+5. **Moderasi Pesan (_Delete Action_):** Hapus ucapan atau balasan yang tidak sesuai dengan dialog konfirmasi khusus.
 6. **Live Guest Counter:** Memantau akumulasi total jumlah tamu yang menyatakan hadir secara real-time langsung dari dokumen metadata/agregasi server.
 
 ---
 
 ## 🛠️ Tech Stack & Ekosistem
 
-| Kategori | Teknologi | Deskripsi |
-| :--- | :--- | :--- |
-| **Core Architecture** | `HTML5`, `CSS3`, `JavaScript (ES6+)` | Struktur semantik, styling fleksibel tanpa framework, dan JavaScript modern modular. |
-| **Database & Backend** | `Google Firebase Cloud Firestore v10.7.1` | Penyimpanan data kehadiran, doa restu, likes, replies, dan statistik secara real-time. |
-| **Emoji & Vector Graphics** | `Twemoji (@twemoji/api) & emoji-picker-element` | Rendering emoji seragam ala WhatsApp dan keyboard pemilih emoji interaktif. |
-| **Typography** | `Google Fonts (Cinzel & Montserrat)` | Kombinasi font serif klasik bernuansa sakral dan sans-serif modern yang mudah dibaca. |
-| **Iconography** | `Bootstrap Icons v1.11.3` | Ikon web berbasis font vektor yang tajam dan ringan. |
-| **Scroll Animation** | `AOS (Animate On Scroll v2.3.4)` | Efek animasi bertahap (*fade*, *zoom*) yang disesuaikan per breakpoint layar. |
-| **PWA & Offline** | `Service Worker (sw.js) & Web App Manifest` | Caching cerdas (*Cache-First* untuk media, *Network-First* untuk script) dan instalasi aplikasi. |
-| **Structured Data** | `Schema.org JSON-LD` | Metadata SEO lengkap untuk hasil pencarian Google Rich Results (*Event*, *Place*, *Person*). |
+| Kategori                    | Teknologi                                       | Deskripsi                                                                                        |
+| :-------------------------- | :---------------------------------------------- | :----------------------------------------------------------------------------------------------- |
+| **Core Architecture**       | `HTML5`, `CSS3`, `JavaScript (ES6+)`            | Struktur semantik, styling fleksibel tanpa framework, dan JavaScript modern modular.             |
+| **Database & Backend**      | `Google Firebase Cloud Firestore v10.7.1`       | Penyimpanan data kehadiran, doa restu, likes, replies, dan statistik secara real-time.           |
+| **Emoji & Vector Graphics** | `Twemoji (@twemoji/api) & emoji-picker-element` | Rendering emoji seragam ala WhatsApp dan keyboard pemilih emoji interaktif.                      |
+| **Typography**              | `Google Fonts (Cinzel & Montserrat)`            | Kombinasi font serif klasik bernuansa sakral dan sans-serif modern yang mudah dibaca.            |
+| **Iconography**             | `Bootstrap Icons v1.11.3`                       | Ikon web berbasis font vektor yang tajam dan ringan.                                             |
+| **Scroll Animation**        | `AOS (Animate On Scroll v2.3.4)`                | Efek animasi bertahap (_fade_, _zoom_) yang disesuaikan per breakpoint layar.                    |
+| **PWA & Offline**           | `Service Worker (sw.js) & Web App Manifest`     | Caching cerdas (_Cache-First_ untuk media, _Network-First_ untuk script) dan instalasi aplikasi. |
+| **Structured Data**         | `Schema.org JSON-LD`                            | Metadata SEO lengkap untuk hasil pencarian Google Rich Results (_Event_, _Place_, _Person_).     |
 
 ---
 
@@ -177,39 +179,23 @@ pawiwahan-theme-1/
 
 ---
 
-## 🚀 Panduan Instalasi & Menjalankan Lokal
+## 💼 Lisensi Komersial & Pemesanan
 
-Website ini bersifat **murni static frontend** (*Client-side Application*), sehingga Anda dapat menjalankannya dengan mudah tanpa perlu instalasi runtime server yang rumit:
+_Source code_ template undangan digital ini merupakan karya orisinal yang dikembangkan dan didistribusikan secara komersial oleh **WinandaDev**.
 
-### Opsi 1: Menggunakan VS Code Live Server (Direkomendasikan)
-1. Clone repositori ini ke komputer Anda:
-   ```bash
-   git clone https://github.com/winanda150/pawiwahan-theme-1.git
-   ```
-2. Buka folder proyek di **Visual Studio Code**.
-3. Install ekstensi **Live Server** (`ritwickdey.LiveServer`).
-4. Klik kanan pada file `index.html` lalu pilih **"Open with Live Server"**.
-5. Browser akan otomatis terbuka di `http://127.0.0.1:5500`.
-
-### Opsi 2: Menggunakan Python HTTP Server
-Jika Anda memiliki Python terinstal:
-```bash
-# Python 3.x
-python -m http.server 8080
-```
-Buka browser di `http://localhost:8080`.
-
-### Opsi 3: Menggunakan Node.js `serve` / `http-server`
-```bash
-npx serve .
-```
+- 🚫 **Dilarang Keras:** Mempublikasikan ulang, membagikan gratis, atau memperjualbelikan kembali _source code_ ini kepada pihak lain tanpa izin lisensi tertulis dari pemilik hak cipta.
+- 📦 **Bagi Pembeli Source Code:** Anda berhak penuh menggunakan dan menyesuaikan template ini untuk proyek undangan pribadi maupun pesanan klien Anda.
+- 📩 **Pemesanan Jasa & Pembelian Lisensi:** Silakan hubungi kontak resmi pengembang melalui [WhatsApp](https://wa.me/6285964393536) atau tautan di bagian bawah.
 
 ---
 
 ## ⚙️ Panduan Kustomisasi & Konfigurasi
 
-### 1. Mengubah Seluruh Data Undangan (Pusat Data Tunggal `config.js`)
-Anda **TIDAK PERLU lagi mengedit file `index.html` yang panjang**! Seluruh informasi acara, nama kedua mempelai, tanggal, foto, countdown, mantra, nomor rekening, hingga alamat kado fisik kini terpusat di **`config.js`**:
+### 1. Manajemen Konten Terpusat (`config.js`)
+
+Aplikasi ini menerapkan arsitektur *Single Source of Truth*. Seluruh konten acara — mulai dari identitas kedua mempelai, kutipan sakral (*mantra*), rangkaian upacara, integrasi Google Maps & Kalender, nomor rekening tanda kasih, hingga kredensial Firebase — dikonfigurasi secara terpusat melalui berkas **`config.js`**.
+
+Mesin hidrasi data bawaan akan secara otomatis memetakan nilai-nilai konfigurasi tersebut ke seluruh antarmuka pengguna tanpa memerlukan modifikasi manual pada struktur markup `index.html`:
 
 ```javascript
 window.WEDDING_CONFIG = {
@@ -225,33 +211,38 @@ window.WEDDING_CONFIG = {
     },
     events: {
         countdownTarget: "2026-01-30T08:00:00+08:00",
-        list: [ ... ] // Jadwal acara, maps, dan kalender otomatis
+        list: [ ... ] // Rangkaian acara, maps, & kalender otomatis
     },
     gifts: {
-        bankAccounts: [ ... ], // Otomatis membuat kartu rekening & tombol salin
+        bankAccounts: [ ... ], // Otomatis me-render kartu rekening & tombol salin
         physicalGift: { ... }
     }
 };
 ```
 
-### 2. Mengatur Judul & Pratinjau WhatsApp di `index.html` (Opsional)
-Untuk pratinjau kartu saat link dibagikan di WhatsApp/Facebook, sesuaikan baris `<title>` dan `<meta property="og:title">` di bagian `<head>` file `index.html`:
+### 2. Penyesuaian Metadata Pratinjau Sosial (Open Graph & SEO)
+
+Meskipun antarmuka web secara otomatis disinkronkan oleh `config.js`, perayap media sosial (*crawlers*) seperti WhatsApp dan Facebook membaca metadata statis sebelum JavaScript dieksekusi. Sesuaikan tag berikut pada bagian `<head>` berkas `index.html` sebelum deployment:
+
 ```html
 <title>Undangan Pawiwahan | Nama Pasangan</title>
-<meta property="og:title" content="Undangan Pawiwahan | Nama Pasangan">
+<meta property="og:title" content="Undangan Pawiwahan | Nama Pasangan" />
 ```
-*(Seluruh isi tampilan halaman web di dalam browser akan selalu otomatis terisi dari `config.js`).*
 
-### 3. Mengatur URL Parameter Nama Tamu
-Kirim tautan undangan kepada tamu dengan menyematkan query parameter `?to=`:
+### 3. Personalisasi Nama Tamu Dinamis (URL Parameter)
+
+Sistem secara otomatis mendeteksi dan mempersonalisasi nama tamu pada sampul undangan melalui query parameter `?to=`. Algoritma *auto font scaling* memastikan nama panjang tetap proporsional dan tidak terpotong:
+
 ```text
 https://domain-anda.com/?to=Nama+Tamu+Undangan
 Contoh:
 https://domain-anda.com/?to=Bapak+I+Wayan+Sudira,+S.T.+%26+Keluarga
 ```
 
-### 4. Mengganti Konfigurasi Firebase
-Buka file `config.js` dan sesuaikan objek `firebase`:
+### 4. Konfigurasi Layanan Cloud Firestore
+
+Untuk menghubungkan fitur buku tamu dan RSVP real-time ke proyek Firebase Anda sendiri, sesuaikan objek `firebase` di dalam berkas `config.js`:
+
 ```javascript
 firebase: {
     apiKey: "YOUR_API_KEY",
@@ -264,10 +255,13 @@ firebase: {
 }
 ```
 
-### 5. Mengubah Password Mode Mempelai
-Password diverifikasi melalui sistem otorisasi dua tingkat (*Dual-Tier Salted Token*): `security.mempelaiHash` di `config.js` untuk otentikasi login frontend, serta token bertingkat pada fungsi `getAdminSecretHash()` di Firestore Rules.
-Untuk mengganti password dengan yang baru:
-1. Buka console browser (`F12`) dan jalankan skrip generator berikut:
+### 5. Manajemen Kredensial & Otorisasi Mode Mempelai
+
+Autentikasi Mode Mempelai dilindungi oleh sistem keamanan bertingkat (*Dual-Tier Salted Token*): `security.mempelaiHash` di `config.js` untuk verifikasi antarmuka klien, serta token kriptografi pada fungsi `getAdminSecretHash()` di Cloud Firestore Rules.
+
+Untuk memperbarui kata sandi administratif:
+
+1. Buka console browser (`F12`) pada halaman web dan jalankan fungsi generator berikut:
    ```javascript
    async function generateBothHashes(pass) {
        const hash1 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass)))).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -275,25 +269,27 @@ Untuk mengganti password dengan yang baru:
        console.log("mempelaiHash (config.js):", hash1);
        console.log("getAdminSecretHash (Firestore Rules):", hash2);
    }
-   generateBothHashes("PasswordBaruAnda");
+   generateBothHashes("KataSandiBaruAnda");
    ```
-2. Tempelkan `hash1` ke properti `security.mempelaiHash` di `config.js` dan `hash2` ke fungsi `getAdminSecretHash()` di `rules/firestore.rules` atau Firestore Security Rules Anda.
+2. Tempelkan nilai `hash1` ke properti `security.mempelaiHash` di `config.js`, dan nilai `hash2` ke fungsi `getAdminSecretHash()` pada berkas `rules/firestore.rules` (atau di tab Rules Firebase Console).
 
 ---
 
 ## 🛡️ Aturan Keamanan Firestore (Security Rules)
 
-Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada file `rules/firestore.rules`. File dan folder konfigurasi ini disimpan secara lokal dan dilindungi oleh `.gitignore` agar tidak terekspos secara publik di repositori GitHub. Aturan ini dirancang dengan tingkat keamanan sangat ketat (*High-Level Security Lockdown*):
+Seluruh konfigurasi keamanan database terpusat dan dikelola secara modular pada file `rules/firestore.rules`. File dan folder konfigurasi ini disimpan secara lokal dan dilindungi oleh `.gitignore` agar tidak terekspos secara publik di repositori GitHub. Aturan ini dirancang dengan tingkat keamanan sangat ketat (_High-Level Security Lockdown_):
 
 - **🛡️ Validasi Ketat Data Kehadiran & Anti-Spam:** Membatasi ukuran teks nama (1–50 karakter), pesan (1–500 karakter), integritas status (`Hadir` wajib 1–10 orang, `Tidak Hadir` wajib 0 orang), serta mengunci status pin awal.
-- **🔐 Otorisasi Bertingkat (*Dual-Tier Salted Token*):** Menjamin fitur sematkan (*pin/unpin*), hapus ucapan, dan centang verifikasi balasan mempelai (*blue badge*) hanya dapat dieksekusi oleh mempelai yang memegang kata sandi sah.
-- **⚡ Batasan Operasi Dinamis (Anti-Bot):** Operasi *like* dan *reply count* dibatasi hanya $\pm 1$ per request serta mencegah nilai negatif.
+- **🔐 Otorisasi Bertingkat (_Dual-Tier Salted Token_):** Menjamin fitur sematkan (_pin/unpin_), hapus ucapan, dan centang verifikasi balasan mempelai (_blue badge_) hanya dapat dieksekusi oleh mempelai yang memegang kata sandi sah.
+- **⚡ Batasan Operasi Dinamis (Anti-Bot):** Operasi _like_ dan _reply count_ dibatasi hanya $\pm 1$ per request serta mencegah nilai negatif.
 - **🚫 Global Wildcard Lockdown:** Mengunci seluruh koleksi lain di database selain yang diizinkan (`allow read, write: if false;`).
 
 ### 🚀 Cara Menerapkan Security Rules & Indexes:
 
 #### Opsi 1: Menggunakan Firebase CLI (Direkomendasikan)
-Jalankan perintah berikut di terminal root proyek untuk men-deploy *rules* dan *indexes* sekaligus:
+
+Jalankan perintah berikut di terminal root proyek untuk men-deploy _rules_ dan _indexes_ sekaligus:
+
 ```bash
 # Deploy Rules & Indexes sekaligus
 npx firebase deploy --only firestore
@@ -304,6 +300,7 @@ npx firebase deploy --only firestore:indexes
 ```
 
 #### Opsi 2: Menggunakan Firebase Console (Manual)
+
 1. Buka file lokal `rules/firestore.rules` di editor Anda lalu salin seluruh kodenya.
 2. Masuk ke [Firebase Console](https://console.firebase.google.com/) > Pilih Project Anda > **Firestore Database**.
 3. Buka tab **Rules**, tempelkan kode yang telah disalin, lalu klik tombol **Publish**.
@@ -321,8 +318,8 @@ Pure White       : #ffffff  ■■■■■■■ (Background Konten Utama, Kont
 Slate Grey       : #718096  ■■■■■■■ (Teks Deskripsi & Subjudul)
 ```
 
-- **Judul & Header:** `Cinzel` (*Google Fonts*) – Memberikan kesan megah, elegan, dan bernuansa kerajaan klasik.
-- **Teks Tubuh & Form:** `Montserrat` (*Google Fonts*) – Bersih, modern, dan sangat nyaman dibaca pada perangkat mobile.
+- **Judul & Header:** `Cinzel` (_Google Fonts_) – Memberikan kesan megah, elegan, dan bernuansa kerajaan klasik.
+- **Teks Tubuh & Form:** `Montserrat` (_Google Fonts_) – Bersih, modern, dan sangat nyaman dibaca pada perangkat mobile.
 
 ---
 
@@ -335,26 +332,8 @@ Slate Grey       : #718096  ■■■■■■■ (Teks Deskripsi & Subjudul)
 
 ---
 
-## 👨‍💻 Kontributor & Kredit
-
-Dibuat dengan penuh dedikasi dan cinta oleh **WinandaDev**.
-
-<p align="left">
-  <a href="https://github.com/winanda150" target="_blank">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
-  </a>
-  <a href="https://www.instagram.com/wiinaandaa_" target="_blank">
-    <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" />
-  </a>
-  <a href="https://wa.me/6285964393536" target="_blank">
-    <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp" />
-  </a>
-</p>
-
----
-
 <div align="center">
   <p><em>"Ihaiva stam ma vi yaustam, visvam ayur vyasnutam, kridantau putrair naptrbhih, modamanau sve grhe."</em><br>
   <strong>— Rg Veda X.85.42 —</strong></p>
-  <p>© 2026 Pawiwahan Edi & Winda. All Rights Reserved.</p>
+  <p>© Pawiwahan Theme 1 by WinandaDev. All Rights Reserved.</p>
 </div>
