@@ -512,19 +512,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Konfigurasi Media Session
             if ('mediaSession' in navigator) {
-                const coverArt = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.mediaSessionCover)
-                    ? WEDDING_CONFIG.couple.mediaSessionCover
-                    : (typeof WEDDING_CONFIG !== 'undefined' && (WEDDING_CONFIG.couple?.coverImage1 || WEDDING_CONFIG.couple?.coverImage))
-                        ? (WEDDING_CONFIG.couple.coverImage1 || WEDDING_CONFIG.couple.coverImage)
-                        : 'assets/images/gallery/gallery-05.webp';
-                navigator.mediaSession.metadata = new MediaMetadata({
+                const cfgCouple = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple) ? WEDDING_CONFIG.couple : {};
+                const coverArt = cfgCouple.mediaSessionCover || cfgCouple.coverImage1 || '';
+
+                const sessionMetadata = {
                     title: 'Undangan Pawiwahan',
-                    artist: (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple?.shortName) ? WEDDING_CONFIG.couple.shortName : 'Undangan Pernikahan',
-                    album: 'Wedding Invitation',
-                    artwork: [
+                    artist: cfgCouple.shortName || 'Undangan Pernikahan',
+                    album: 'Wedding Invitation'
+                };
+
+                if (coverArt) {
+                    sessionMetadata.artwork = [
                         { src: coverArt, sizes: '512x512', type: 'image/webp' }
-                    ]
-                });
+                    ];
+                }
+
+                navigator.mediaSession.metadata = new MediaMetadata(sessionMetadata);
 
                 // Sinkronisasi kontrol play/pause dari Media Session (Notifikasi HP)
                 navigator.mediaSession.setActionHandler('play', () => music.play());
