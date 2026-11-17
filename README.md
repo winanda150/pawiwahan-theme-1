@@ -185,7 +185,7 @@ _Source code_ template undangan digital ini merupakan karya orisinal yang dikemb
 
 - 🚫 **Dilarang Keras:** Mempublikasikan ulang, membagikan gratis, atau memperjualbelikan kembali _source code_ ini kepada pihak lain tanpa izin lisensi tertulis dari pemilik hak cipta.
 - 📦 **Bagi Pembeli Source Code:** Anda berhak penuh menggunakan dan menyesuaikan template ini untuk proyek undangan pribadi maupun pesanan klien Anda.
-- 📩 **Pemesanan Jasa & Pembelian Lisensi:** Silakan hubungi kontak resmi pengembang melalui [WhatsApp](https://wa.me/6285964393536) atau tautan di bagian bawah.
+- 📩 **Pemesanan Jasa & Pembelian Lisensi:** Silakan hubungi kontak resmi pengembang melalui [WhatsApp](https://wa.me/6285964393536).
 
 ---
 
@@ -193,7 +193,7 @@ _Source code_ template undangan digital ini merupakan karya orisinal yang dikemb
 
 ### 1. Manajemen Konten Terpusat (`config.js`)
 
-Aplikasi ini menerapkan arsitektur *Single Source of Truth*. Seluruh konten acara — mulai dari identitas kedua mempelai, kutipan sakral (*mantra*), rangkaian upacara, integrasi Google Maps & Kalender, nomor rekening tanda kasih, hingga kredensial Firebase — dikonfigurasi secara terpusat melalui berkas **`config.js`**.
+Aplikasi ini menerapkan arsitektur _Single Source of Truth_. Seluruh konten acara — mulai dari identitas kedua mempelai, kutipan sakral (_mantra_), rangkaian upacara, integrasi Google Maps & Kalender, nomor rekening tanda kasih, hingga kredensial Firebase — dikonfigurasi secara terpusat melalui berkas **`config.js`**.
 
 Mesin hidrasi data bawaan akan secara otomatis memetakan nilai-nilai konfigurasi tersebut ke seluruh antarmuka pengguna tanpa memerlukan modifikasi manual pada struktur markup `index.html`:
 
@@ -222,7 +222,7 @@ window.WEDDING_CONFIG = {
 
 ### 2. Penyesuaian Metadata Pratinjau Sosial (Open Graph & SEO)
 
-Meskipun antarmuka web secara otomatis disinkronkan oleh `config.js`, perayap media sosial (*crawlers*) seperti WhatsApp dan Facebook membaca metadata statis sebelum JavaScript dieksekusi. Sesuaikan tag berikut pada bagian `<head>` berkas `index.html` sebelum deployment:
+Meskipun antarmuka web secara otomatis disinkronkan oleh `config.js`, perayap media sosial (_crawlers_) seperti WhatsApp dan Facebook membaca metadata statis sebelum JavaScript dieksekusi. Sesuaikan tag berikut pada bagian `<head>` berkas `index.html` sebelum deployment:
 
 ```html
 <title>Undangan Pawiwahan | Nama Pasangan</title>
@@ -231,7 +231,7 @@ Meskipun antarmuka web secara otomatis disinkronkan oleh `config.js`, perayap me
 
 ### 3. Personalisasi Nama Tamu Dinamis (URL Parameter)
 
-Sistem secara otomatis mendeteksi dan mempersonalisasi nama tamu pada sampul undangan melalui query parameter `?to=`. Algoritma *auto font scaling* memastikan nama panjang tetap proporsional dan tidak terpotong:
+Sistem secara otomatis mendeteksi dan mempersonalisasi nama tamu pada sampul undangan melalui query parameter `?to=`. Algoritma _auto font scaling_ memastikan nama panjang tetap proporsional dan tidak terpotong:
 
 ```text
 https://domain-anda.com/?to=Nama+Tamu+Undangan
@@ -257,17 +257,32 @@ firebase: {
 
 ### 5. Manajemen Kredensial & Otorisasi Mode Mempelai
 
-Autentikasi Mode Mempelai dilindungi oleh sistem keamanan bertingkat (*Dual-Tier Salted Token*): `security.mempelaiHash` di `config.js` untuk verifikasi antarmuka klien, serta token kriptografi pada fungsi `getAdminSecretHash()` di Cloud Firestore Rules.
+Autentikasi Mode Mempelai dilindungi oleh sistem keamanan bertingkat (_Dual-Tier Salted Token_): `security.mempelaiHash` di `config.js` untuk verifikasi antarmuka klien, serta token kriptografi pada fungsi `getAdminSecretHash()` di Cloud Firestore Rules.
 
 Untuk memperbarui kata sandi administratif:
 
 1. Buka console browser (`F12`) pada halaman web dan jalankan fungsi generator berikut:
    ```javascript
    async function generateBothHashes(pass) {
-       const hash1 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass)))).map(b => b.toString(16).padStart(2, '0')).join('');
-       const hash2 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass + "@pawiwahan-secure-backend-key")))).map(b => b.toString(16).padStart(2, '0')).join('');
-       console.log("mempelaiHash (config.js):", hash1);
-       console.log("getAdminSecretHash (Firestore Rules):", hash2);
+     const hash1 = Array.from(
+       new Uint8Array(
+         await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pass)),
+       ),
+     )
+       .map((b) => b.toString(16).padStart(2, "0"))
+       .join("");
+     const hash2 = Array.from(
+       new Uint8Array(
+         await crypto.subtle.digest(
+           "SHA-256",
+           new TextEncoder().encode(pass + "@pawiwahan-secure-backend-key"),
+         ),
+       ),
+     )
+       .map((b) => b.toString(16).padStart(2, "0"))
+       .join("");
+     console.log("mempelaiHash (config.js):", hash1);
+     console.log("getAdminSecretHash (Firestore Rules):", hash2);
    }
    generateBothHashes("KataSandiBaruAnda");
    ```
