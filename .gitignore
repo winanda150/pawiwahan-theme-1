@@ -65,3 +65,8 @@ build/
 *.zip
 *.tar.gz
 *.rar
+
+# ==========================================
+# 7. Dokumentasi Rilis Lokal & Catatan Draft
+# ==========================================
+releases/
