@@ -35,7 +35,7 @@ const firebaseConfig = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.
 // Variabel modul Firebase & Firestore (dimuat secara asinkron saat dibutuhkan agar LCP & PageSpeed optimal)
 let app = null;
 let db = null;
-let collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, deleteField, startAfter, endBefore, limitToLast, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum;
+let collection, query, orderBy, onSnapshot, serverTimestamp, limit, doc, updateDoc, deleteDoc, increment, startAfter, getCountFromServer, getDoc, getDocs, setDoc, where, getAggregateFromServer, sum;
 
 let firebaseInitialized = false;
 let firebaseInitPromise = null;
@@ -49,41 +49,42 @@ async function ensureFirebase() {
     if (firebaseInitPromise) return firebaseInitPromise;
 
     firebaseInitPromise = (async () => {
-        const [appMod, fsMod] = await Promise.all([
-            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
-            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
-        ]);
+        try {
+            const [appMod, fsMod] = await Promise.all([
+                import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+                import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+            ]);
 
-        app = appMod.initializeApp(firebaseConfig);
-        db = fsMod.initializeFirestore(app, {
-            experimentalAutoDetectLongPolling: true,
-        });
+            app = appMod.initializeApp(firebaseConfig);
+            db = fsMod.initializeFirestore(app, {
+                experimentalAutoDetectLongPolling: true,
+            });
 
-        collection = fsMod.collection;
-        addDoc = fsMod.addDoc;
-        query = fsMod.query;
-        orderBy = fsMod.orderBy;
-        onSnapshot = fsMod.onSnapshot;
-        serverTimestamp = fsMod.serverTimestamp;
-        limit = fsMod.limit;
-        doc = fsMod.doc;
-        updateDoc = fsMod.updateDoc;
-        deleteDoc = fsMod.deleteDoc;
-        increment = fsMod.increment;
-        deleteField = fsMod.deleteField;
-        startAfter = fsMod.startAfter;
-        endBefore = fsMod.endBefore;
-        limitToLast = fsMod.limitToLast;
-        getCountFromServer = fsMod.getCountFromServer;
-        getDoc = fsMod.getDoc;
-        getDocs = fsMod.getDocs;
-        setDoc = fsMod.setDoc;
-        where = fsMod.where;
-        getAggregateFromServer = fsMod.getAggregateFromServer;
-        sum = fsMod.sum;
+            collection = fsMod.collection;
+            query = fsMod.query;
+            orderBy = fsMod.orderBy;
+            onSnapshot = fsMod.onSnapshot;
+            serverTimestamp = fsMod.serverTimestamp;
+            limit = fsMod.limit;
+            doc = fsMod.doc;
+            updateDoc = fsMod.updateDoc;
+            deleteDoc = fsMod.deleteDoc;
+            increment = fsMod.increment;
+            startAfter = fsMod.startAfter;
+            getCountFromServer = fsMod.getCountFromServer;
+            getDoc = fsMod.getDoc;
+            getDocs = fsMod.getDocs;
+            setDoc = fsMod.setDoc;
+            where = fsMod.where;
+            getAggregateFromServer = fsMod.getAggregateFromServer;
+            sum = fsMod.sum;
 
-        firebaseInitialized = true;
-        return { app, db };
+            firebaseInitialized = true;
+            return { app, db };
+        } catch (err) {
+            firebaseInitPromise = null; // Reset promise agar pemanggilan berikutnya dapat mencoba ulang secara otomatis
+            throw err;
+        }
     })();
 
     return firebaseInitPromise;
@@ -134,6 +135,7 @@ let serverTimeOffset = 0;
  * agar countdown akurat meskipun jam HP user salah.
  */
 async function syncTimeWithServer() {
+    if (!window.location.protocol.startsWith('http')) return;
     try {
         const start = Date.now();
         const response = await fetch(window.location.href, {
@@ -188,25 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, '&#039;');
     }
 
-    // Helper sanitasi HTML aman untuk [data-bind-html] (XSS-Safe: hanya izinkan format teks aman)
-    function sanitizeHTML(str) {
-        if (typeof str !== 'string') return '';
-        const temp = document.createElement('div');
-        temp.innerHTML = str;
-        const dangerous = temp.querySelectorAll('script, iframe, object, embed, link, style, form, input, button, textarea');
-        dangerous.forEach(el => el.remove());
-        const allEls = temp.querySelectorAll('*');
-        allEls.forEach(el => {
-            const attrs = Array.from(el.attributes);
-            for (const attr of attrs) {
-                if (attr.name.startsWith('on') || attr.value.trim().toLowerCase().startsWith('javascript:')) {
-                    el.removeAttribute(attr.name);
-                }
-            }
-        });
-        return temp.innerHTML;
-    }
-
     // --- 00. ENGINE HYDRATION DARI CONFIG.JS ---
     const applyWeddingConfig = () => {
         const cfg = typeof WEDDING_CONFIG !== 'undefined' ? WEDDING_CONFIG : null;
@@ -252,24 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Sinkronkan konten HTML dengan [data-bind-html] (Aman dari XSS)
-        document.querySelectorAll('[data-bind-html]').forEach(el => {
-            const keyPath = el.getAttribute('data-bind-html').split('.');
-            let val = cfg;
-            for (const key of keyPath) {
-                if (val && typeof val === 'object' && key in val) {
-                    val = val[key];
-                } else {
-                    val = null;
-                    break;
-                }
-            }
-            if (val !== null && val !== undefined) {
-                el.innerHTML = sanitizeHTML(String(val));
-            }
-        });
-
-        // 3. Sinkronkan atribut gambar [data-bind-src] dan [data-bind-alt] (Mendukung Loading Skeleton)
+        // 2. Sinkronkan atribut gambar [data-bind-src] dan [data-bind-alt] (Mendukung Loading Skeleton)
         document.querySelectorAll('[data-bind-src]').forEach(el => {
             const keyPath = el.getAttribute('data-bind-src').split('.');
             let val = cfg;
@@ -295,12 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (coverBg) coverBg.classList.remove('skeleton');
                     }, { once: true });
 
-                    el.src = val;
+                    if (el.getAttribute('src') !== val) {
+                        el.src = val;
+                    }
 
                     if (el.complete && el.naturalWidth > 0) {
                         onImageLoad();
                     }
-                } else {
+                } else if (el.getAttribute('src') !== val) {
                     el.src = val;
                 }
             }
@@ -335,8 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (val) el.href = val;
         });
 
-        // 5. Sinkronkan Audio Musik Latar
-        if (cfg.couple?.bgMusic && music) {
+        // 5. Sinkronkan Audio Musik Latar (Hanya jika belum terpasang agar tidak memicu double HTTP fetch)
+        if (cfg.couple?.bgMusic && music && music.getAttribute('src') !== cfg.couple.bgMusic) {
             music.src = cfg.couple.bgMusic;
         }
 
@@ -364,29 +332,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (eventGrid && Array.isArray(cfg.events?.list) && cfg.events.list.length > 0) {
             eventGrid.innerHTML = cfg.events.list.map((ev, idx) => {
                 const cal = ev.calendar || {};
-                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cal.title || ev.title)}&dates=${encodeURIComponent(cal.dates || '')}&details=${encodeURIComponent(cal.details || '')}&location=${encodeURIComponent(cal.location || ev.address || '')}`;
+                const eventTitle = ev.title || 'Acara Pernikahan';
+                const calTitle = cal.title || eventTitle;
+                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(calTitle)}&dates=${encodeURIComponent(cal.dates || '')}&details=${encodeURIComponent(cal.details || '')}&location=${encodeURIComponent(cal.location || ev.address || '')}`;
                 const delay = (idx + 1) * 200;
                 return `
                     <div class="event-card" data-aos="fade-up" data-aos-delay="${delay}">
                         <div class="event-arch">
                             <i class="bi ${escapeHTML(ev.icon || 'bi-calendar-event')} event-icon-top"></i>
-                            <h3 class="cinzel-font">${escapeHTML(ev.title)}</h3>
+                            <h3 class="cinzel-font">${escapeHTML(eventTitle)}</h3>
                             <div class="event-info">
                                 <div class="info-item">
-                                    <p>${escapeHTML(ev.dayDate)}</p>
+                                    <p>${escapeHTML(ev.dayDate || '')}</p>
                                 </div>
                                 <div class="info-item">
-                                    <p>${escapeHTML(ev.time)}</p>
+                                    <p>${escapeHTML(ev.time || '')}</p>
                                 </div>
                                 <div class="info-item">
-                                    <p><span>Bertempat di</span><br>${escapeHTML(ev.address)}</p>
+                                    <p><span>Bertempat di</span><br>${escapeHTML(ev.address || '')}</p>
                                 </div>
                             </div>
                             <div class="event-buttons">
-                                <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-event" aria-label="Simpan Jadwal ${escapeHTML(ev.title)} ke Kalender">
+                                <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-event" aria-label="Simpan Jadwal ${escapeHTML(eventTitle)} ke Kalender">
                                     <i class="bi bi-calendar-plus"></i> Simpan Kalender
                                 </a>
-                                <a href="${escapeHTML(ev.mapsUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn-event outline" aria-label="Lihat Lokasi ${escapeHTML(ev.title)} di Google Maps">
+                                <a href="${escapeHTML(ev.mapsUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn-event outline" aria-label="Lihat Lokasi ${escapeHTML(eventTitle)} di Google Maps">
                                     <i class="bi bi-geo-alt-fill"></i> Lihat Lokasi
                                 </a>
                             </div>
@@ -427,9 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
             guestNameElement.textContent = "Tamu Undangan";
         }
 
-        // Jalankan saat pertama dimuat dan setiap kali jendela di-resize
+        // Jalankan saat pertama dimuat (penyesuaian saat resize ditangani secara debounced di handleOrientationChange)
         adjustGuestNameSize();
-        window.addEventListener('resize', adjustGuestNameSize);
     }
 
     // Fungsi untuk (re)inisialisasi AOS agar durasi & offset selalu sinkron dengan lebar layar
@@ -545,15 +514,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 if (coverArt) {
+                    let resolvedArtUrl = coverArt;
+                    try {
+                        resolvedArtUrl = new URL(coverArt, window.location.href).href;
+                    } catch (e) {
+                        resolvedArtUrl = coverArt;
+                    }
                     sessionMetadata.artwork = [
-                        { src: coverArt, sizes: '512x512', type: 'image/webp' }
+                        { src: resolvedArtUrl, sizes: '512x512', type: 'image/webp' }
                     ];
                 }
 
                 navigator.mediaSession.metadata = new MediaMetadata(sessionMetadata);
 
                 // Sinkronisasi kontrol play/pause dari Media Session (Notifikasi HP)
-                navigator.mediaSession.setActionHandler('play', () => music.play());
+                navigator.mediaSession.setActionHandler('play', () => {
+                    music.play().catch(err => console.log("MediaSession play note:", err));
+                });
                 navigator.mediaSession.setActionHandler('pause', () => music.pause());
             }
 
@@ -598,8 +575,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('allow-scroll');
 
             setTimeout(() => {
-                // Refresh AOS setelah container benar-benar terbuka/berubah layout
-                AOS.refresh();
+                // Refresh AOS setelah container benar-benar terbuka/berubah layout (jika library tersedia)
+                if (typeof AOS !== 'undefined' && typeof AOS.refresh === 'function') {
+                    AOS.refresh();
+                }
 
                 const nextSection = document.getElementById('main-content');
                 if (nextSection) {
@@ -627,7 +606,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         musicControl.addEventListener('click', (e) => {
             e.stopPropagation();
-            music.paused ? music.play() : music.pause();
+            if (music.paused) {
+                music.play().catch(err => console.log("Audio playback note:", err));
+            } else {
+                music.pause();
+            }
         });
     }
 
@@ -635,50 +618,30 @@ document.addEventListener('DOMContentLoaded', () => {
        06. PENGHITUNG WAKTU MUNDUR ACARA & SINKRONISASI REAL-TIME
        ========================================================================== */
 
-    // --- Logika Countdown (Mendukung events.countdown terpisah dan events.countdownTarget) ---
+    // --- Logika Countdown (Berdasarkan events.countdown { date, time, timezone } di config.js) ---
     const getCountdownTargetDate = () => {
         const eventsConfig = (typeof WEDDING_CONFIG !== 'undefined') ? WEDDING_CONFIG.events : null;
-        if (!eventsConfig) return 0;
+        if (!eventsConfig || !eventsConfig.countdown || typeof eventsConfig.countdown !== 'object') return 0;
 
-        // 1. Format Ramah Pengguna: events.countdown { date, time, timezone }
-        if (eventsConfig.countdown && typeof eventsConfig.countdown === 'object') {
-            const cd = eventsConfig.countdown;
-            const dateStr = (cd.date || '').trim();
-            if (!dateStr) return 0;
+        const cd = eventsConfig.countdown;
+        const dateStr = (cd.date || '').trim();
+        if (!dateStr) return 0;
 
-            let timeStr = (cd.time || '08:00').trim();
-            if (timeStr.split(':').length === 2) timeStr += ':00';
+        const timeMatch = (cd.time || '08:00').match(/(\d{1,2})[.:](\d{2})(?:[.:](\d{2}))?/);
+        const timeStr = timeMatch
+            ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}:${timeMatch[3] || '00'}`
+            : '08:00:00';
 
-            let tzOffset = '+08:00'; // Default WITA (Bali)
-            const tzUpper = String(cd.timezone || '').trim().toUpperCase();
-            if (tzUpper === 'WIB') tzOffset = '+07:00';
-            else if (tzUpper === 'WITA') tzOffset = '+08:00';
-            else if (tzUpper === 'WIT') tzOffset = '+09:00';
-            else if (tzUpper.startsWith('+') || tzUpper.startsWith('-')) tzOffset = tzUpper;
+        let tzOffset = '+08:00'; // Default WITA (Bali)
+        const tzUpper = String(cd.timezone || '').trim().toUpperCase();
+        if (tzUpper === 'WIB') tzOffset = '+07:00';
+        else if (tzUpper === 'WITA') tzOffset = '+08:00';
+        else if (tzUpper === 'WIT') tzOffset = '+09:00';
+        else if (tzUpper.startsWith('+') || tzUpper.startsWith('-')) tzOffset = tzUpper;
 
-            const isoString = `${dateStr}T${timeStr}${tzOffset}`;
-            const parsed = new Date(isoString).getTime();
-            if (!isNaN(parsed)) return parsed;
-        }
-
-        // 2. Fallback: Format String Tunggal (countdownTarget)
-        const rawTarget = eventsConfig.countdownTarget;
-        if (rawTarget && typeof rawTarget === 'string') {
-            const trimmed = rawTarget.trim();
-            if (trimmed.includes('T') && (trimmed.includes('+') || trimmed.endsWith('Z'))) {
-                const parsed = new Date(trimmed).getTime();
-                if (!isNaN(parsed)) return parsed;
-            }
-            const parts = trimmed.split(/[\sT]+/);
-            const datePart = parts[0];
-            let timePart = parts[1] || '08:00';
-            if (timePart.split(':').length === 2) timePart += ':00';
-            const isoString = `${datePart}T${timePart}+08:00`;
-            const parsed = new Date(isoString).getTime();
-            if (!isNaN(parsed)) return parsed;
-        }
-
-        return 0;
+        const isoString = `${dateStr}T${timeStr}${tzOffset}`;
+        const parsed = new Date(isoString).getTime();
+        return !isNaN(parsed) ? parsed : 0;
     };
     const targetDate = getCountdownTargetDate();
     const daysEl = document.getElementById("days");
@@ -726,9 +689,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Jalankan interval setiap detik
     countdownInterval = setInterval(updateCountdown, 1000);
 
-    // Sinkronisasi ulang otomatis saat user kembali ke tab undangan
+    // Sinkronisasi ulang otomatis saat user kembali ke tab undangan (hanya jika acara belum berakhir)
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
+        if (document.visibilityState === 'visible' && targetDate && (targetDate - (Date.now() + serverTimeOffset)) > 0) {
             syncTimeWithServer().then(() => updateCountdown());
         }
     });
@@ -754,6 +717,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let retries = 0;
         const maxRetries = 10; // Jumlah maksimal percobaan ulang (10 kali)
 
+        img._resetRetry = () => {
+            if (img._retryTimer) {
+                clearTimeout(img._retryTimer);
+                img._retryTimer = null;
+            }
+            retries = 0;
+        };
+
         img.addEventListener('error', function handleError() {
             if (!this.src || this.src === window.location.href || this.src.startsWith('data:')) return;
 
@@ -761,11 +732,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentSrc = this.src.split(/[?&]retry=/)[0].split(/[?&]t=/)[0];
             if (!currentSrc || currentSrc === window.location.href) return;
 
+            if (this._retryTimer) {
+                clearTimeout(this._retryTimer);
+                this._retryTimer = null;
+            }
+
             if (retries < maxRetries) {
                 retries++;
                 console.warn(`[Retry] Gagal memuat: ${currentSrc}. Mencoba lagi (${retries}/${maxRetries})...`);
 
-                setTimeout(() => {
+                this._retryTimer = setTimeout(() => {
+                    this._retryTimer = null;
                     const separator = currentSrc.includes('?') ? '&' : '?';
                     // Tambahkan query parameter unik untuk memaksa browser mengambil data baru dari server (bypass cache)
                     this.src = `${currentSrc}${separator}retry=${retries}&t=${Date.now()}`;
@@ -774,6 +751,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         img.addEventListener('load', () => {
+            if (img._retryTimer) {
+                clearTimeout(img._retryTimer);
+                img._retryTimer = null;
+            }
             if (retries > 0) console.log(`[Retry] Berhasil memuat gambar setelah ${retries} percobaan.`);
             retries = 0; // Reset counter jika gambar akhirnya berhasil dimuat
         });
@@ -795,6 +776,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDragging = false;
     let galleryImages = [];
     let isTicking = false;
+    let lastTap = 0;
+    let lightboxTransitionTimer = null;
+    let wasPinching = false;
+
+    const clearLightboxTransitionClasses = () => {
+        if (!lightboxImg) return;
+        lightboxImg.classList.remove('changing', 'slide-next-out', 'slide-next-in', 'slide-prev-out', 'slide-prev-in');
+    };
+
+    // Helper untuk menghitung jarak antara dua sentuhan (untuk pinch zoom)
+    const getDistance = (touches) => {
+        if (!touches || touches.length < 2) return 0;
+        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    };
 
     const updateTransform = () => {
         if (lightboxImg) {
@@ -838,8 +833,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateLightboxImage = (index, direction = null) => {
         resetZoom();
+        if (lightboxTransitionTimer) {
+            clearTimeout(lightboxTransitionTimer);
+            lightboxTransitionTimer = null;
+        }
+        if (lightboxImg && typeof lightboxImg._resetRetry === 'function') {
+            lightboxImg._resetRetry();
+        }
+        if (!galleryImages || galleryImages.length === 0 || !lightboxImg) return;
+
+        // Hitung dan perbarui currentIndex segera agar klik cepat beruntun tidak terlewat
+        let normalizedIndex = index;
+        if (normalizedIndex < 0) normalizedIndex = galleryImages.length - 1;
+        if (normalizedIndex >= galleryImages.length) normalizedIndex = 0;
+        currentIndex = normalizedIndex;
+
         const isNext = direction === 'next';
         const isPrev = direction === 'prev';
+
+        // Bersihkan semua kelas transisi sebelumnya agar tidak terjadi stuck opacity: 0 saat arah berubah cepat
+        clearLightboxTransitionClasses();
 
         // Pilih kelas transisi berdasarkan arah (slide atau fade default)
         const outClass = isNext ? 'slide-next-out' : (isPrev ? 'slide-prev-out' : 'changing');
@@ -850,10 +863,11 @@ document.addEventListener('DOMContentLoaded', () => {
             lightboxLoader.classList.add('show');
         }
 
-        setTimeout(() => {
-            if (index < 0) index = galleryImages.length - 1;
-            if (index >= galleryImages.length) index = 0;
-            currentIndex = index;
+        const targetIndex = currentIndex;
+        lightboxTransitionTimer = setTimeout(() => {
+            lightboxTransitionTimer = null;
+            if (!lightbox || !lightbox.classList.contains('show')) return;
+            if (!galleryImages || galleryImages.length === 0 || !galleryImages[targetIndex]) return;
 
             // Siapkan posisi gambar baru (masih transparan)
             if (isNext || isPrev) {
@@ -863,23 +877,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 void lightboxImg.offsetWidth;
             }
 
-            lightboxImg.src = galleryImages[currentIndex].src;
-
             if (lightboxCounter) {
-                lightboxCounter.textContent = `${currentIndex + 1} / ${galleryImages.length}`;
+                lightboxCounter.textContent = `${targetIndex + 1} / ${galleryImages.length}`;
             }
 
-            // Mulai animasi masuk setelah gambar baru berhasil dimuat
-            lightboxImg.onload = () => {
-                if (isNext || isPrev) {
-                    lightboxImg.classList.remove(inClass);
-                } else {
-                    lightboxImg.classList.remove('changing');
-                }
+            const onImageLoaded = () => {
+                lightboxImg.onload = null;
+                lightboxImg.onerror = null;
+                clearLightboxTransitionClasses();
                 if (lightboxLoader) {
                     lightboxLoader.classList.remove('show');
                 }
             };
+
+            const onImageError = () => {
+                lightboxImg.onload = null;
+                lightboxImg.onerror = null;
+                clearLightboxTransitionClasses();
+                if (lightboxLoader) {
+                    lightboxLoader.classList.remove('show');
+                }
+            };
+
+            // Daftarkan listener sebelum mengubah src agar tidak terjadi race condition pada gambar ter-cache
+            const nextSrc = galleryImages[targetIndex].src;
+            const isSameSrc = lightboxImg.getAttribute('src') === nextSrc || lightboxImg.src === nextSrc;
+            lightboxImg.onload = onImageLoaded;
+            lightboxImg.onerror = onImageError;
+            lightboxImg.src = nextSrc;
+
+            // Jika gambar sudah selesai dimuat dari cache browser secara instan (atau gagal pada URL yang sama sebelumnya)
+            if (lightboxImg.complete && lightboxImg.naturalWidth > 0) {
+                onImageLoaded();
+            } else if (isSameSrc && lightboxImg.complete && lightboxImg.naturalWidth === 0) {
+                onImageError();
+            }
         }, 300);
     };
 
@@ -913,50 +945,146 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Toggle Zoom Logic via Button
-    btnZoom.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleZoom();
-    });
-
-    // Logika Tombol Layar Penuh (Fullscreen)
-    if (btnFullscreen) {
-        btnFullscreen.addEventListener('click', (e) => {
+    if (btnZoom) {
+        btnZoom.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (!document.fullscreenElement) {
-                lightbox.requestFullscreen().catch(err => {
-                    console.error(`Gagal mengaktifkan mode layar penuh: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        // Pantau perubahan status fullscreen untuk memperbarui ikon
-        document.addEventListener('fullscreenchange', () => {
-            if (document.fullscreenElement) {
-                btnFullscreen.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
-                btnFullscreen.title = "Keluar Layar Penuh";
-            } else {
-                btnFullscreen.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
-                btnFullscreen.title = "Layar Penuh";
-            }
+            toggleZoom();
         });
     }
 
-    // Double click on image to toggle zoom
-    lightboxImg.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        toggleZoom(e.clientX, e.clientY);
-    });
+    // Logika Tombol Layar Penuh (Fullscreen - Aman untuk iOS Safari / WebKit)
+    if (btnFullscreen && lightbox) {
+        const supportsFullscreen = Boolean(lightbox.requestFullscreen || lightbox.webkitRequestFullscreen);
+        if (!supportsFullscreen) {
+            btnFullscreen.style.display = 'none';
+        } else {
+            btnFullscreen.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                if (!fsEl) {
+                    const reqFs = lightbox.requestFullscreen || lightbox.webkitRequestFullscreen;
+                    if (typeof reqFs === 'function') {
+                        try {
+                            const result = reqFs.call(lightbox);
+                            if (result && typeof result.catch === 'function') {
+                                result.catch(err => console.error(`Gagal mengaktifkan mode layar penuh: ${err.message}`));
+                            }
+                        } catch (err) {
+                            console.error(`Gagal mengaktifkan mode layar penuh: ${err.message}`);
+                        }
+                    }
+                } else {
+                    const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+                    if (typeof exitFs === 'function') {
+                        try {
+                            const result = exitFs.call(document);
+                            if (result && typeof result.catch === 'function') {
+                                result.catch(err => console.error(`Gagal keluar mode layar penuh: ${err.message}`));
+                            }
+                        } catch (err) {
+                            console.error(`Gagal keluar mode layar penuh: ${err.message}`);
+                        }
+                    }
+                }
+            });
 
-    // Panning Logic (Mouse)
-    lightboxImg.addEventListener('mousedown', (e) => {
-        if (!isZoomed) return;
-        isDragging = true;
-        startX = e.clientX - translateX;
-        startY = e.clientY - translateY;
-        lightboxImg.style.cursor = 'grabbing';
-    });
+            // Pantau perubahan status fullscreen untuk memperbarui ikon
+            const updateFullscreenIcon = () => {
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                if (fsEl) {
+                    btnFullscreen.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+                    btnFullscreen.title = "Keluar Layar Penuh";
+                } else {
+                    btnFullscreen.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+                    btnFullscreen.title = "Layar Penuh";
+                }
+            };
+            document.addEventListener('fullscreenchange', updateFullscreenIcon);
+            document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        }
+    }
+
+    if (lightboxImg) {
+        // Double click on image to toggle zoom
+        lightboxImg.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            toggleZoom(e.clientX, e.clientY);
+        });
+
+        // Panning Logic (Mouse)
+        lightboxImg.addEventListener('mousedown', (e) => {
+            if (!isZoomed) return;
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            lightboxImg.style.cursor = 'grabbing';
+        });
+
+        // Panning Logic (Touch for Mobile)
+        lightboxImg.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                wasPinching = true;
+                initialPinchDistance = getDistance(e.touches);
+                initialScale = currentScale;
+                isDragging = false;
+                return;
+            }
+
+            const now = Date.now();
+            const timesince = now - lastTap;
+            if (timesince < 300 && timesince > 0) {
+                // Double tap terdeteksi
+                if (e.cancelable) e.preventDefault();
+                toggleZoom(e.touches[0].clientX, e.touches[0].clientY);
+                lastTap = 0; // Reset agar tidak terhitung triple tap
+                return;
+            }
+            lastTap = now;
+
+            if (!isZoomed || e.touches.length > 1) return;
+            isDragging = true;
+            startX = e.touches[0].clientX - translateX;
+            startY = e.touches[0].clientY - translateY;
+        }, { passive: false });
+
+        lightboxImg.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && initialPinchDistance > 0) {
+                e.preventDefault();
+                const currentDistance = getDistance(e.touches);
+                const scaleFactor = currentDistance / initialPinchDistance;
+
+                // Batas zoom minimal 1x dan maksimal 4x
+                currentScale = Math.min(Math.max(initialScale * scaleFactor, 1), 4);
+                isZoomed = currentScale > 1.05;
+
+                if (isZoomed) {
+                    lightboxImg.classList.add('zoomed');
+                    if (btnZoom) btnZoom.innerHTML = '<i class="bi bi-zoom-out"></i>';
+                } else {
+                    resetZoom();
+                }
+
+                if (!isTicking) {
+                    requestAnimationFrame(updateTransform);
+                    isTicking = true;
+                }
+                return;
+            }
+
+            if (!isDragging || !isZoomed || e.touches.length > 1) return;
+            translateX = e.touches[0].clientX - startX;
+            translateY = e.touches[0].clientY - startY;
+            if (!isTicking) {
+                requestAnimationFrame(updateTransform);
+                isTicking = true;
+            }
+        }, { passive: false });
+
+        lightboxImg.addEventListener('touchend', () => {
+            isDragging = false;
+            initialPinchDistance = 0;
+        });
+    }
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging || !isZoomed) return;
@@ -971,77 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('mouseup', () => {
         isDragging = false;
-        if (isZoomed) lightboxImg.style.cursor = 'grab';
-    });
-
-    // Helper untuk menghitung jarak antara dua sentuhan (untuk pinch zoom)
-    const getDistance = (touches) => {
-        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-    };
-
-    // Panning Logic (Touch for Mobile)
-    let lastTap = 0;
-    lightboxImg.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            initialPinchDistance = getDistance(e.touches);
-            initialScale = currentScale;
-            isDragging = false;
-            return;
-        }
-
-        const now = Date.now();
-        const timesince = now - lastTap;
-        if (timesince < 300 && timesince > 0) {
-            // Double tap terdeteksi
-            if (e.cancelable) e.preventDefault();
-            toggleZoom(e.touches[0].clientX, e.touches[0].clientY);
-            lastTap = 0; // Reset agar tidak terhitung triple tap
-            return;
-        }
-        lastTap = now;
-
-        if (!isZoomed || e.touches.length > 1) return;
-        isDragging = true;
-        startX = e.touches[0].clientX - translateX;
-        startY = e.touches[0].clientY - translateY;
-    }, { passive: false });
-
-    lightboxImg.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialPinchDistance > 0) {
-            e.preventDefault();
-            const currentDistance = getDistance(e.touches);
-            const scaleFactor = currentDistance / initialPinchDistance;
-
-            // Batas zoom minimal 1x dan maksimal 4x
-            currentScale = Math.min(Math.max(initialScale * scaleFactor, 1), 4);
-            isZoomed = currentScale > 1.05;
-
-            if (isZoomed) {
-                lightboxImg.classList.add('zoomed');
-                if (btnZoom) btnZoom.innerHTML = '<i class="bi bi-zoom-out"></i>';
-            } else {
-                resetZoom();
-            }
-
-            if (!isTicking) {
-                requestAnimationFrame(updateTransform);
-                isTicking = true;
-            }
-            return;
-        }
-
-        if (!isDragging || !isZoomed || e.touches.length > 1) return;
-        translateX = e.touches[0].clientX - startX;
-        translateY = e.touches[0].clientY - startY;
-        if (!isTicking) {
-            requestAnimationFrame(updateTransform);
-            isTicking = true;
-        }
-    }, { passive: false });
-
-    lightboxImg.addEventListener('touchend', () => {
-        isDragging = false;
-        initialPinchDistance = 0;
+        if (isZoomed && lightboxImg) lightboxImg.style.cursor = 'grab';
     });
 
     // Fungsi untuk mengunduh gambar dengan nama kustom
@@ -1067,31 +1125,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    btnDownload.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const src = galleryImages[currentIndex].src;
-        const extension = src.split('.').pop().split(/\#|\?/)[0];
-        downloadImage(src, `Momen_Bahagia_Ke${currentIndex + 1}.${extension}`);
-    });
+    if (btnDownload) {
+        btnDownload.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!galleryImages || !galleryImages[currentIndex]) return;
+            const src = galleryImages[currentIndex].src;
+            const rawExt = (src.split('.').pop() || '').split(/[#?]/)[0].toLowerCase();
+            const extension = (rawExt.length >= 2 && rawExt.length <= 5 && /^[a-z0-9]+$/.test(rawExt)) ? rawExt : 'webp';
+            downloadImage(src, `Momen_Bahagia_Ke${currentIndex + 1}.${extension}`);
+        });
+    }
 
+    let lightboxResizeTimer = null;
     window.addEventListener('resize', () => {
-        refreshVisibleImages();
-        if (lightbox && lightbox.classList.contains('show')) {
-            updateLightboxImage(currentIndex);
-        }
+        clearTimeout(lightboxResizeTimer);
+        lightboxResizeTimer = setTimeout(() => {
+            const prevCount = galleryImages.length;
+            const activeImg = galleryImages[currentIndex] || null;
+            refreshVisibleImages();
+            if (lightbox && lightbox.classList.contains('show') && galleryImages.length > 0) {
+                const newIdx = activeImg ? galleryImages.indexOf(activeImg) : -1;
+                if (newIdx >= 0) {
+                    currentIndex = newIdx;
+                    if (lightboxCounter) {
+                        lightboxCounter.textContent = `${currentIndex + 1} / ${galleryImages.length}`;
+                    }
+                } else if (prevCount !== galleryImages.length || currentIndex >= galleryImages.length) {
+                    updateLightboxImage(Math.min(currentIndex, galleryImages.length - 1));
+                }
+            }
+        }, 200);
     });
 
     // Pasang listener ke SEMUA gambar, tetapi tentukan index berdasarkan gambar yang sedang tampil
     allGalleryImages.forEach((img) => {
         img.addEventListener('click', () => {
+            if (!lightbox) return;
             // Pastikan data gambar paling update sebelum membuka lightbox
             refreshVisibleImages();
 
-            currentIndex = galleryImages.indexOf(img);
-            updateLightboxImage(currentIndex);
+            const foundIdx = galleryImages.indexOf(img);
+            currentIndex = foundIdx >= 0 ? foundIdx : 0;
             lightbox.classList.add('show');
+            updateLightboxImage(currentIndex);
             // Kunci scroll saat melihat foto
             document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
         });
     });
 
@@ -1111,30 +1190,40 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchendX = 0;
     let touchendY = 0;
 
-    lightbox.addEventListener('touchstart', (e) => {
-        touchstartX = e.changedTouches[0].clientX;
-        touchstartY = e.changedTouches[0].clientY;
-    }, { passive: true });
-
-    lightbox.addEventListener('touchend', (e) => {
-        if (isZoomed) return; // Mencegah pindah foto jika sedang dalam mode zoom (panning)
-
-        touchendX = e.changedTouches[0].clientX;
-        touchendY = e.changedTouches[0].clientY;
-
-        const diffX = touchstartX - touchendX;
-        const diffY = touchstartY - touchendY;
-        const swipeThreshold = 50; // Jarak minimum geser dalam pixel
-
-        // Memastikan geseran horizontal lebih dominan daripada vertikal agar tidak sensitif berlebihan
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
-            if (diffX > 0) {
-                updateLightboxImage(currentIndex + 1, 'next'); // Geser ke kiri -> Foto Berikutnya
-            } else {
-                updateLightboxImage(currentIndex - 1, 'prev'); // Geser ke kanan -> Foto Sebelumnya
+    if (lightbox) {
+        lightbox.addEventListener('touchstart', (e) => {
+            if (e.touches.length >= 2) {
+                wasPinching = true;
+                return;
             }
-        }
-    }, { passive: true });
+            touchstartX = e.changedTouches[0].clientX;
+            touchstartY = e.changedTouches[0].clientY;
+        }, { passive: true });
+
+        lightbox.addEventListener('touchend', (e) => {
+            if (wasPinching) {
+                if (e.touches.length === 0) wasPinching = false;
+                return; // Cegah swipe tak sengaja setelah selesai pinch-zoom
+            }
+            if (isZoomed) return; // Mencegah pindah foto jika sedang dalam mode zoom (panning)
+
+            touchendX = e.changedTouches[0].clientX;
+            touchendY = e.changedTouches[0].clientY;
+
+            const diffX = touchstartX - touchendX;
+            const diffY = touchstartY - touchendY;
+            const swipeThreshold = 50; // Jarak minimum geser dalam pixel
+
+            // Memastikan geseran horizontal lebih dominan daripada vertikal agar tidak sensitif berlebihan
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
+                if (diffX > 0) {
+                    updateLightboxImage(currentIndex + 1, 'next'); // Geser ke kiri -> Foto Berikutnya
+                } else {
+                    updateLightboxImage(currentIndex - 1, 'prev'); // Geser ke kanan -> Foto Sebelumnya
+                }
+            }
+        }, { passive: true });
+    }
 
     // --- Logika Navigasi Keyboard & Modal Escape ---
     document.addEventListener('keydown', (e) => {
@@ -1149,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.key === 'Escape') {
             const confirmModal = document.getElementById('custom-confirm-modal');
-            if (confirmModal && confirmModal.classList.contains('show')) {
+            if (confirmModal && confirmModal.classList.contains('show') && !isDeleting) {
                 confirmModal.classList.remove('show');
                 docIdToDelete = null;
                 parentIdForReply = null;
@@ -1160,20 +1249,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pwdInput = document.getElementById('mempelai-password-input');
                 if (pwdInput) pwdInput.value = '';
             }
+            updateModalScrollLock();
         }
     });
 
     const closeLightbox = () => {
+        if (lightboxTransitionTimer) {
+            clearTimeout(lightboxTransitionTimer);
+            lightboxTransitionTimer = null;
+        }
+        wasPinching = false;
         resetZoom();
+        clearLightboxTransitionClasses();
+        if (lightboxLoader) {
+            lightboxLoader.classList.remove('show');
+        }
+        if (lightboxImg && typeof lightboxImg._resetRetry === 'function') {
+            lightboxImg._resetRetry();
+        }
         // Keluar dari mode layar penuh jika sedang aktif saat lightbox ditutup
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => console.log("Gagal keluar fullscreen:", err));
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        if (fsEl) {
+            const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+            if (typeof exitFs === 'function') {
+                try {
+                    const result = exitFs.call(document);
+                    if (result && typeof result.catch === 'function') {
+                        result.catch(err => console.log("Gagal keluar fullscreen:", err));
+                    }
+                } catch (err) {
+                    console.log("Gagal keluar fullscreen:", err);
+                }
+            }
         }
 
-        lightbox.classList.remove('show');
+        if (lightbox) lightbox.classList.remove('show');
         // Kembalikan scroll jika cover sudah terbuka
         if (document.body.classList.contains('allow-scroll')) {
             document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
         }
     };
 
@@ -1239,14 +1353,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const emojiPickerEl = emojiDropdown?.querySelector('emoji-picker');
 
     let isEmojiPickerLoaded = false;
+    let emojiLoadPromise = null;
     const loadEmojiPickerElement = async () => {
-        if (isEmojiPickerLoaded) return;
-        try {
-            await import("https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js");
-            isEmojiPickerLoaded = true;
-        } catch (e) {
-            console.warn("Gagal memuat emoji picker modul:", e);
-        }
+        if (isEmojiPickerLoaded) return true;
+        if (emojiLoadPromise) return emojiLoadPromise;
+
+        emojiLoadPromise = (async () => {
+            try {
+                await import("https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js");
+                isEmojiPickerLoaded = true;
+                return true;
+            } catch (e) {
+                console.warn("Gagal memuat emoji picker modul:", e);
+                return false;
+            } finally {
+                emojiLoadPromise = null;
+            }
+        })();
+
+        return emojiLoadPromise;
     };
 
     const toggleEmojiPicker = async (show) => {
@@ -1255,7 +1380,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const willShow = typeof show === 'boolean' ? show : !isVisible;
 
         if (willShow) {
-            await loadEmojiPickerElement();
+            const loaded = await loadEmojiPickerElement();
+            if (!loaded) {
+                showToast("Pemilih emoji membutuhkan koneksi internet.", "error");
+                return;
+            }
             emojiDropdown.style.display = 'block';
             btnEmojiTrigger?.classList.add('active');
         } else {
@@ -1342,12 +1471,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Helper WhatsApp & Markdown Rich Text Formatter (100% XSS-Safe) ---
     function formatRichText(rawStr) {
         if (!rawStr) return '';
-        // 1. Sanitasi ketat terhadap XSS
-        let safe = escapeHTML(rawStr);
+        // 1. Sanitasi ketat terhadap XSS & bersihkan null byte agar placeholder aman
+        let safe = escapeHTML(rawStr).replace(/\u0000/g, '');
 
-        // 2. Code blocks (```code```) dan inline code (`code`)
-        safe = safe.replace(/```([\s\S]+?)```/g, '<code class="gb-code-block">$1</code>');
-        safe = safe.replace(/`([^`\n]+?)`/g, '<code class="gb-inline-code">$1</code>');
+        // 2. Isolasi Code blocks (```code```) dan inline code (`code`) ke placeholder sementara
+        // agar simbol _ * ~ > - di dalam blok kode tidak ikut terkonversi menjadi format teks
+        const codePlaceholders = [];
+        safe = safe.replace(/```([\s\S]+?)```/g, (_, code) => {
+            const idx = codePlaceholders.length;
+            codePlaceholders.push(`<code class="gb-code-block">${code}</code>`);
+            return `\u0000CODEBLOCK${idx}\u0000`;
+        });
+        safe = safe.replace(/`([^`\n]+?)`/g, (_, code) => {
+            const idx = codePlaceholders.length;
+            codePlaceholders.push(`<code class="gb-inline-code">${code}</code>`);
+            return `\u0000CODEINLINE${idx}\u0000`;
+        });
 
         // 3. Spoiler / Pesan Rahasia (||spoiler||) - Sentuh/klik untuk membuka
         safe = safe.replace(/\|\|([^|\n]+?)\|\|/g, '<span class="gb-spoiler" title="Klik untuk membuka pesan rahasia">$1</span>');
@@ -1411,7 +1550,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return line;
         });
 
-        return formattedLines.join('\n');
+        // 9. Kembalikan seluruh blok kode & inline code secara utuh
+        let result = formattedLines.join('\n');
+        if (codePlaceholders.length > 0) {
+            result = result.replace(/\u0000CODE(?:BLOCK|INLINE)(\d+)\u0000/g, (_, idx) => codePlaceholders[Number(idx)] || '');
+        }
+        return result;
     }
 
     // --- Helper Aman Parsing LocalStorage (Anti Crash jika Storage Rusak/Dimanipulasi) ---
@@ -1466,7 +1610,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const submitBtn = hybridForm.querySelector('button[type="submit"]');
-            if (isFormSubmitting) return;
 
             // 1. Validasi Input Ketat (Selaras dengan Firestore Rules & Normalisasi Smart Punctuation)
             const rawName = (document.getElementById('att-name')?.value || '')
@@ -1489,7 +1632,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Pencegahan Spam & Rate Limiting (Jeda 15 detik untuk Tamu)
             if (!isMempelai) {
-                const lastSub = localStorage.getItem('last_gb_submission');
+                let lastSub = null;
+                try {
+                    lastSub = localStorage.getItem('last_gb_submission');
+                } catch (e) {}
                 const now = Date.now();
                 const COOLDOWN_MS = 15000;
                 if (lastSub && (now - Number(lastSub)) < COOLDOWN_MS) {
@@ -1506,6 +1652,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await ensureFirebase();
+                if (!db || !doc || !collection || !setDoc) {
+                    throw new Error("Layanan buku tamu belum terkonfigurasi.");
+                }
 
                 if (replyingToId) {
                     // PROSES BALASAN (Sub-collection)
@@ -1519,11 +1668,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         .replace(/[“”]/g, "'")
                         .replace(/[–—]/g, '-')
                         .trim() || 'Tamu';
+                    const sanitizedTargetName = isSubReply
+                        ? (targetName.substring(0, 50).replace(/[^a-zA-Z0-9 .,'’&\/()+\-]/g, '').trim() || 'Tamu')
+                        : '';
 
                     const replyData = {
                         name: rawName,
                         message: rawMessage,
-                        replyTo: isSubReply ? targetName : '',
+                        replyTo: sanitizedTargetName,
                         isMempelaiReply: Boolean(isMempelai),
                         timestamp: serverTimestamp(),
                         likes: 0
@@ -1560,7 +1712,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     replyingToId = null;
                     replyingToTargetName = '';
                     replyingToIsSubReply = false;
-                    document.getElementById('reply-mode-indicator').style.display = 'none';
+                    const replyModeEl = document.getElementById('reply-mode-indicator');
+                    if (replyModeEl) replyModeEl.style.display = 'none';
                 } else {
                     // PROSES UCAPAN BARU
                     const newDocRef = doc(collection(db, "messages"));
@@ -1607,6 +1760,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Sinkronisasi ulang total hitungan pasti dari server setelah setDoc selesai
                     updateTotalCount();
 
+                    // Jika pengguna sedang berada di halaman 2+, kembali ke halaman 1 agar ucapan barunya langsung terlihat
+                    if (currentPage > 1 && typeof loadGuestbook === 'function') {
+                        loadGuestbook(1);
+                        if (gbList) gbList.scrollTop = 0;
+                    }
+
                     // Jalankan update metadata di background
                     if (guestCount > 0) {
                         setDoc(doc(db, "metadata", "totals"), {
@@ -1619,7 +1778,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Simpan timestamp pengiriman terakhir (Kecuali jika Mempelai)
                 if (!isMempelai) {
-                    localStorage.setItem('last_gb_submission', Date.now());
+                    try {
+                        localStorage.setItem('last_gb_submission', Date.now());
+                    } catch (e) {}
                 }
 
                 hybridForm.reset();
@@ -1629,7 +1790,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     charCounter.style.color = '#999';
                     charCounter.style.fontWeight = 'normal';
                 }
-                document.getElementById('att-message').placeholder = "Tuliskan ucapan manis Anda...";
+                const msgInputEl = document.getElementById('att-message');
+                if (msgInputEl) msgInputEl.placeholder = "Tuliskan ucapan manis Anda...";
 
                 // Reset status kehadiran ke default "Pilih Konfirmasi" dan pastikan container muncul
                 const formRow = statusSelect?.closest('.form-row');
@@ -1642,6 +1804,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("Error submitting form: ", error);
+                // Revert optimistic counter update jika penyimpanan pesan gagal
+                updateTotalCount();
                 if (error.code === 'permission-denied' || error.message?.includes('permission')) {
                     showToast('Format data tidak memenuhi kriteria validasi. Silakan periksa kembali.', 'error');
                 } else {
@@ -1698,18 +1862,102 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================================== */
 
     // --- Logika Akses Khusus (Admin & Mempelai) ---
-    let isMempelai = sessionStorage.getItem('isMempelai') === 'true' && (!!sessionStorage.getItem('mToken') || !!sessionStorage.getItem('mKey'));
+    let isMempelai = false;
+    try {
+        isMempelai = sessionStorage.getItem('isMempelai') === 'true' && (!!sessionStorage.getItem('mToken') || !!sessionStorage.getItem('mKey'));
+    } catch (e) {
+        isMempelai = false;
+    }
 
     // Inisialisasi status tampilan mempelai jika sudah login di session sebelumnya
     if (isMempelai) {
         document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
     }
 
-    // Helper Kriptografi SHA-256 untuk keamanan kata sandi
+    // Implementasi Pure JS SHA-256 sebagai fallback saat running di non-Secure Context (LAN HTTP / IP pengujian lokal)
+    function jsSha256(ascii) {
+        function rightRotate(value, amount) {
+            return (value >>> amount) | (value << (32 - amount));
+        }
+        const mathPow = Math.pow;
+        const maxWord = mathPow(2, 32);
+        let result = '';
+        const words = [];
+        const asciiBitLength = ascii.length * 8;
+        const hash = [];
+        const k = [];
+        let primeCounter = 0;
+        const isPrime = {};
+        for (let candidate = 2; primeCounter < 64; candidate++) {
+            if (!isPrime[candidate]) {
+                for (let i = 0; i < 313; i += candidate) {
+                    isPrime[i] = true;
+                }
+                hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                k[primeCounter++] = (mathPow(candidate, 1/3) * maxWord) | 0;
+            }
+        }
+        ascii += '\x80';
+        while (ascii.length % 64 - 56) ascii += '\x00';
+        for (let i = 0; i < ascii.length; i++) {
+            const j = ascii.charCodeAt(i);
+            words[i >> 2] |= j << ((3 - i) % 4) * 8;
+        }
+        words[words.length] = ((asciiBitLength / maxWord) | 0);
+        words[words.length] = (asciiBitLength | 0);
+        for (let j = 0; j < words.length;) {
+            const w = words.slice(j, j += 16);
+            const oldHash = hash.slice(0);
+            for (let i = 0; i < 64; i++) {
+                const w15 = w[i - 15], w2 = w[i - 2];
+                const s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+                const s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+                w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+                const ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+                const maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+                const s0_h = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
+                const s1_h = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
+                const t1 = hash[7] + s1_h + ch + k[i] + w[i];
+                const t2 = s0_h + maj;
+                hash[7] = hash[6];
+                hash[6] = hash[5];
+                hash[5] = hash[4];
+                hash[4] = (hash[3] + t1) | 0;
+                hash[3] = hash[2];
+                hash[2] = hash[1];
+                hash[1] = hash[0];
+                hash[0] = (t1 + t2) | 0;
+            }
+            for (let i = 0; i < 8; i++) {
+                hash[i] = (hash[i] + oldHash[i]) | 0;
+            }
+        }
+        for (let i = 0; i < 8; i++) {
+            for (let j = 3; j + 1; j--) {
+                const b = (hash[i] >> (j * 8)) & 255;
+                result += ((b < 16) ? 0 : '') + b.toString(16);
+            }
+        }
+        return result;
+    }
+
+    // Helper Kriptografi SHA-256 untuk keamanan kata sandi (Akselerasi Native Hardware dengan Fallback Pure JS)
     async function sha256(str) {
-        const buffer = new TextEncoder().encode(str);
-        const digest = await crypto.subtle.digest('SHA-256', buffer);
-        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function') {
+            try {
+                const buffer = new TextEncoder().encode(str);
+                const digest = await crypto.subtle.digest('SHA-256', buffer);
+                return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+            } catch (e) {
+                // Fallback jika terjadi kendala pada subtle digest
+            }
+        }
+        const utf8Bytes = new TextEncoder().encode(str);
+        let utf8Str = '';
+        for (let i = 0; i < utf8Bytes.length; i++) {
+            utf8Str += String.fromCharCode(utf8Bytes[i]);
+        }
+        return jsSha256(utf8Str);
     }
 
     // Token Otorisasi Server Berlapis (HMAC-style Salted Token, diambil dari config.js)
@@ -1723,14 +1971,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper Aman Mengambil Token Mempelai (Tanpa Menyimpan Plaintext di Storage)
     async function getAdminToken() {
-        let token = sessionStorage.getItem('mToken');
-        if (!token) {
-            const legacyKey = sessionStorage.getItem('mKey');
-            if (legacyKey) {
-                token = await generateAdminToken(legacyKey);
-                sessionStorage.setItem('mToken', token);
-                sessionStorage.removeItem('mKey');
+        let token = null;
+        try {
+            token = sessionStorage.getItem('mToken');
+            if (!token) {
+                const legacyKey = sessionStorage.getItem('mKey');
+                if (legacyKey) {
+                    token = await generateAdminToken(legacyKey);
+                    sessionStorage.setItem('mToken', token);
+                    sessionStorage.removeItem('mKey');
+                }
             }
+        } catch (e) {
+            token = null;
         }
         return token || null;
     }
@@ -1797,7 +2050,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMempelai && guestStatsWrapper && guestCounter) {
             guestStatsWrapper.style.display = 'inline';
 
-            await ensureFirebase();
+            try {
+                await ensureFirebase();
+            } catch (err) {
+                console.warn("Guest counter init note:", err);
+                return;
+            }
             if (!db) return;
 
             // Jalankan sinkronisasi agregasi riil pertama kali
@@ -1829,6 +2087,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let replyingToIsSubReply = false; // Menyimpan status apakah membalas sub-reply atau pesan utama
     let docIdToDelete = null; // Pindahkan ke sini agar nilainya tidak ter-reset saat modal konfirmasi muncul
     let parentIdForReply = null; // Menyimpan ID pesan utama jika yang dihapus adalah balasan
+    let isDeleting = false; // Mencegah race condition / double-delete saat tombol konfirmasi diklik cepat
 
     // --- Logika Modal Password Modern (Mode Mempelai) ---
     const authModal = document.getElementById('mempelai-auth-modal');
@@ -1837,9 +2096,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const togglePwdBtn = document.getElementById('btn-toggle-mempelai-pwd');
     const cancelAuthBtn = document.getElementById('btn-cancel-auth');
 
+    function updateModalScrollLock() {
+        const hasActiveModal = document.querySelector('.custom-modal.show');
+        if (hasActiveModal) {
+            document.body.classList.add('modal-open');
+            document.documentElement.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+            document.documentElement.classList.remove('modal-open');
+        }
+    }
+
     const openAuthModal = () => {
         if (!authModal) return;
         authModal.classList.add('show');
+        updateModalScrollLock();
         if (pwdInput) {
             pwdInput.value = '';
             pwdInput.type = 'password';
@@ -1853,6 +2124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeAuthModal = () => {
         if (!authModal) return;
         authModal.classList.remove('show');
+        updateModalScrollLock();
         if (pwdInput) pwdInput.value = '';
     };
 
@@ -1877,12 +2149,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let authFailedAttempts = 0;
+    let isAuthSubmitting = false;
 
     if (authForm) {
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (isAuthSubmitting) return;
+
             const now = Date.now();
-            const storedLockout = Number(localStorage.getItem('auth_lockout_until') || '0');
+            let storedLockout = 0;
+            try {
+                storedLockout = Number(localStorage.getItem('auth_lockout_until') || '0');
+            } catch (e) {}
+
             if (now < storedLockout) {
                 const remaining = Math.ceil((storedLockout - now) / 1000);
                 showToast(`Akses sementara dinonaktifkan. Silakan coba kembali dalam ${remaining} detik.`, "error");
@@ -1892,66 +2171,88 @@ document.addEventListener('DOMContentLoaded', () => {
             const pass = pwdInput ? pwdInput.value.trim() : '';
             if (!pass) return;
 
-            // Constant Artificial delay 350ms untuk mencegah automated rapid script cracking & timing attack
-            await new Promise(res => setTimeout(res, 350));
-            const plainHash = await sha256(pass);
-            const saltedToken = await generateAdminToken(pass);
+            const submitAuthBtn = document.getElementById('btn-submit-auth');
+            isAuthSubmitting = true;
+            if (submitAuthBtn) submitAuthBtn.disabled = true;
 
-            // Verifikasi terhadap hash plain ATAU hash salted token dari config
-            if (MEMPELAI_HASH && (plainHash === MEMPELAI_HASH || saltedToken === MEMPELAI_HASH)) {
-                authFailedAttempts = 0;
-                localStorage.removeItem('auth_lockout_until');
-                localStorage.removeItem('auth_total_fails');
-                isMempelai = true;
-                sessionStorage.setItem('isMempelai', 'true');
-                sessionStorage.setItem('mToken', saltedToken);
-                sessionStorage.removeItem('mKey'); // Hapus password plaintext demi keamanan
-                document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
-                initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
-                showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
-                closeAuthModal();
-            } else {
-                authFailedAttempts++;
-                const totalFails = Number(localStorage.getItem('auth_total_fails') || '0') + 1;
-                localStorage.setItem('auth_total_fails', String(totalFails));
+            try {
+                // Constant Artificial delay 350ms untuk mencegah automated rapid script cracking & timing attack
+                await new Promise(res => setTimeout(res, 350));
+                const plainHash = await sha256(pass);
+                const saltedToken = await generateAdminToken(pass);
 
-                if (authFailedAttempts >= 5 || totalFails >= 5) {
-                    // Progressive exponential lockout: 30s -> 60s -> 300s
-                    let lockoutDuration = 30000;
-                    if (totalFails >= 10) lockoutDuration = 300000; // 5 menit
-                    else if (totalFails >= 7) lockoutDuration = 60000; // 1 menit
-
-                    localStorage.setItem('auth_lockout_until', String(Date.now() + lockoutDuration));
+                // Verifikasi terhadap hash plain ATAU hash salted token dari config
+                if (MEMPELAI_HASH && (plainHash === MEMPELAI_HASH || saltedToken === MEMPELAI_HASH)) {
                     authFailedAttempts = 0;
-                    showToast(`Batas percobaan terlampaui. Akses ditangguhkan selama ${lockoutDuration / 1000} detik.`, "error");
+                    try {
+                        localStorage.removeItem('auth_lockout_until');
+                        localStorage.removeItem('auth_total_fails');
+                        sessionStorage.setItem('isMempelai', 'true');
+                        sessionStorage.setItem('mToken', saltedToken);
+                        sessionStorage.removeItem('mKey'); // Hapus password plaintext demi keamanan
+                    } catch (e) {}
+                    isMempelai = true;
+                    document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
+                    initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
+                    showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
+                    closeAuthModal();
                 } else {
-                    const attemptsLeft = Math.max(1, 5 - authFailedAttempts);
-                    showToast(`Kata sandi tidak sesuai. Sisa kesempatan: ${attemptsLeft}`, "error");
-                }
+                    authFailedAttempts++;
+                    let totalFails = 1;
+                    try {
+                        totalFails = Number(localStorage.getItem('auth_total_fails') || '0') + 1;
+                        localStorage.setItem('auth_total_fails', String(totalFails));
+                    } catch (e) {}
 
-                const modalBox = authModal.querySelector('.auth-modal-content');
-                if (modalBox) {
-                    modalBox.classList.remove('shake');
-                    void modalBox.offsetWidth; // Force reflow agar animasi shake bisa dipicu ulang
-                    modalBox.classList.add('shake');
+                    if (authFailedAttempts >= 5 || totalFails >= 5) {
+                        // Progressive exponential lockout: 30s -> 60s -> 300s
+                        let lockoutDuration = 30000;
+                        if (totalFails >= 10) lockoutDuration = 300000; // 5 menit
+                        else if (totalFails >= 7) lockoutDuration = 60000; // 1 menit
+
+                        try {
+                            localStorage.setItem('auth_lockout_until', String(Date.now() + lockoutDuration));
+                        } catch (e) {}
+                        authFailedAttempts = 0;
+                        showToast(`Batas percobaan terlampaui. Akses ditangguhkan selama ${lockoutDuration / 1000} detik.`, "error");
+                    } else {
+                        const attemptsLeft = Math.max(1, 5 - authFailedAttempts);
+                        showToast(`Kata sandi tidak sesuai. Sisa kesempatan: ${attemptsLeft}`, "error");
+                    }
+
+                    const modalBox = authModal.querySelector('.auth-modal-content');
+                    if (modalBox) {
+                        modalBox.classList.remove('shake');
+                        void modalBox.offsetWidth; // Force reflow agar animasi shake bisa dipicu ulang
+                        modalBox.classList.add('shake');
+                    }
+                    if (pwdInput) {
+                        pwdInput.select();
+                        pwdInput.focus();
+                    }
                 }
-                if (pwdInput) {
-                    pwdInput.select();
-                    pwdInput.focus();
-                }
+            } finally {
+                isAuthSubmitting = false;
+                if (submitAuthBtn) submitAuthBtn.disabled = false;
             }
         });
     }
 
-    // Pemicu login: klik judul section 5x
+    // Pemicu login: klik cepat judul section 5x (otomatis reset jika jeda > 2 detik)
     const sectionTitle = document.querySelector('#attendance .section-title');
     let clickCount = 0;
+    let clickResetTimer = null;
     if (sectionTitle) {
         sectionTitle.addEventListener('click', () => {
             clickCount++;
-            if (clickCount === 5) {
+            clearTimeout(clickResetTimer);
+            if (clickCount >= 5) {
                 openAuthModal();
                 clickCount = 0;
+            } else {
+                clickResetTimer = setTimeout(() => {
+                    clickCount = 0;
+                }, 2000);
             }
         });
     }
@@ -1959,6 +2260,39 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ==========================================================================
        11. BUKU TAMU REAL-TIME FIRESTORE, BALASAN BERTINGKAT & REAKSI SUKA
        ========================================================================== */
+
+    /**
+     * Memformat timestamp komentar ke format tanggal lokal Indonesia beserta zona waktu (WIB, WITA, WIT, atau GMT).
+     * Otomatis mendeteksi zona waktu perangkat pengguna yang sedang membuka halaman.
+     */
+    function formatGuestbookDate(rawTimestamp) {
+        if (!rawTimestamp) return 'Baru saja';
+        try {
+            const dateObj = rawTimestamp.toDate ? rawTimestamp.toDate() : new Date(rawTimestamp);
+            if (isNaN(dateObj.getTime())) return 'Baru saja';
+
+            const offset = -dateObj.getTimezoneOffset(); // Menit selisih dari UTC
+            let tzLabel = 'WITA';
+            if (offset === 420) {
+                tzLabel = 'WIB';
+            } else if (offset === 480) {
+                tzLabel = 'WITA';
+            } else if (offset === 540) {
+                tzLabel = 'WIT';
+            } else {
+                const sign = offset >= 0 ? '+' : '-';
+                const hours = Math.floor(Math.abs(offset) / 60);
+                const mins = Math.abs(offset) % 60;
+                tzLabel = `GMT${sign}${hours}${mins ? `:${mins}` : ''}`;
+            }
+
+            const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+            return `${dateStr} pukul ${timeStr} ${tzLabel}`;
+        } catch (e) {
+            return 'Baru saja';
+        }
+    }
 
     // Inisialisasi tampilan jika sudah login di session sebelumnya
     function createReplyItemElement(rDoc, parentId, parentName) {
@@ -1972,19 +2306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rIsLong = rMessage.length > 180;
         const rPreviewText = rIsLong ? getTruncatedText(rMessage, 180) : rMessage;
 
-        let rFullDate = 'Baru saja';
-        if (rData.timestamp) {
-            try {
-                const rDateObj = rData.timestamp.toDate ? rData.timestamp.toDate() : new Date(rData.timestamp);
-                if (!isNaN(rDateObj.getTime())) {
-                    const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                    const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-                    rFullDate = `${rDateStr} pukul ${rTimeStr} Wita`;
-                }
-            } catch (e) {
-                rFullDate = 'Baru saja';
-            }
-        }
+        const rFullDate = formatGuestbookDate(rData.timestamp);
 
         const safeName = escapeHTML(rData.name || 'Tamu');
         const safePreview = formatRichText(rPreviewText);
@@ -2016,13 +2338,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <p class="gb-message">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions" style="margin-top: -5px;">
-                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}" data-parent-name="${parentName}" data-is-subreply="true">Balas</button>
+                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}" data-parent-name="${escapeHTML(parentName)}" data-is-subreply="true">Balas</button>
                 <button class="like-btn" data-id="${rDocId}" data-parent-id="${parentId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
                     <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
                 </button>
             </div>
         `;
-        if (rIsLong) replyItem.querySelector('.msg-text').dataset.full = rMessage;
+        const rMsgTextEl = replyItem.querySelector('.msg-text');
+        if (rMsgTextEl) {
+            rMsgTextEl.dataset.rawPreview = rPreviewText;
+            if (rIsLong) rMsgTextEl.dataset.full = rMessage;
+        }
         applyTwemoji(replyItem);
         return replyItem;
     }
@@ -2037,19 +2363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rIsLong = rMessage.length > 180;
         const rPreviewText = rIsLong ? getTruncatedText(rMessage, 180) : rMessage;
 
-        let rFullDate = 'Baru saja';
-        if (rData.timestamp) {
-            try {
-                const rDateObj = rData.timestamp.toDate ? rData.timestamp.toDate() : new Date(rData.timestamp);
-                if (!isNaN(rDateObj.getTime())) {
-                    const rDateStr = rDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                    const rTimeStr = rDateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-                    rFullDate = `${rDateStr} pukul ${rTimeStr} Wita`;
-                }
-            } catch (e) {
-                rFullDate = 'Baru saja';
-            }
-        }
+        const rFullDate = formatGuestbookDate(rData.timestamp);
 
         const rHeader = existingReply.querySelector(':scope > .gb-header-row > .gb-info > .gb-top-row') || existingReply.querySelector('.gb-header-row > .gb-info > .gb-top-row');
         const rNameEl = rHeader ? rHeader.querySelector('.gb-name') : existingReply.querySelector('.gb-name');
@@ -2083,7 +2397,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rMsgTextEl) {
             const rReadMoreBtn = rMsgContainer.querySelector('.read-more-btn');
             const rIsExpanded = rMsgTextEl.dataset.expanded === 'true' || (rReadMoreBtn && rReadMoreBtn.dataset.expanded === 'true');
-            if (!rIsExpanded) {
+            if (!rIsExpanded && rMsgTextEl.dataset.rawPreview !== rPreviewText) {
+                rMsgTextEl.dataset.rawPreview = rPreviewText;
                 rMsgTextEl.innerHTML = formatRichText(rPreviewText);
                 applyTwemoji(rMsgTextEl);
             }
@@ -2142,15 +2457,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Tampilkan indikator balas di form
             const indicator = document.getElementById('reply-mode-indicator');
             const nameSpan = document.getElementById('replying-to-name');
-            indicator.style.display = 'flex';
-            nameSpan.innerText = `@${replyingToTargetName}`;
+            if (indicator) indicator.style.display = 'flex';
+            if (nameSpan) nameSpan.innerText = `@${replyingToTargetName}`;
 
             // Scroll ke form
-            document.querySelector('.attendance-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.querySelector('.attendance-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Fokus ke textarea ucapan
-            document.getElementById('att-message').placeholder = `Tulis balasan untuk @${replyingToTargetName}...`;
-            document.getElementById('att-message').focus();
+            const msgInputReply = document.getElementById('att-message');
+            if (msgInputReply) {
+                msgInputReply.placeholder = `Tulis balasan untuk @${replyingToTargetName}...`;
+                msgInputReply.focus();
+            }
 
             // Sembunyikan input kehadiran & jumlah tamu saat mode balas
             const formRow = statusSelect?.closest('.form-row');
@@ -2164,8 +2482,10 @@ document.addEventListener('DOMContentLoaded', () => {
             replyingToTargetName = '';
             replyingToIsSubReply = false;
             toggleEmojiPicker(false);
-            document.getElementById('reply-mode-indicator').style.display = 'none';
-            document.getElementById('att-message').placeholder = "Tuliskan ucapan manis Anda...";
+            const cancelIndicator = document.getElementById('reply-mode-indicator');
+            if (cancelIndicator) cancelIndicator.style.display = 'none';
+            const cancelMsgInput = document.getElementById('att-message');
+            if (cancelMsgInput) cancelMsgInput.placeholder = "Tuliskan ucapan manis Anda...";
 
             // Kembalikan tampilan input kehadiran
             const formRow = statusSelect?.closest('.form-row');
@@ -2229,13 +2549,19 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             likeBtn.disabled = true;
-
-            // Tentukan referensi dokumen (ucapan utama vs balasan)
-            const docRef = parentId
-                ? doc(db, "messages", parentId, "replies", docId)
-                : doc(db, "messages", docId);
+            const prevLikedItems = [...likedItems];
 
             try {
+                if (!db) await ensureFirebase();
+                if (!db || !doc || !updateDoc || !increment) {
+                    throw new Error("Firebase belum siap.");
+                }
+
+                // Tentukan referensi dokumen (ucapan utama vs balasan)
+                const docRef = parentId
+                    ? doc(db, "messages", parentId, "replies", docId)
+                    : doc(db, "messages", docId);
+
                 if (isAlreadyLiked) {
                     // PROSES UNLIKE
                     // Tambahkan animasi shiver (getar ke kiri-kanan)
@@ -2254,7 +2580,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     likeBtn.setAttribute('aria-label', parentId ? 'Sukai balasan ini' : 'Sukai ucapan ini');
 
                     likedItems = likedItems.filter(id => id !== docId);
-                    localStorage.setItem(storageKey, JSON.stringify(likedItems));
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(likedItems));
+                    } catch (storageErr) { }
 
                     await updateDoc(docRef, { likes: increment(-1) });
                 } else {
@@ -2271,24 +2599,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     likeBtn.setAttribute('aria-label', parentId ? 'Batal menyukai balasan ini' : 'Batal menyukai ucapan ini');
 
                     likedItems.push(docId);
-                    localStorage.setItem(storageKey, JSON.stringify(likedItems));
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(likedItems));
+                    } catch (storageErr) { }
 
                     await updateDoc(docRef, { likes: increment(1) });
                 }
             } catch (error) {
                 console.error("Error liking message:", error);
                 showToast("Tidak dapat memperbarui tanda suka. Silakan coba lagi.", "error");
-                // Revert UI jika terjadi kesalahan
+                // Revert UI, dataset, aria-label, dan localStorage jika update Firestore gagal
                 if (isAlreadyLiked) {
                     likeCountSpan.classList.add('liked'); // Kembalikan warna merah jika sebelumnya sudah liked
                     likeIcon.classList.remove('bi-heart');
                     likeIcon.classList.add('bi-heart-fill');
+                    likeBtn.setAttribute('aria-label', parentId ? 'Batal menyukai balasan ini' : 'Batal menyukai ucapan ini');
                 } else {
                     likeIcon.classList.remove('bi-heart-fill');
                     likeIcon.classList.add('bi-heart');
                     likeCountSpan.classList.remove('liked'); // Hapus warna merah jika sebelumnya belum liked
+                    likeBtn.setAttribute('aria-label', parentId ? 'Sukai balasan ini' : 'Sukai ucapan ini');
                 }
                 likeCountSpan.textContent = currentLikes > 0 ? currentLikes : '';
+                likeBtn.dataset.likes = currentLikes;
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(prevLikedItems));
+                } catch (storageErr) { }
             } finally {
                 setTimeout(() => {
                     likeBtn.disabled = false;
@@ -2300,6 +2636,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Klik Tombol Hapus (Hanya Mempelai)
         const deleteBtn = e.target.closest('.delete-btn');
         if (deleteBtn) {
+            if (!confirmModal) return;
             docIdToDelete = deleteBtn.dataset.id;
             parentIdForReply = deleteBtn.dataset.parentId || null;
 
@@ -2323,22 +2660,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             confirmModal.classList.add('show');
+            updateModalScrollLock();
         }
 
         if (e.target.id === 'btn-delete-confirm' && docIdToDelete) {
+            if (isDeleting) return;
+            isDeleting = true;
+
+            const confirmDeleteBtn = e.target;
+            confirmDeleteBtn.disabled = true;
+
+            const targetDocId = docIdToDelete;
+            const targetParentId = parentIdForReply;
+
             try {
+                if (!db) await ensureFirebase();
+                if (!db) throw new Error("Firebase belum siap.");
+
                 const adminSecretHash = await getAdminToken();
                 if (!adminSecretHash) {
                     showToast("Sesi autentikasi telah kedaluwarsa. Silakan verifikasi ulang kata sandi Anda.", "error");
+                    confirmModal?.classList.remove('show');
+                    updateModalScrollLock();
                     openAuthModal();
-                    confirmModal.classList.remove('show');
                     return;
                 }
 
-                if (parentIdForReply) {
-                    const replyRef = doc(db, "messages", parentIdForReply, "replies", docIdToDelete);
+                if (targetParentId) {
+                    const replyRef = doc(db, "messages", targetParentId, "replies", targetDocId);
                     // 1. Otorisasi hapus balasan via private zero-leak sink
-                    await setDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`), {
+                    await setDoc(doc(db, "admin_actions", `${targetDocId}_delete_reply`), {
                         secret: adminSecretHash,
                         timestamp: serverTimestamp()
                     });
@@ -2347,11 +2698,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         await deleteDoc(replyRef);
                     } finally {
                         // 3. Bersihkan tiket otorisasi balasan secara instan
-                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete_reply`)).catch(() => { });
+                        deleteDoc(doc(db, "admin_actions", `${targetDocId}_delete_reply`)).catch(() => { });
                     }
                     // 4. Kurangi counter balasan di dokumen utama
                     try {
-                        await updateDoc(doc(db, "messages", parentIdForReply), {
+                        await updateDoc(doc(db, "messages", targetParentId), {
                             replyCount: increment(-1)
                         });
                     } catch (cntErr) {
@@ -2362,29 +2713,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentCount = parseInt(document.getElementById('message-counter')?.innerText || '0', 10) || 0;
                     updateTotalCount(Math.max(0, currentCount - 1));
 
-                    // Ambil data pesan dulu untuk tahu berapa tamu yang harus dikurangi
-                    const msgRef = doc(db, "messages", docIdToDelete);
+                    // Ambil data pesan dulu untuk tahu berapa tamu yang harus dikurangi setelah hapus berhasil
+                    const msgRef = doc(db, "messages", targetDocId);
                     const msgSnap = await getDoc(msgRef);
+                    let guestCountToRemove = 0;
 
                     if (msgSnap.exists()) {
                         const msgData = msgSnap.data();
                         if (msgData.status === 'Hadir' && msgData.count > 0) {
-                            // Optimistic update counter total tamu
+                            guestCountToRemove = msgData.count;
+                            // Optimistic update counter total tamu di UI
                             const currentGuests = parseInt(document.getElementById('guest-counter')?.innerText || '0', 10) || 0;
-                            syncGuestCount(Math.max(0, currentGuests - msgData.count));
-
-                            try {
-                                await setDoc(doc(db, "metadata", "totals"), {
-                                    totalGuests: increment(-msgData.count)
-                                }, { merge: true });
-                            } catch (metaErr) {
-                                console.warn("Metadata total update note:", metaErr);
-                            }
+                            syncGuestCount(Math.max(0, currentGuests - guestCountToRemove));
                         }
 
                         // Hapus semua sub-koleksi balasan terlebih dahulu agar tidak menjadi phantom document
                         try {
-                            const repliesSnap = await getDocs(collection(db, "messages", docIdToDelete, "replies"));
+                            const repliesSnap = await getDocs(collection(db, "messages", targetDocId, "replies"));
                             for (const rDoc of repliesSnap.docs) {
                                 try {
                                     await setDoc(doc(db, "admin_actions", `${rDoc.id}_delete_reply`), {
@@ -2402,25 +2747,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Bersihkan listener balasan aktif jika ada
-                    if (replyUnsubscribers[docIdToDelete]) {
-                        replyUnsubscribers[docIdToDelete]();
-                        delete replyUnsubscribers[docIdToDelete];
+                    if (replyUnsubscribers[targetDocId]) {
+                        replyUnsubscribers[targetDocId]();
+                        delete replyUnsubscribers[targetDocId];
                     }
 
                     // 1. Otorisasi hapus pesan utama via private zero-leak sink
-                    await setDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`), {
+                    await setDoc(doc(db, "admin_actions", `${targetDocId}_delete`), {
                         secret: adminSecretHash,
                         timestamp: serverTimestamp()
                     });
                     try {
-                        // 2. Hapus pesan utama secara permanen
+                        // 2. Hapus pesan utama secara permanen TERLEBIH DAHULU sebelum kurangi metadata/totals
                         await deleteDoc(msgRef);
                     } finally {
                         // 3. Bersihkan tiket otorisasi pesan utama secara instan
-                        deleteDoc(doc(db, "admin_actions", `${docIdToDelete}_delete`)).catch(() => { });
+                        deleteDoc(doc(db, "admin_actions", `${targetDocId}_delete`)).catch(() => { });
                     }
 
-                    // 4. Sinkronisasi ulang total hitungan pasti dari server setelah deleteDoc selesai
+                    // 4. Kurangi totalGuests di metadata/totals HANYA setelah deleteDoc berhasil (mencegah drift data)
+                    if (guestCountToRemove > 0) {
+                        try {
+                            await setDoc(doc(db, "metadata", "totals"), {
+                                totalGuests: increment(-guestCountToRemove)
+                            }, { merge: true });
+                        } catch (metaErr) {
+                            console.warn("Metadata total update note:", metaErr);
+                        }
+                    }
+
+                    // 5. Sinkronisasi ulang total hitungan pasti dari server setelah deleteDoc selesai
                     await updateTotalCount();
                     if (isMempelai) {
                         await syncGuestCount();
@@ -2429,19 +2785,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Ucapan berhasil dihapus dari buku tamu.");
             } catch (error) {
                 console.error("Gagal menghapus pesan:", error);
+                // Rollback counter optimistik jika terjadi kegagalan penghapusan
+                updateTotalCount();
+                if (isMempelai) {
+                    syncGuestCount();
+                }
                 if (error.code === 'permission-denied' || error.message?.includes('permission')) {
                     showToast("Akses ditolak: Anda tidak memiliki izin untuk menghapus ucapan ini.", "error");
                 } else {
                     showToast("Gagal menghapus ucapan. Silakan periksa koneksi Anda dan coba lagi.", "error");
                 }
+            } finally {
+                isDeleting = false;
+                confirmDeleteBtn.disabled = false;
+                confirmModal?.classList.remove('show');
+                updateModalScrollLock();
+                docIdToDelete = null;
+                parentIdForReply = null;
             }
-            confirmModal.classList.remove('show');
-            docIdToDelete = null;
-            parentIdForReply = null;
         }
 
-        if (e.target.id === 'btn-cancel-confirm' || e.target === confirmModal) {
+        if (confirmModal && (e.target.id === 'btn-cancel-confirm' || e.target === confirmModal)) {
+            if (isDeleting) return;
             confirmModal.classList.remove('show');
+            updateModalScrollLock();
             docIdToDelete = null;
             parentIdForReply = null;
         }
@@ -2461,6 +2828,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pinBtn.disabled = true;
             try {
+                if (!db) await ensureFirebase();
+                if (!db) throw new Error("Firebase belum siap.");
+
                 const msgRef = doc(db, "messages", docId);
                 // Otorisasi aksi pin/unpin via private zero-leak sink
                 await setDoc(doc(db, "admin_actions", `${docId}_pin`), {
@@ -2520,6 +2890,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p style="color: #999; margin-top: 5px; font-size: 0.75rem; font-style: italic;">Memuat balasan...</p>
                             </div>
                         `;
+
+                        try {
+                            if (!db) await ensureFirebase();
+                        } catch (fbErr) {
+                            console.warn("Reply Firebase init note:", fbErr);
+                        }
+                        if (!db || !collection || !query || !orderBy || !onSnapshot) {
+                            replyContent.innerHTML = '<p style="color: #dc3545; font-size: 0.8rem; margin: 5px 0;">Gagal memuat balasan.</p>';
+                            replyContent.style.display = 'block';
+                            return;
+                        }
 
                         const repliesRef = collection(db, "messages", docId, "replies");
                         const qReplies = query(repliesRef, orderBy("timestamp", "asc"));
@@ -2602,6 +2983,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return forcedCount;
             }
 
+            if (!db) await ensureFirebase();
+            if (!db || !collection || !getCountFromServer) return;
+
             const coll = collection(db, "messages");
             const snapshot = await getCountFromServer(coll);
             const total = snapshot.data().count;
@@ -2622,10 +3006,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const likedMessages = getSafeLocalStorageArray('liked_messages');
         const isPinned = data.isPinned === true;
 
-        const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
-        const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-        const date = data.timestamp ? `${dateStr} pukul ${timeStr} Wita` : 'Baru saja';
+        const date = formatGuestbookDate(data.timestamp);
 
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
@@ -2684,7 +3065,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             ` : ''}
         `;
-        if (isLong) item.querySelector('.msg-text').dataset.full = message;
+        const msgTextEl = item.querySelector('.msg-text');
+        if (msgTextEl) {
+            msgTextEl.dataset.rawPreview = previewText;
+            if (isLong) msgTextEl.dataset.full = message;
+        }
         applyTwemoji(item);
         return item;
     }
@@ -2692,10 +3077,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateMessageElement(existingItem, docSnap) {
         const data = docSnap.data();
         const isPinned = data.isPinned === true;
-        const dateObj = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : new Date();
-        const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-        const date = data.timestamp ? `${dateStr} pukul ${timeStr} Wita` : 'Baru saja';
+        const date = formatGuestbookDate(data.timestamp);
 
         const statusClass = data.status === 'Hadir' ? 'status-hadir' : 'status-absen';
         const message = data.message || '';
@@ -2758,7 +3140,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (msgTextEl) {
             const readMoreBtn = msgContainer.querySelector('.read-more-btn');
             const isExpanded = msgTextEl.dataset.expanded === 'true' || (readMoreBtn && readMoreBtn.dataset.expanded === 'true');
-            if (!isExpanded) {
+            if (!isExpanded && msgTextEl.dataset.rawPreview !== previewText) {
+                msgTextEl.dataset.rawPreview = previewText;
                 msgTextEl.innerHTML = formatRichText(previewText);
                 applyTwemoji(msgTextEl);
             }
@@ -2795,6 +3178,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 : `<i class="bi bi-arrow-return-right"></i> Lihat ${data.replyCount || 0} balasan lainnya`;
 
             if ((data.replyCount || 0) <= 0) {
+                if (replyUnsubscribers[docSnap.id]) {
+                    replyUnsubscribers[docSnap.id]();
+                    delete replyUnsubscribers[docSnap.id];
+                }
                 existingItem.querySelector('.reply-toggle-container')?.remove();
             }
         } else if (data.replyCount > 0) {
@@ -2843,6 +3230,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (snapshot.empty) {
+                pinnedContainer.querySelectorAll('.guestbook-item').forEach(el => {
+                    const id = el.dataset.id;
+                    if (id && replyUnsubscribers[id]) {
+                        replyUnsubscribers[id]();
+                        delete replyUnsubscribers[id];
+                    }
+                });
                 pinnedContainer.style.display = 'none';
                 pinnedContainer.innerHTML = '';
                 return;
@@ -2861,10 +3255,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPinnedIds.add(docSnap.id);
             });
 
-            // 1. Hapus elemen pin yang sudah tidak disematkan
+            // 1. Hapus elemen pin yang sudah tidak disematkan beserta listener balasannya agar tidak memory leak
             pinnedContainer.querySelectorAll('.guestbook-item').forEach(el => {
                 const id = el.dataset.id;
                 if (!currentPinnedIds.has(id)) {
+                    if (id && replyUnsubscribers[id]) {
+                        replyUnsubscribers[id]();
+                        delete replyUnsubscribers[id];
+                    }
                     el.remove();
                 }
             });
@@ -2888,10 +3286,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pinnedContainer.style.display = currentPage === 1 ? 'flex' : 'none';
 
-            // 3. Pastikan tidak ada duplikat di daftar pesan reguler
+            // 3. Pastikan tidak ada duplikat di daftar pesan reguler sekaligus bersihkan listener balasan yang terputus
             sortedDocs.forEach(docSnap => {
                 const regItem = document.querySelector(`#regular-messages-list #msg-${docSnap.id}`);
-                if (regItem) regItem.remove();
+                if (regItem) {
+                    if (replyUnsubscribers[docSnap.id]) {
+                        replyUnsubscribers[docSnap.id]();
+                        delete replyUnsubscribers[docSnap.id];
+                    }
+                    regItem.remove();
+                }
             });
 
             if (typeof AOS !== 'undefined') {
@@ -3001,38 +3405,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const pageLimit = (currentPage === 1) ? Math.max(1, 10 - pinnedCount) : 10;
 
             if (unpinnedDocs.length === 0) {
-                const totalCounterVal = parseInt(document.getElementById('message-counter')?.innerText || '0', 10);
-
-                // Cegah kedipan: Jangan pernah tampilkan pesan kosong jika kontainer sudah memiliki pesan sebelumnya,
-                // jika total ucapan di sistem > 0, atau jika snapshot berasal dari cache / transisi awal
-                if (hasExistingMessages || totalCounterVal > 0 || snapshot.metadata.fromCache) {
-                    if (currentPage > 1 && !snapshot.metadata.fromCache && totalCounterVal <= 0) {
-                        loadGuestbook(currentPage - 1);
-                    }
+                // Abaikan snapshot kosong sementara dari cache lokal agar tidak memicu kedipan sebelum respons server tiba
+                if (snapshot.metadata.fromCache) {
                     return;
                 }
 
+                // Jika halaman > 1 memang kosong di server (mis. pesan terakhir di halaman tersebut dihapus), kembali ke halaman sebelumnya
                 if (currentPage > 1) {
-                    // Jika halaman berikutnya memang kosong dari server, otomatis kembali ke halaman sebelumnya
                     loadGuestbook(currentPage - 1);
                     return;
                 }
 
-                if (currentPage === 1) {
-                    updateTotalCount(pinnedCount);
+                // Cek apakah masih ada pesan yang disematkan (pinned) di database
+                const actualPinnedCount = Math.max(pinnedCount, snapshot.docs.length);
+
+                if (actualPinnedCount === 0) {
+                    updateTotalCount(0);
                     if (isMempelai) {
                         syncGuestCount(0);
                     }
-                }
-
-                // Tampilkan pesan kosong hanya jika benar-benar tidak ada pesan sama sekali (termasuk pesan sematan)
-                if (pinnedCount === 0) {
                     targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
                 } else {
+                    // Semua pesan saat ini berstatus disematkan -> bersihkan spinner/kontainer reguler tanpa error
                     targetList.innerHTML = '';
+                    if (pinnedContainer) {
+                        pinnedContainer.style.display = 'flex';
+                        pinnedContainer.style.opacity = '1';
+                    }
                 }
 
                 targetList.style.opacity = '1';
+                isInitialLoad = false;
                 if (btnNextGb) btnNextGb.disabled = true;
                 if (btnPrevGb) btnPrevGb.disabled = true;
                 const paginationControls = document.getElementById('pagination-controls');
@@ -3101,69 +3504,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     gbList.style.minHeight = '';
                 }
             } else {
-                // Real-time update untuk halaman saat ini
-                snapshot.docChanges().forEach((change) => {
-                    const docSnap = change.doc;
+                // Rekonsiliasi real-time langsung terhadap visibleDocs agar urutan & kuota pageLimit selalu presisi
+                // (kebal terhadap pergeseran index akibat pesan pinned maupun dokumen lookahead)
+                const emptyMsg = targetList.querySelector('.empty-msg');
+                if (emptyMsg) emptyMsg.remove();
+
+                const visibleIds = new Set(visibleDocs.map(d => d.id));
+
+                // 1. Hapus item DOM yang tidak lagi masuk halaman ini (dihapus, disematkan, atau tergeser ke halaman berikutnya)
+                targetList.querySelectorAll(':scope > .guestbook-item').forEach((el) => {
+                    const id = el.dataset.id;
+                    if (!id || !visibleIds.has(id)) {
+                        if (id && replyUnsubscribers[id]) {
+                            replyUnsubscribers[id]();
+                            delete replyUnsubscribers[id];
+                        }
+                        el.remove();
+                    }
+                });
+
+                // 2. Perbarui in-place atau buat item baru serta sinkronkan urutan persis sesuai visibleDocs
+                visibleDocs.forEach((docSnap, index) => {
                     const docId = docSnap.id;
-                    const isDocPinned = docSnap.data().isPinned === true;
-                    const existingItem = targetList.querySelector(`#msg-${docId}`);
+                    let item = targetList.querySelector(`#msg-${docId}`);
+                    if (item) {
+                        updateMessageElement(item, docSnap);
+                    } else {
+                        item = createMessageElement(docSnap, false, false);
+                    }
 
-                    if (change.type === "added") {
-                        if (!existingItem && !isDocPinned) {
-                            const emptyMsg = targetList.querySelector('.empty-msg');
-                            if (emptyMsg) emptyMsg.remove();
-
-                            const item = createMessageElement(docSnap, false, false);
-                            if (change.newIndex === 0) {
-                                targetList.prepend(item);
-                            } else {
-                                const referenceNode = targetList.children[change.newIndex];
-                                targetList.insertBefore(item, referenceNode);
-                            }
-                            if (targetList.children.length > pageLimit) {
-                                targetList.lastElementChild?.remove();
-                            }
-                        }
-                    } else if (change.type === "modified") {
-                        if (isDocPinned) {
-                            // Jika pesan baru saja disematkan -> Hapus dari daftar reguler
-                            if (existingItem) existingItem.remove();
-                        } else {
-                            // Jika pesan reguler diupdate atau baru saja dilepas dari sematan
-                            if (existingItem) {
-                                updateMessageElement(existingItem, docSnap);
-                            } else {
-                                const emptyMsg = targetList.querySelector('.empty-msg');
-                                if (emptyMsg) emptyMsg.remove();
-
-                                const item = createMessageElement(docSnap, false, false);
-                                if (change.newIndex === 0 || targetList.children.length === 0) {
-                                    targetList.prepend(item);
-                                } else {
-                                    const referenceNode = targetList.children[change.newIndex];
-                                    if (referenceNode) {
-                                        targetList.insertBefore(item, referenceNode);
-                                    } else {
-                                        targetList.appendChild(item);
-                                    }
-                                }
-                            }
-                        }
-                    } else if (change.type === "removed" && existingItem) {
-                        if (replyUnsubscribers[docId]) {
-                            replyUnsubscribers[docId]();
-                            delete replyUnsubscribers[docId];
-                        }
-                        existingItem.remove();
-                        const pinnedContainer = document.getElementById('pinned-messages-list');
-                        const hasPinned = pinnedContainer && pinnedContainer.children.length > 0 && pinnedContainer.style.display !== 'none';
-                        if (targetList.children.length === 0) {
-                            if (currentPage > 1) {
-                                loadGuestbook(currentPage - 1);
-                            } else if (!hasPinned) {
-                                targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #999; font-style: italic; margin-bottom: 0;">Belum ada ucapan. Jadilah yang pertama memberikan ucapan!</p></div>';
-                            }
-                        }
+                    const currentChildAtIndex = targetList.children[index];
+                    if (currentChildAtIndex !== item) {
+                        targetList.insertBefore(item, currentChildAtIndex || null);
                     }
                 });
             }
@@ -3183,8 +3555,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isGuestbookInitialized) return;
         isGuestbookInitialized = true;
 
-        await ensureFirebase();
-        if (!db) return;
+        try {
+            await ensureFirebase();
+        } catch (err) {
+            isGuestbookInitialized = false; // Izinkan percobaan ulang otomatis saat jaringan kembali pulih
+            console.warn("Guestbook Firebase init note:", err);
+            return;
+        }
+        if (!db) {
+            isGuestbookInitialized = false;
+            return;
+        }
 
         if (gbList) {
             initPinnedMessagesListener();
@@ -3269,8 +3650,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const ro = new ResizeObserver(syncHeight);
-        ro.observe(formContainer);
+        if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(syncHeight);
+            ro.observe(formContainer);
+        }
         window.addEventListener('resize', syncHeight);
     }
 
@@ -3282,26 +3665,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.btn-copy');
         if (!btn) return;
+        if (btn.classList.contains('copied')) return; // Mencegah race condition saat tombol ditekan cepat
 
         const textToCopy = btn.dataset.copy;
         if (!textToCopy) return;
 
         const handleSuccess = () => {
             const originalHTML = btn.innerHTML;
+            btn.classList.add('copied');
             btn.innerHTML = '<i class="bi bi-check2"></i> Berhasil!';
             showToast('Nomor rekening berhasil disalin ke papan klip!');
-            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+            if (btn._copyTimer) clearTimeout(btn._copyTimer);
+            btn._copyTimer = setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('copied');
+                btn._copyTimer = null;
+            }, 2000);
         };
 
         const handleFallback = (text) => {
             try {
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
+                textArea.setAttribute("readonly", "");
                 textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                textArea.style.top = "-999999px";
+                textArea.style.top = "0";
+                textArea.style.left = "-9999px";
+                textArea.style.fontSize = "16px";
+                textArea.style.opacity = "0";
                 document.body.appendChild(textArea);
                 textArea.focus();
+                textArea.setSelectionRange(0, 99999);
                 textArea.select();
                 const successful = document.execCommand('copy');
                 document.body.removeChild(textArea);
@@ -3329,9 +3723,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
     }
-
-    // --- Render Universal WhatsApp-Style Emoji (Dijalankan per pesan komentar dinamis, cegah blocking DOM awal) ---
-    // applyTwemoji(document.body);
 
     // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization) ---
     if ('serviceWorker' in navigator) {

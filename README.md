@@ -134,7 +134,7 @@ flowchart TD
 | **Typography**              | `Google Fonts (Cinzel & Montserrat)`            | Kombinasi font serif klasik bernuansa sakral dan sans-serif modern yang mudah dibaca.            |
 | **Iconography**             | `Bootstrap Icons v1.11.3`                       | Ikon web berbasis font vektor yang tajam dan ringan.                                             |
 | **Scroll Animation**        | `AOS (Animate On Scroll v2.3.4)`                | Efek animasi bertahap (_fade_, _zoom_) yang disesuaikan per breakpoint layar.                    |
-| **PWA & Offline**           | `Service Worker (sw.js) & Web App Manifest`     | Caching cerdas (_Cache-First_ untuk media, _Network-First_ untuk script) dan instalasi aplikasi. |
+| **PWA & Offline**           | `Service Worker (sw.js)`                        | Caching cerdas bertingkat (_Cache-First_ untuk media, _Network-First_ untuk kode) & ketahanan luring. |
 | **Social Preview & SEO**    | `Open Graph & Twitter Cards`                    | Metadata pratinjau sosial optimal untuk link WhatsApp, Facebook, dan Telegram.                   |
 
 ---
@@ -171,6 +171,7 @@ pawiwahan-theme-1/
 ├── 🔧 firebase.json                     # (Lokal) Konfigurasi deployment Firebase CLI (diabaikan .gitignore)
 ├── ⚙️ sw.js                             # Service Worker untuk manajemen cache & mode offline
 ├── 🙈 .gitignore                        # Konfigurasi pengabaian file Git ( OS, & IDE)
+├── 📜 LICENSE.md                        # Dokumen Lisensi Komersial & Atribusi Pihak Ketiga
 └── 📘 README.md                         # Dokumentasi lengkap proyek
 ```
 
@@ -178,10 +179,12 @@ pawiwahan-theme-1/
 
 ## 💼 Lisensi Komersial & Pemesanan
 
-_Source code_ template undangan digital ini merupakan karya orisinal yang dikembangkan dan didistribusikan secara komersial oleh **WinandaDev**.
+_Source code_ template undangan digital ini merupakan karya orisinal yang dikembangkan dan didistribusikan secara komersial oleh **WinandaDev** (**All Rights Reserved**).
 
-- 🚫 **Dilarang Keras:** Mempublikasikan ulang, membagikan gratis, atau memperjualbelikan kembali _source code_ ini kepada pihak lain tanpa izin lisensi tertulis dari pemilik hak cipta.
-- 📦 **Bagi Pembeli Source Code:** Anda berhak penuh menggunakan dan menyesuaikan template ini untuk proyek undangan pribadi maupun pesanan klien Anda.
+- 🚫 **Dilarang Keras:** Mempublikasikan ulang, membagikan gratis, mengunggah ke repositori publik, menggunakan tanpa izin, atau memperjualbelikan kembali _source code_ ini (asli maupun hasil modifikasi) kepada pihak lain tanpa izin tertulis dari pemilik hak cipta.
+- 💌 **Pemesanan Undangan Jadi (1 Acara):** Setiap 1 kali pemesanan berlaku untuk **1 acara pernikahan** (terima tautan undangan aktif siap pakai, tanpa penyerahan _source code_).
+- 📦 **Pembelian Lisensi Source Code:** Pembeli sah berhak mengustomisasi, melanjutkan pengembangan proyek, dan menggunakannya secara berulang untuk proyek pribadi maupun pesanan klien undangan jadi (*end-client*), namun **tetap dilarang menjual ulang atau membagikan _source code_-nya**.
+- 📜 **Ketentuan Lengkap:** Baca rincian hak penggunaan, ketentuan aset demo, dan atribusi pihak ketiga selengkapnya pada berkas [LICENSE.md](LICENSE.md).
 - 📩 **Pemesanan Jasa & Pembelian Lisensi:** Silakan hubungi kontak resmi pengembang melalui [WhatsApp](https://wa.me/6285964393536).
 
 ---

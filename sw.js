@@ -14,14 +14,13 @@
 /* ==========================================================================
    01. DAFTAR ASET CACHE & KONFIGURASI
    ========================================================================== */
-const CACHE_NAME = 'pawiwahan-v17';
+const CACHE_NAME = 'pawiwahan-v23';
 const ASSETS_TO_CACHE = [
+    './',
     './index.html',
     './config.js',
     './style.css',
-    './script.js',
-    './assets/images/gallery/cover-1.webp',
-    './assets/images/decorations/wave.webp'
+    './script.js'
 ];
 
 /* ==========================================================================
@@ -74,25 +73,25 @@ self.addEventListener('fetch', (event) => {
         event.request.url.includes('google-analytics.com') ||
         event.request.url.includes('googletagmanager.com') ||
         event.request.headers.get('range') ||
-        event.request.url.match(/\.mp3$/i)
+        event.request.url.match(/\.mp3(\?.*)?$/i)
     ) {
         return;
     }
 
     // 3. Strategi: Network-First untuk File Kode (HTML, CSS, JS) & Navigasi
     // Memastikan user selalu mendapatkan update UI terbaru, dengan fallback cache saat offline.
-    if (event.request.url.match(/\.(html|css|js)$/) || event.request.mode === 'navigate') {
+    if (event.request.url.match(/\.(html|css|js)(\?.*)?$/i) || event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200) {
                     const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
+                    caches.open(CACHE_NAME)
+                        .then((cache) => cache.put(event.request, responseToCache))
+                        .catch(() => { });
                 }
                 return networkResponse;
             }).catch(() => {
-                return caches.match(event.request).then((cached) => {
+                return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
                     return cached || caches.match('./index.html');
                 });
             })
@@ -103,20 +102,21 @@ self.addEventListener('fetch', (event) => {
     // 4. Strategi: Cache-First untuk Media Statis (WebP, JPG, PNG, Font WOFF2, Favicon)
     // Mengoptimalkan LCP, rendering super cepat, dan menghemat kuota internet pengguna.
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
+        caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
             if (cachedResponse) {
                 return cachedResponse;
             }
             return fetch(event.request).then((response) => {
-                if (response && response.status === 200 && event.request.url.match(/\.(webp|jpg|jpeg|png|woff2|ico)$/i)) {
+                const isRetryReq = /[?&]retry=/i.test(event.request.url);
+                if (!isRetryReq && response && response.status === 200 && event.request.url.match(/\.(webp|jpg|jpeg|png|woff2|ico)(\?.*)?$/i)) {
                     const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
+                    caches.open(CACHE_NAME)
+                        .then((cache) => cache.put(event.request, responseToCache))
+                        .catch(() => { });
                 }
                 return response;
             }).catch(() => {
-                return caches.match(event.request);
+                return caches.match(event.request, { ignoreSearch: true });
             });
         })
     );

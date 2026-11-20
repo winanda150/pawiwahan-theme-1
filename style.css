@@ -42,7 +42,9 @@
 
 img {
     -webkit-user-drag: none;
+    -webkit-touch-callout: none;
     user-select: none;
+    -webkit-user-select: none;
     -moz-user-select: none;
 }
 
@@ -137,6 +139,7 @@ body:active {
     height: 45px;
     background: rgba(212, 175, 55, 0.85);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     color: white;
     border: none;
     border-radius: 50%;
@@ -1235,7 +1238,9 @@ body:active {
     transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
     -webkit-user-drag: none;
+    -webkit-touch-callout: none;
     will-change: transform, opacity;
     backface-visibility: hidden;
     perspective: 1000px;
@@ -1749,6 +1754,7 @@ img.emoji {
     border-radius: 4px;
     padding: 1px 6px;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
     transition: background-color 0.25s ease, color 0.25s ease;
     display: inline-block;
@@ -2276,6 +2282,33 @@ img.emoji {
     color: #bfa100;
 }
 
+.btn-cancel-reply {
+    border: none;
+    background: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    line-height: 1;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    touch-action: manipulation;
+}
+
+.btn-cancel-reply:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.btn-cancel-reply:active {
+    transform: scale(0.92);
+}
+
 .verified-icon {
     color: #1d9bf0;
     /* Warna biru verified */
@@ -2632,6 +2665,7 @@ emoji-picker {
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 15000;
     align-items: center;
     justify-content: center;
@@ -2640,6 +2674,11 @@ emoji-picker {
 
 .custom-modal.show {
     display: flex;
+}
+
+html.modal-open,
+body.modal-open {
+    overflow: hidden !important;
 }
 
 .modal-content-confirm {
@@ -3152,23 +3191,20 @@ emoji-picker {
     }
 
     .guestbook-list {
-        max-height: 400px;
+        max-height: 540px;
         transition: min-height 0.25s ease;
-        /* Batasi tinggi list di mobile agar tetap bisa di-scroll dan transisi mulus */
+        /* Khusus mobile: buat area daftar komentar lebih tinggi dari form RSVP agar lebih lega saat dibaca */
     }
 
     .attendance-card {
         padding: 25px 15px;
     }
 
-    .attendance-card label {
-        font-size: 0.75rem;
-    }
-
     .form-group input,
     .form-group select,
-    .form-group textarea {
-        font-size: 0.85rem;
+    .form-group textarea,
+    .auth-input-wrapper input {
+        font-size: 1rem; /* Mencegah auto-zoom paksa pada iOS Safari / iPhone */
     }
 
     .attendance-card label {
