@@ -859,6 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastTap = 0;
     let lightboxTransitionTimer = null;
     let wasPinching = false;
+    let wheelTransitionTimer = null;
 
     const clearLightboxTransitionClasses = () => {
         if (!lightboxImg) return;
@@ -901,9 +902,15 @@ document.addEventListener('DOMContentLoaded', () => {
         translateX = 0;
         translateY = 0;
         isDragging = false;
+        if (wheelTransitionTimer) {
+            clearTimeout(wheelTransitionTimer);
+            wheelTransitionTimer = null;
+        }
         if (lightboxImg) {
             lightboxImg.classList.remove('zoomed');
+            lightboxImg.style.transition = '';
             lightboxImg.style.transform = '';
+            lightboxImg.style.cursor = 'pointer';
         }
         if (btnZoom) {
             btnZoom.innerHTML = '<i class="bi bi-zoom-in"></i>'; // Kaca pembesar dengan plus
@@ -1026,6 +1033,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- Logika Zoom Menggunakan Roda Gulir Mouse (Scroll Wheel) ---
+    const handleWheelZoom = (e) => {
+        if (!lightbox || !lightbox.classList.contains('show') || !lightboxImg) return;
+
+        // Cegah browser melakukan scrolling pada halaman latar belakang saat di dalam lightbox
+        e.preventDefault();
+
+        // Normalisasi delta mode jika browser menggunakan unit line atau page (misal mouse tertentu di Windows/Linux)
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 30; // DOM_DELTA_LINE
+        else if (e.deltaMode === 2) delta *= 300; // DOM_DELTA_PAGE
+
+        // Hitung faktor skala eksponensial (halus untuk roda putar mouse standar maupun trackpad kontinu)
+        // delta < 0: putar ke depan (zoom in)
+        // delta > 0: putar ke belakang (zoom out)
+        const zoomFactor = Math.min(Math.max(Math.exp(-delta * 0.002), 0.6), 1.6);
+        const oldScale = currentScale;
+        let newScale = oldScale * zoomFactor;
+
+        // Batasi rentang perbesaran antara 1.0x hingga 4.0x
+        newScale = Math.min(Math.max(newScale, 1), 4);
+
+        // Jika skala kembali ke batas normal atau diperkecil hingga <= 1.05x
+        if (newScale <= 1.05) {
+            lightboxImg.style.transition = 'transform 0.15s ease-out';
+            resetZoom();
+            return;
+        }
+
+        // Dapatkan batas koordinat gambar di layar saat ini
+        const rect = lightboxImg.getBoundingClientRect();
+        const cursorX = e.clientX;
+        const cursorY = e.clientY;
+
+        // Periksa apakah posisi kursor berada di dalam batas gambar
+        const isCursorInside = (
+            cursorX >= rect.left &&
+            cursorX <= rect.right &&
+            cursorY >= rect.top &&
+            cursorY <= rect.bottom
+        );
+
+        // Titik pusat gambar di layar saat ini
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        // Jika kursor berada di dalam gambar, zoom terpusat pada kursor (focal point).
+        // Jika kursor berada di luar gambar (pada backdrop gelap), zoom berpusat ke tengah gambar.
+        const focalX = isCursorInside ? cursorX : centerX;
+        const focalY = isCursorInside ? cursorY : centerY;
+
+        const scaleRatio = newScale / oldScale;
+
+        // Sesuaikan koordinat translasi agar titik di bawah kursor tidak bergeser
+        translateX += (centerX - focalX) * (scaleRatio - 1);
+        translateY += (centerY - focalY) * (scaleRatio - 1);
+        currentScale = newScale;
+        isZoomed = true;
+
+        // Terapkan transisi dinamis cepat (0.08s) agar perputaran roda mouse terasa instan dan responsif
+        lightboxImg.style.transition = 'transform 0.08s ease-out';
+        if (wheelTransitionTimer) clearTimeout(wheelTransitionTimer);
+        wheelTransitionTimer = setTimeout(() => {
+            if (lightboxImg && !isDragging) {
+                lightboxImg.style.transition = '';
+            }
+            wheelTransitionTimer = null;
+        }, 150);
+
+        lightboxImg.classList.add('zoomed');
+        lightboxImg.style.cursor = 'grab';
+
+        if (btnZoom) {
+            btnZoom.innerHTML = '<i class="bi bi-zoom-out"></i>';
+            btnZoom.title = "Perkecil Foto";
+        }
+
+        if (!isTicking) {
+            requestAnimationFrame(updateTransform);
+            isTicking = true;
+        }
+    };
+
     // Toggle Zoom Logic via Button
     if (btnZoom) {
         btnZoom.addEventListener('click', (e) => {
@@ -1099,6 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = true;
             startX = e.clientX - translateX;
             startY = e.clientY - translateY;
+            lightboxImg.style.transition = 'none';
             lightboxImg.style.cursor = 'grabbing';
         });
 
@@ -1109,6 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initialPinchDistance = getDistance(e.touches);
                 initialScale = currentScale;
                 isDragging = false;
+                lightboxImg.style.transition = 'none';
                 return;
             }
 
@@ -1127,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = true;
             startX = e.touches[0].clientX - translateX;
             startY = e.touches[0].clientY - translateY;
+            lightboxImg.style.transition = 'none';
         }, { passive: false });
 
         lightboxImg.addEventListener('touchmove', (e) => {
@@ -1165,6 +1258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lightboxImg.addEventListener('touchend', () => {
             isDragging = false;
             initialPinchDistance = 0;
+            if (lightboxImg) lightboxImg.style.transition = '';
         });
     }
 
@@ -1180,8 +1274,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('mouseup', () => {
-        isDragging = false;
-        if (isZoomed && lightboxImg) lightboxImg.style.cursor = 'grab';
+        if (isDragging) {
+            isDragging = false;
+            if (lightboxImg) {
+                lightboxImg.style.transition = '';
+                if (isZoomed) lightboxImg.style.cursor = 'grab';
+            }
+        }
     });
 
     // Fungsi untuk mengunduh gambar dengan nama kustom
@@ -1273,6 +1372,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchendY = 0;
 
     if (lightbox) {
+        // Zoom interaktif dengan roda gulir mouse (scroll wheel)
+        lightbox.addEventListener('wheel', handleWheelZoom, { passive: false });
+
         lightbox.addEventListener('touchstart', (e) => {
             if (e.touches.length >= 2) {
                 wasPinching = true;
@@ -3106,11 +3208,6 @@ document.addEventListener('DOMContentLoaded', () => {
         item.dataset.id = docId;
         item.className = `guestbook-item ${isPinned ? 'is-pinned ' : ''}${isInitial ? 'fade-in-up' : ''}`;
         item.innerHTML = `
-            ${isPinned ? `
-            <div class="gb-pinned-badge">
-                <i class="bi bi-pin-angle-fill"></i> Pesan Disematkan
-            </div>
-            ` : ''}
             <div class="gb-header-row">
                 <div class="gb-avatar">
                     <i class="bi bi-person-circle"></i>
@@ -3119,6 +3216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="gb-top-row">
                         <span class="gb-name">${safeName}</span>${data.isMempelai ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
                         <span class="status-badge ${statusClass}">${safeStatus}</span>
+                        <span class="gb-pinned-icon ${isPinned ? 'show' : ''}" title="Pesan Disematkan" aria-label="Pesan Disematkan"><i class="bi bi-pin-angle-fill"></i></span>
                         <div class="gb-admin-actions">
                             <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${docId}" data-pinned="${isPinned}" title="${isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan'}" aria-label="${isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan'}">
                                 <i class="bi ${isPinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'}"></i>
@@ -3171,16 +3269,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         existingItem.classList.toggle('is-pinned', isPinned);
 
-        let pinnedBadge = existingItem.querySelector('.gb-pinned-badge');
-        if (isPinned) {
-            if (!pinnedBadge) {
-                pinnedBadge = document.createElement('div');
-                pinnedBadge.className = 'gb-pinned-badge';
-                pinnedBadge.innerHTML = '<i class="bi bi-pin-angle-fill"></i> Pesan Disematkan';
-                existingItem.prepend(pinnedBadge);
+        // Hapus elemen badge lama jika masih ada di DOM
+        const oldPinnedBadge = existingItem.querySelector('.gb-pinned-badge');
+        if (oldPinnedBadge) oldPinnedBadge.remove();
+
+        // Perbarui atau sisipkan ikon sematan pojok kanan (tampil untuk mode publik/non-admin)
+        let pinnedIcon = existingItem.querySelector('.gb-pinned-icon');
+        if (!pinnedIcon) {
+            const topRow = existingItem.querySelector(':scope > .gb-header-row > .gb-info > .gb-top-row') || existingItem.querySelector('.gb-header-row > .gb-info > .gb-top-row');
+            const adminActions = topRow?.querySelector('.gb-admin-actions');
+            if (topRow) {
+                pinnedIcon = document.createElement('span');
+                pinnedIcon.className = `gb-pinned-icon ${isPinned ? 'show' : ''}`;
+                pinnedIcon.title = 'Pesan Disematkan';
+                pinnedIcon.setAttribute('aria-label', 'Pesan Disematkan');
+                pinnedIcon.innerHTML = '<i class="bi bi-pin-angle-fill"></i>';
+                if (adminActions) {
+                    topRow.insertBefore(pinnedIcon, adminActions);
+                } else {
+                    topRow.appendChild(pinnedIcon);
+                }
             }
-        } else if (pinnedBadge) {
-            pinnedBadge.remove();
+        } else {
+            pinnedIcon.classList.toggle('show', isPinned);
         }
 
         const pinBtn = existingItem.querySelector('.pin-btn');

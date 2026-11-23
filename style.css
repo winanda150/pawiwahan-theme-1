@@ -1623,26 +1623,34 @@ body:active {
     box-shadow: 0 10px 25px rgba(212, 175, 55, 0.18);
 }
 
-.gb-pinned-badge {
-    display: inline-flex;
+/* Ikon Indikator Pesan Disematkan di Samping Kanan Status Kehadiran */
+.gb-pinned-icon {
+    display: none;
     align-items: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #bfa100;
-    background: rgba(212, 175, 55, 0.14);
-    border: 1px solid rgba(212, 175, 55, 0.28);
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 10px;
-    letter-spacing: 0.3px;
-    width: fit-content;
+    justify-content: center;
+    color: #d4af37;
+    font-size: 0.95rem;
+    line-height: 1;
+    flex-shrink: 0;
+    padding: 0 2px;
 }
 
-.gb-pinned-badge i {
-    font-size: 0.8rem;
-    color: #d4af37;
+.guestbook-item.is-pinned .gb-pinned-icon.show {
+    display: inline-flex;
+}
+
+.gb-pinned-icon i {
     transform: rotate(15deg);
+    display: inline-block;
+}
+
+/* Sembunyikan ikon indikator statis saat mode Mempelai/Admin aktif karena sudah ada pin-btn di gb-admin-actions */
+.mempelai-mode .gb-pinned-icon {
+    display: none !important;
+}
+
+.gb-pinned-badge {
+    display: none !important;
 }
 
 .gb-header-row {
