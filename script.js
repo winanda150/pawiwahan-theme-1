@@ -2026,6 +2026,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return sub + '...';
     }
 
+    /**
+     * Memeriksa apakah pesan tergolong singkat atau memiliki baris-baris pendek
+     * sehingga lebih rapi ditampilkan dengan rata kiri (left-align) alih-alih justify.
+     */
+    function isShortOrRaggedMessage(text) {
+        if (!text) return true;
+        const trimmed = text.trim();
+        if (trimmed.length <= 85) return true;
+        const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length > 1 && lines.some(l => l.length < 35)) return true;
+        return false;
+    }
+
     // --- Logika Event Delegation untuk Read More (Gaya Instagram Seamless) ---
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.read-more-btn');
@@ -2046,6 +2059,11 @@ document.addEventListener('DOMContentLoaded', () => {
             msgEl.innerHTML = formatRichText(fullText);
             msgEl.classList.add('fade-in-text');
             applyTwemoji(msgEl);
+
+            // Perbarui class penataan tipografi berdasarkan panjang teks lengkap
+            if (msgContainer) {
+                msgContainer.classList.toggle('short-msg', isShortOrRaggedMessage(fullText));
+            }
 
             // Hapus tombol selengkapnya ala Instagram agar tampilan pesan terbuka bersih
             btn.remove();
@@ -2581,6 +2599,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const safeName = escapeHTML(rData.name || 'Tamu');
         const safePreview = formatRichText(rPreviewText);
+        const rIsShort = isShortOrRaggedMessage(rPreviewText);
 
         // Aturan Tag / Mention:
         // - Jika membalas di bagian dalam balasan (sub-reply), rData.replyTo terisi -> Tampilkan tag @NamaTarget
@@ -2607,7 +2626,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
                 </div>
             </div>
-            <p class="gb-message">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
+            <p class="gb-message${rIsShort ? ' short-msg' : ''}">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions" style="margin-top: -5px;">
                 <button class="reply-btn" data-id="${parentId}" data-name="${safeName}" data-parent-name="${escapeHTML(parentName)}" data-is-subreply="true">Balas</button>
                 <button class="like-btn" data-id="${rDocId}" data-parent-id="${parentId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
@@ -2648,6 +2667,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rMsgContainer = existingReply.querySelector('.gb-message');
         if (rMsgContainer) {
+            rMsgContainer.classList.toggle('short-msg', isShortOrRaggedMessage(rPreviewText));
             const mentionEl = rMsgContainer.querySelector('.reply-to-mention');
 
             if (rawTarget) {
@@ -3289,6 +3309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const safeName = escapeHTML(data.name || 'Tamu');
         const safeStatus = escapeHTML(data.status || 'Hadir');
         const safePreview = formatRichText(previewText);
+        const isShort = isShortOrRaggedMessage(previewText);
 
         const item = document.createElement('div');
         item.id = isPinnedContainer ? `pinned-msg-${docId}` : `msg-${docId}`;
@@ -3316,7 +3337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-            <p class="gb-message"><span class="msg-text">${safePreview}</span>${isLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
+            <p class="gb-message${isShort ? ' short-msg' : ''}"><span class="msg-text">${safePreview}</span>${isLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions">
                 <button class="reply-btn" data-id="${docId}" data-name="${safeName}" data-is-subreply="false">Balas</button>
                 <button class="like-btn" data-id="${docId}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
@@ -3416,6 +3437,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeEl) timeEl.textContent = date;
 
         const msgContainer = existingItem.querySelector(':scope > .gb-message') || existingItem.querySelector('.gb-message');
+        if (msgContainer) {
+            msgContainer.classList.toggle('short-msg', isShortOrRaggedMessage(previewText));
+        }
         const msgTextEl = msgContainer?.querySelector('.msg-text');
         if (msgTextEl) {
             const readMoreBtn = msgContainer.querySelector('.read-more-btn');

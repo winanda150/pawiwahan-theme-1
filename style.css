@@ -1759,7 +1759,17 @@ body:active {
     display: block;
     text-align: justify;
     text-justify: inter-word;
+    text-align-last: left;
+    text-wrap: pretty;
+    hyphens: auto;
+    -webkit-hyphens: auto;
     white-space: pre-line;
+}
+
+/* Pesan singkat atau dengan baris-baris pendek otomatis rata kiri agar tidak renggang */
+.gb-message.short-msg {
+    text-align: left;
+    text-justify: auto;
 }
 
 .gb-message::after {
@@ -3307,6 +3317,12 @@ body.modal-open {
         max-height: 540px;
         transition: min-height 0.25s ease;
         /* Khusus mobile: buat area daftar komentar lebih tinggi dari form RSVP agar lebih lega saat dibaca */
+    }
+
+    /* Khusus mobile: seluruh pesan komentar otomatis rata kiri alami agar tidak ada celah spasi renggang */
+    .gb-message {
+        text-align: left !important;
+        text-justify: auto !important;
     }
 
     .attendance-card {
