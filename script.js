@@ -414,9 +414,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (guestNameElement) {
         const urlParams = new URLSearchParams(window.location.search);
-        const guestParam = urlParams.get('to'); // Mengambil nilai dari parameter 'to'
+        let rawGuestParam = urlParams.get('to');
 
-        if (guestParam && guestParam.trim() !== "") {
+        // Fallback jika pengguna mengetik ?to setelah hash (misal: #hash/?to=Made atau #hash?to=Made)
+        if (!rawGuestParam && window.location.hash.includes('to=')) {
+            const hashMatch = window.location.hash.match(/[?&]to=([^&#/]+)/);
+            if (hashMatch && hashMatch[1]) {
+                rawGuestParam = decodeURIComponent(hashMatch[1]);
+            }
+        }
+
+        // Sanitasi: Bersihkan garis miring di akhir nama agar tidak ada tanda '/' di cover
+        const guestParam = rawGuestParam ? rawGuestParam.replace(/\/+$/, '').trim() : '';
+
+        if (guestParam && guestParam !== "") {
             guestNameElement.textContent = guestParam;
         } else {
             guestNameElement.textContent = "Tamu Undangan";
@@ -2053,10 +2064,85 @@ document.addEventListener('DOMContentLoaded', () => {
         isMempelai = false;
     }
 
+    // --- Helper Generator Kode Sesi Acak 22 Karakter Kriptografis Unik ---
+    function generateAdminSessionCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const randomBytes = new Uint8Array(22);
+        if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+            window.crypto.getRandomValues(randomBytes);
+        } else {
+            for (let i = 0; i < 22; i++) {
+                randomBytes[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        return Array.from(randomBytes, byte => chars[byte % chars.length]).join('');
+    }
+
+    // --- Penyelarasan & Sinkronisasi URL Mode Mempelai / Admin ---
+    function syncAdminUrlState(isAdminActive) {
+        const pathname = window.location.pathname;
+        let search = window.location.search || '';
+
+        // Deteksi cerdas jika pengguna mengetik '?to=...' di dalam hash (misal #abc/?to=Made atau #abc?to=Made)
+        if (!search && window.location.hash.includes('to=')) {
+            const hashMatch = window.location.hash.match(/[?&]to=([^&#/]+)/);
+            if (hashMatch && hashMatch[1]) {
+                search = `?to=${encodeURIComponent(hashMatch[1])}`;
+            }
+        }
+
+        if (isAdminActive) {
+            let code = null;
+            try {
+                code = sessionStorage.getItem('mAdminHash');
+                if (!code || code.length < 16) {
+                    code = generateAdminSessionCode();
+                    sessionStorage.setItem('mAdminHash', code);
+                }
+            } catch (e) {
+                code = generateAdminSessionCode();
+            }
+
+            // Bentuk URL sesuai spesifikasi:
+            // Jika ada parameter ?to=... maka akhiri dengan '/' sebelum '#kode'
+            // Jika tanpa nama tamu maka langsung '/#kode'
+            let newUrl = '';
+            if (search && search.includes('to=')) {
+                const cleanSearch = search.replace(/\/+$/, '');
+                newUrl = `${pathname}${cleanSearch}/#${code}`;
+            } else {
+                newUrl = `${pathname}#${code}`;
+            }
+
+            const currentFullUrl = window.location.pathname + window.location.search + window.location.hash;
+            if (currentFullUrl !== newUrl) {
+                try {
+                    window.history.replaceState(null, document.title, newUrl);
+                } catch (e) {}
+            }
+        } else {
+            // Jika BUKAN admin (misal tamu biasa atau copy-paste URL admin oleh orang lain):
+            try {
+                sessionStorage.removeItem('mAdminHash');
+            } catch (e) {}
+
+            // Bersihkan hash kode acak dari bilah alamat browser agar URL kembali bersih
+            const cleanSearch = search.replace(/\/+$/, '');
+            const cleanUrl = `${pathname}${cleanSearch}`;
+            if (window.location.hash) {
+                try {
+                    window.history.replaceState(null, document.title, cleanUrl);
+                } catch (e) {}
+            }
+        }
+    }
+
     // Inisialisasi status tampilan mempelai jika sudah login di session sebelumnya
     if (isMempelai) {
         document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
     }
+    // Sinkronisasi status URL (format kode acak jika admin, atau bersihkan jika bukan admin)
+    syncAdminUrlState(isMempelai);
 
     // Implementasi Pure JS SHA-256 sebagai fallback saat running di non-Secure Context (LAN HTTP / IP pengujian lokal)
     function jsSha256(ascii) {
@@ -2378,6 +2464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     isMempelai = true;
                     document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                     initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
+                    syncAdminUrlState(true); // Perbarui URL menjadi ber-hash kode acak sesi admin
                     showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
                     closeAuthModal();
                 } else {

@@ -48,34 +48,47 @@ img {
     -moz-user-select: none;
 }
 
-/* Custom Main Scrollbar Styles */
-::-webkit-scrollbar {
+/* Custom Main Scrollbar Styles (Aktif saat halaman diizinkan scroll) */
+html.allow-scroll::-webkit-scrollbar,
+body.allow-scroll::-webkit-scrollbar {
     width: 10px;
 }
 
-::-webkit-scrollbar-track {
+html.allow-scroll::-webkit-scrollbar-track,
+body.allow-scroll::-webkit-scrollbar-track {
     background: #ffffff;
 }
 
-::-webkit-scrollbar-thumb {
+html.allow-scroll::-webkit-scrollbar-thumb,
+body.allow-scroll::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #d4af37, #bfa100);
     border-radius: 10px;
     border: 2px solid #ffffff;
     /* Memberikan efek padding di dalam track */
 }
 
-::-webkit-scrollbar-thumb:hover {
+html.allow-scroll::-webkit-scrollbar-thumb:hover,
+body.allow-scroll::-webkit-scrollbar-thumb:hover {
     background: #bfa100;
 }
 
-/* Firefox Support */
+/* Kunci Scroll & Sembunyikan Scrollbar Sepenuhnya Sebelum Undangan Dibuka */
 html {
-    scrollbar-width: thin;
-    scrollbar-color: #d4af37 #ffffff;
-    scrollbar-gutter: stable;
     overflow: hidden;
     /* Kunci scroll root sepenuhnya di awal */
     height: 100%;
+}
+
+html:not(.allow-scroll) {
+    scrollbar-width: none;
+    scrollbar-gutter: auto;
+}
+
+html:not(.allow-scroll)::-webkit-scrollbar,
+body:not(.allow-scroll)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 body {
@@ -83,6 +96,13 @@ body {
     background-color: #ffffff;
     overflow: hidden;
     height: 100%;
+}
+
+/* Izinkan Scroll & Tampilkan Scrollbar Cantik Setelah Tombol Buka Undangan Diklik */
+html.allow-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 #ffffff;
+    scrollbar-gutter: stable;
 }
 
 html.allow-scroll,
