@@ -14,13 +14,14 @@
 /* ==========================================================================
    01. DAFTAR ASET CACHE & KONFIGURASI
    ========================================================================== */
-const CACHE_NAME = 'pawiwahan-v23';
+const CACHE_NAME = 'pawiwahan-v29';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './config.js',
     './style.css',
-    './script.js'
+    './script.js',
+    './assets/icons/favicon.ico'
 ];
 
 /* ==========================================================================
@@ -86,13 +87,24 @@ self.addEventListener('fetch', (event) => {
                 if (networkResponse && networkResponse.status === 200) {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME)
-                        .then((cache) => cache.put(event.request, responseToCache))
+                        .then((cache) => {
+                            // Normalisasi kunci cache dokumen navigasi/HTML agar tidak membengkak karena query ?to=...
+                            // Sinkronkan ke './index.html' dan './' agar offline fallback selalu identik & segar
+                            const isDocument = event.request.mode === 'navigate' || event.request.url.match(/\.html(\?.*)?$/i);
+                            if (isDocument) {
+                                return Promise.all([
+                                    cache.put('./index.html', responseToCache.clone()),
+                                    cache.put('./', responseToCache)
+                                ]);
+                            }
+                            return cache.put(event.request, responseToCache);
+                        })
                         .catch(() => { });
                 }
                 return networkResponse;
             }).catch(() => {
                 return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
-                    return cached || caches.match('./index.html');
+                    return cached || caches.match('./index.html') || caches.match('./');
                 });
             })
         );

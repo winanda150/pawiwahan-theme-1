@@ -660,6 +660,7 @@ body:active {
 }
 
 .mempelai-img-wrapper {
+    position: relative;
     width: 230px;
     height: 280px;
     margin: 0 auto 25px;
@@ -669,6 +670,47 @@ body:active {
     border-radius: 100px 100px 0 0;
     /* Bentuk Arch */
     overflow: hidden;
+    background-color: #ffffff;
+}
+
+/* Skeleton Loading Shimmer untuk Foto Profil Mempelai */
+.mempelai-img-wrapper.skeleton {
+    background-color: #ffffff;
+}
+
+.mempelai-img-wrapper.skeleton::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border-radius: 90px 90px 0 0;
+    background: linear-gradient(
+        90deg,
+        #f0f2f5 0%,
+        #e2e6ea 25%,
+        #f8f9fa 50%,
+        #e2e6ea 75%,
+        #f0f2f5 100%
+    );
+    background-size: 200% 100%;
+    animation: mempelaiSkeletonShimmer 1.8s infinite linear;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.mempelai-img-wrapper.skeleton .mempelai-img {
+    opacity: 0;
+}
+
+@keyframes mempelaiSkeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .mempelai-img {
@@ -676,6 +718,7 @@ body:active {
     height: 100%;
     object-fit: cover;
     border-radius: 90px 90px 0 0;
+    transition: opacity 0.5s ease-in-out;
 }
 
 .mempelai-card .name {
@@ -1159,6 +1202,47 @@ body:active {
     /* Mengisolasi elemen galeri agar render lebih cepat */
 }
 
+/* Skeleton Loading Shimmer untuk Gallery Item */
+.gallery-item.skeleton {
+    background: linear-gradient(
+        90deg,
+        #f0f2f5 0%,
+        #e2e6ea 25%,
+        #f8f9fa 50%,
+        #e2e6ea 75%,
+        #f0f2f5 100%
+    );
+    background-size: 200% 100%;
+    animation: gallerySkeletonShimmer 1.8s infinite linear;
+    pointer-events: none;
+}
+
+.gallery-item.skeleton::after {
+    display: none;
+}
+
+.gallery-item.skeleton img {
+    opacity: 0;
+}
+
+@keyframes gallerySkeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cover-bg.skeleton,
+    .mempelai-img-wrapper.skeleton::before,
+    .gallery-item.skeleton,
+    .particle {
+        animation: none !important;
+    }
+}
+
 .gallery-item::after {
     content: '';
     position: absolute;
@@ -1199,7 +1283,7 @@ body:active {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.7s ease, filter 0.5s ease;
+    transition: opacity 0.5s ease-in-out, transform 0.7s ease, filter 0.5s ease;
 }
 
 .gallery-item:hover img {
@@ -3123,7 +3207,8 @@ body.modal-open {
     }
 
     .countdown-box span {
-        font-size: 1.4rem;
+        font-size: clamp(1.1rem, 3.8vw, 1.4rem);
+        white-space: nowrap;
     }
 
     .closing-text.mt-5 {

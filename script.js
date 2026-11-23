@@ -253,15 +253,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         el.classList.add('loaded');
                         const coverBg = el.closest('.cover-bg');
                         if (coverBg) coverBg.classList.remove('skeleton');
+                        const mempelaiWrapper = el.closest('.mempelai-img-wrapper');
+                        if (mempelaiWrapper) mempelaiWrapper.classList.remove('skeleton');
                     };
 
                     el.addEventListener('load', onImageLoad, { once: true });
                     el.addEventListener('error', () => {
                         const coverBg = el.closest('.cover-bg');
                         if (coverBg) coverBg.classList.remove('skeleton');
+                        const mempelaiWrapper = el.closest('.mempelai-img-wrapper');
+                        if (mempelaiWrapper) mempelaiWrapper.classList.remove('skeleton');
                     }, { once: true });
 
                     if (el.getAttribute('src') !== val) {
+                        const mempelaiWrapper = el.closest('.mempelai-img-wrapper');
+                        if (mempelaiWrapper) mempelaiWrapper.classList.add('skeleton');
+                        el.classList.remove('loaded');
                         el.src = val;
                     }
 
@@ -271,6 +278,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (el.getAttribute('src') !== val) {
                     el.src = val;
                 }
+            }
+        });
+
+        // 2b. Inisialisasi status loading skeleton foto profil mempelai (fallback cache/native loading)
+        document.querySelectorAll('.mempelai-img').forEach(img => {
+            const wrapper = img.closest('.mempelai-img-wrapper');
+            if (!wrapper) return;
+
+            const onDone = () => {
+                img.classList.add('loaded');
+                wrapper.classList.remove('skeleton');
+            };
+
+            if (img.complete && img.naturalWidth > 0) {
+                onDone();
+            } else {
+                img.addEventListener('load', onDone, { once: true });
+                img.addEventListener('error', onDone, { once: true });
             }
         });
 
@@ -504,34 +529,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Konfigurasi Media Session
             if ('mediaSession' in navigator) {
-                const cfgCouple = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple) ? WEDDING_CONFIG.couple : {};
-                const coverArt = cfgCouple.mediaSessionCover || cfgCouple.coverImage1 || '';
+                try {
+                    const cfgCouple = (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.couple) ? WEDDING_CONFIG.couple : {};
+                    const coverArt = cfgCouple.mediaSessionCover || cfgCouple.coverImage1 || '';
 
-                const sessionMetadata = {
-                    title: 'Undangan Pawiwahan',
-                    artist: cfgCouple.shortName || 'Undangan Pernikahan',
-                    album: 'Wedding Invitation'
-                };
+                    const sessionMetadata = {
+                        title: 'Undangan Pawiwahan',
+                        artist: cfgCouple.shortName || 'Undangan Pernikahan',
+                        album: 'Wedding Invitation'
+                    };
 
-                if (coverArt) {
-                    let resolvedArtUrl = coverArt;
-                    try {
-                        resolvedArtUrl = new URL(coverArt, window.location.href).href;
-                    } catch (e) {
-                        resolvedArtUrl = coverArt;
+                    if (coverArt) {
+                        let resolvedArtUrl = coverArt;
+                        try {
+                            resolvedArtUrl = new URL(coverArt, window.location.href).href;
+                        } catch (e) {
+                            resolvedArtUrl = coverArt;
+                        }
+                        sessionMetadata.artwork = [
+                            { src: resolvedArtUrl, sizes: '512x512', type: 'image/webp' }
+                        ];
                     }
-                    sessionMetadata.artwork = [
-                        { src: resolvedArtUrl, sizes: '512x512', type: 'image/webp' }
-                    ];
+
+                    navigator.mediaSession.metadata = new MediaMetadata(sessionMetadata);
+
+                    // Sinkronisasi kontrol play/pause dari Media Session (Notifikasi HP)
+                    navigator.mediaSession.setActionHandler('play', () => {
+                        music.play().catch(err => console.log("MediaSession play note:", err));
+                    });
+                    navigator.mediaSession.setActionHandler('pause', () => music.pause());
+                } catch (mediaErr) {
+                    console.log("MediaSession setup note:", mediaErr);
                 }
-
-                navigator.mediaSession.metadata = new MediaMetadata(sessionMetadata);
-
-                // Sinkronisasi kontrol play/pause dari Media Session (Notifikasi HP)
-                navigator.mediaSession.setActionHandler('play', () => {
-                    music.play().catch(err => console.log("MediaSession play note:", err));
-                });
-                navigator.mediaSession.setActionHandler('pause', () => music.pause());
             }
 
             // Tampilkan tombol kontrol musik setelah undangan dibuka
@@ -639,7 +668,30 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (tzUpper === 'WIT') tzOffset = '+09:00';
         else if (tzUpper.startsWith('+') || tzUpper.startsWith('-')) tzOffset = tzUpper;
 
-        const isoString = `${dateStr}T${timeStr}${tzOffset}`;
+        // Normalisasi tanggal agar selalu valid di Safari/WebKit (mendukung YYYY-MM-DD maupun DD-MM-YYYY)
+        const dateParts = dateStr.split(/[-/]/);
+        let normalizedDate = dateStr;
+        if (dateParts.length === 3) {
+            let year, month, day;
+            if (dateParts[0].length === 4) {
+                // Format Standar ISO: YYYY-MM-DD atau YYYY/MM/DD
+                year = dateParts[0];
+                month = dateParts[1].padStart(2, '0');
+                day = dateParts[2].padStart(2, '0');
+            } else if (dateParts[2].length === 4) {
+                // Format Umum Indonesia: DD-MM-YYYY atau DD/MM/YYYY
+                year = dateParts[2];
+                month = dateParts[1].padStart(2, '0');
+                day = dateParts[0].padStart(2, '0');
+            } else {
+                year = dateParts[0].padStart(4, '0');
+                month = dateParts[1].padStart(2, '0');
+                day = dateParts[2].padStart(2, '0');
+            }
+            normalizedDate = `${year}-${month}-${day}`;
+        }
+
+        const isoString = `${normalizedDate}T${timeStr}${tzOffset}`;
         const parsed = new Date(isoString).getTime();
         return !isNaN(parsed) ? parsed : 0;
     };
@@ -757,6 +809,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (retries > 0) console.log(`[Retry] Berhasil memuat gambar setelah ${retries} percobaan.`);
             retries = 0; // Reset counter jika gambar akhirnya berhasil dimuat
+            const mempelaiWrapper = img.closest('.mempelai-img-wrapper');
+            if (mempelaiWrapper) {
+                mempelaiWrapper.classList.remove('skeleton');
+                img.classList.add('loaded');
+            }
+            const galleryItem = img.closest('.gallery-item');
+            if (galleryItem) {
+                galleryItem.classList.remove('skeleton');
+                img.classList.add('loaded');
+            }
         });
     };
 
@@ -766,6 +828,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ambil semua elemen gambar galeri yang ada di HTML
     const allGalleryImages = Array.from(document.querySelectorAll('.gallery-item img'));
+
+    // Inisialisasi status loading skeleton untuk galeri foto (fallback cache/native loading)
+    allGalleryImages.forEach(img => {
+        const item = img.closest('.gallery-item');
+        if (!item) return;
+
+        const onImageDone = () => {
+            img.classList.add('loaded');
+            item.classList.remove('skeleton');
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+            onImageDone();
+        } else {
+            img.addEventListener('load', onImageDone, { once: true });
+            img.addEventListener('error', onImageDone, { once: true });
+        }
+    });
 
     let isZoomed = false;
     let currentScale = 1;
@@ -901,10 +981,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Daftarkan listener sebelum mengubah src agar tidak terjadi race condition pada gambar ter-cache
             const nextSrc = galleryImages[targetIndex].src;
+            const nextAlt = galleryImages[targetIndex].alt || 'Pratinjau Foto Galeri';
             const isSameSrc = lightboxImg.getAttribute('src') === nextSrc || lightboxImg.src === nextSrc;
             lightboxImg.onload = onImageLoaded;
             lightboxImg.onerror = onImageError;
             lightboxImg.src = nextSrc;
+            lightboxImg.alt = nextAlt;
 
             // Jika gambar sudah selesai dimuat dari cache browser secara instan (atau gagal pada URL yang sama sebelumnya)
             if (lightboxImg.complete && lightboxImg.naturalWidth > 0) {
@@ -3724,12 +3806,18 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSpan.textContent = new Date().getFullYear();
     }
 
-    // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization) ---
+    // --- Pendaftaran Service Worker (PWA Caching & Offline Optimization - Race Condition Safe) ---
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        const registerSW = () => {
             navigator.serviceWorker.register('./sw.js').catch(err => {
                 console.log('SW registration note:', err);
             });
-        });
+        };
+
+        if (document.readyState === 'complete') {
+            registerSW();
+        } else {
+            window.addEventListener('load', registerSW);
+        }
     }
 });
