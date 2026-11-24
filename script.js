@@ -328,8 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (val) el.href = val;
         });
 
-        // 5. Sinkronkan Audio Musik Latar (Hanya jika belum terpasang agar tidak memicu double HTTP fetch)
-        if (cfg.couple?.bgMusic && music && music.getAttribute('src') !== cfg.couple.bgMusic) {
+        // 5. Sinkronkan Audio Musik Latar (Hanya jika belum terpasang dari data-bind-src agar tidak memicu double HTTP fetch)
+        if (cfg.couple?.bgMusic && music && !music.getAttribute('src')) {
             music.src = cfg.couple.bgMusic;
         }
 
@@ -412,30 +412,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (guestNameElement) {
-        const urlParams = new URLSearchParams(window.location.search);
-        let rawGuestParam = urlParams.get('to');
+    // Fungsi pembaruan nama tamu dari URL (Mendukung inisialisasi awal & update realtime saat hash/URL berubah tanpa reload)
+    const updateGuestNameFromUrl = () => {
+        if (!guestNameElement) return;
 
-        // Fallback jika pengguna mengetik ?to setelah hash (misal: #hash/?to=Made atau #hash?to=Made)
-        if (!rawGuestParam && window.location.hash.includes('to=')) {
-            const hashMatch = window.location.hash.match(/[?&]to=([^&#/]+)/);
+        let rawGuestParam = null;
+        // Prioritaskan jika pengguna mengetik ?to langsung di dalam hash (misal: #hash/?to=Made atau #hash?to=Made)
+        if (window.location.hash.includes('to=')) {
+            const hashMatch = window.location.hash.match(/[?&]to=([^&#]+)/);
             if (hashMatch && hashMatch[1]) {
-                rawGuestParam = decodeURIComponent(hashMatch[1]);
+                rawGuestParam = decodeURIComponent(hashMatch[1].replace(/\+/g, ' '));
             }
+        }
+
+        // Jika tidak ada di hash, ambil dari search parameter baku (?to=...)
+        if (!rawGuestParam) {
+            const urlParams = new URLSearchParams(window.location.search);
+            rawGuestParam = urlParams.get('to');
         }
 
         // Sanitasi: Bersihkan garis miring di akhir nama agar tidak ada tanda '/' di cover
         const guestParam = rawGuestParam ? rawGuestParam.replace(/\/+$/, '').trim() : '';
+        const targetText = (guestParam && guestParam !== "") ? guestParam : "Tamu Undangan";
 
-        if (guestParam && guestParam !== "") {
-            guestNameElement.textContent = guestParam;
-        } else {
-            guestNameElement.textContent = "Tamu Undangan";
-        }
+        guestNameElement.textContent = targetText;
 
-        // Jalankan saat pertama dimuat (penyesuaian saat resize ditangani secara debounced di handleOrientationChange)
+        // Jalankan penyesuaian ukuran font
         adjustGuestNameSize();
-    }
+    };
+
+    // Jalankan saat pertama dimuat
+    updateGuestNameFromUrl();
 
     // Fungsi untuk (re)inisialisasi AOS agar durasi & offset selalu sinkron dengan lebar layar
     const initAOS = () => {
@@ -1306,7 +1313,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(blobUrl);
+            // Tunda revocation agar browser (terutama Firefox & Safari/iOS) memiliki waktu membaca stream blob
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         } catch (error) {
             // Fallback jika terjadi kendala CORS
             const link = document.createElement('a');
@@ -2102,10 +2110,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let search = window.location.search || '';
 
         // Deteksi cerdas jika pengguna mengetik '?to=...' di dalam hash (misal #abc/?to=Made atau #abc?to=Made)
-        if (!search && window.location.hash.includes('to=')) {
-            const hashMatch = window.location.hash.match(/[?&]to=([^&#/]+)/);
+        if (window.location.hash.includes('to=')) {
+            const hashMatch = window.location.hash.match(/[?&]to=([^&#]+)/);
             if (hashMatch && hashMatch[1]) {
-                search = `?to=${encodeURIComponent(hashMatch[1])}`;
+                search = `?to=${encodeURIComponent(hashMatch[1].replace(/\+/g, ' '))}`;
             }
         }
 
@@ -2147,7 +2155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Bersihkan hash kode acak dari bilah alamat browser agar URL kembali bersih
             const cleanSearch = search.replace(/\/+$/, '');
             const cleanUrl = `${pathname}${cleanSearch}`;
-            if (window.location.hash) {
+            const currentFullUrl = window.location.pathname + window.location.search + window.location.hash;
+            if (currentFullUrl !== cleanUrl) {
                 try {
                     window.history.replaceState(null, document.title, cleanUrl);
                 } catch (e) {}
@@ -2161,6 +2170,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Sinkronisasi status URL (format kode acak jika admin, atau bersihkan jika bukan admin)
     syncAdminUrlState(isMempelai);
+
+    // --- Listener Realtime untuk Perubahan Hash / URL tanpa Reload ---
+    // Memungkinkan pengubahan nama tamu dan perbaikan URL secara instan saat pengguna
+    // mengetik/mengubah ?to=... di address bar tanpa perlu refresh halaman.
+    window.addEventListener('hashchange', () => {
+        updateGuestNameFromUrl();
+        syncAdminUrlState(isMempelai);
+    });
+
+    window.addEventListener('popstate', () => {
+        updateGuestNameFromUrl();
+        syncAdminUrlState(isMempelai);
+    });
 
     // Implementasi Pure JS SHA-256 sebagai fallback saat running di non-Secure Context (LAN HTTP / IP pengujian lokal)
     function jsSha256(ascii) {
@@ -2479,11 +2501,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         sessionStorage.setItem('mToken', saltedToken);
                         sessionStorage.removeItem('mKey'); // Hapus password plaintext demi keamanan
                     } catch (e) {}
+                    const wasAlreadyAdmin = Boolean(isMempelai);
                     isMempelai = true;
                     document.getElementById('guestbook-list')?.classList.add('mempelai-mode');
                     initGuestCounter(); // Tampilkan statistik tamu saat login berhasil
                     syncAdminUrlState(true); // Perbarui URL menjadi ber-hash kode acak sesi admin
-                    showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
+                    if (wasAlreadyAdmin) {
+                        showToast("Sesi Aktif: Anda telah terautentikasi dalam Mode Mempelai");
+                    } else {
+                        showToast("Autentikasi Berhasil: Mode Mempelai Aktif");
+                    }
                     closeAuthModal();
                 } else {
                     authFailedAttempts++;
@@ -2621,15 +2648,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="gb-info">
                     <div class="gb-top-row">
                         <span class="gb-name">${safeName}</span>${(rData.isMempelaiReply || rData.isMempelai) ? '<i class="bi bi-patch-check-fill verified-icon"></i>' : ''}
-                        <button class="delete-btn" data-id="${rDocId}" data-parent-id="${parentId}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
+                        <button class="delete-btn" data-id="${escapeHTML(rDocId)}" data-parent-id="${escapeHTML(parentId)}" title="Hapus Balasan" aria-label="Hapus balasan"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="gb-meta"><span class="gb-time">${rFullDate}</span></div>
                 </div>
             </div>
             <p class="gb-message${rIsShort ? ' short-msg' : ''}">${mentionHTML}<span class="msg-text">${safePreview}</span>${rIsLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions" style="margin-top: -5px;">
-                <button class="reply-btn" data-id="${parentId}" data-name="${safeName}" data-parent-name="${escapeHTML(parentName)}" data-is-subreply="true">Balas</button>
-                <button class="like-btn" data-id="${rDocId}" data-parent-id="${parentId}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
+                <button class="reply-btn" data-id="${escapeHTML(parentId)}" data-name="${safeName}" data-parent-name="${escapeHTML(parentName)}" data-is-subreply="true">Balas</button>
+                <button class="like-btn" data-id="${escapeHTML(rDocId)}" data-parent-id="${escapeHTML(parentId)}" data-likes="${rLikes}" aria-label="${isReplyLiked ? 'Batal menyukai balasan ini' : 'Sukai balasan ini'}">
                     <i class="bi ${isReplyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isReplyLiked ? 'liked' : ''}">${rLikes > 0 ? rLikes : ''}</span>
                 </button>
             </div>
@@ -3326,10 +3353,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="status-badge ${statusClass}">${safeStatus}</span>
                         <span class="gb-pinned-icon ${isPinned ? 'show' : ''}" title="Pesan Disematkan" aria-label="Pesan Disematkan"><i class="bi bi-pin-angle-fill"></i></span>
                         <div class="gb-admin-actions">
-                            <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${docId}" data-pinned="${isPinned}" title="${isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan'}" aria-label="${isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan'}">
+                            <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${escapeHTML(docId)}" data-pinned="${isPinned}" title="${isPinned ? 'Lepas Sematan' : 'Sematkan Ucapan'}" aria-label="${isPinned ? 'Lepas sematan ucapan' : 'Sematkan ucapan'}">
                                 <i class="bi ${isPinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'}"></i>
                             </button>
-                            <button class="delete-btn" data-id="${docId}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
+                            <button class="delete-btn" data-id="${escapeHTML(docId)}" title="Hapus Ucapan" aria-label="Hapus ucapan"><i class="bi bi-trash"></i></button>
                         </div>
                     </div>
                     <div class="gb-meta">
@@ -3339,8 +3366,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <p class="gb-message${isShort ? ' short-msg' : ''}"><span class="msg-text">${safePreview}</span>${isLong ? '<button type="button" class="read-more-btn" aria-label="Baca selengkapnya">selengkapnya</button>' : ''}</p>
             <div class="gb-actions">
-                <button class="reply-btn" data-id="${docId}" data-name="${safeName}" data-is-subreply="false">Balas</button>
-                <button class="like-btn" data-id="${docId}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
+                <button class="reply-btn" data-id="${escapeHTML(docId)}" data-name="${safeName}" data-is-subreply="false">Balas</button>
+                <button class="like-btn" data-id="${escapeHTML(docId)}" data-likes="${likes}" aria-label="${isAlreadyLiked ? 'Batal menyukai ucapan ini' : 'Sukai ucapan ini'}">
                     <i class="bi ${isAlreadyLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span class="like-count ${isAlreadyLiked ? 'liked' : ''}">${likes > 0 ? likes : ''}</span>
                 </button>
             </div>
@@ -3850,7 +3877,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     AOS.refresh();
                 }, 250);
             }
-        }, (error) => console.warn("Guestbook listener error:", error));
+        }, (error) => {
+            console.warn("Guestbook listener error:", error);
+            if (spinnerTimer) clearTimeout(spinnerTimer);
+            if (currentPage > 1) {
+                // Fallback otomatis ke halaman 1 jika kursor halaman sebelumnya tidak valid / terhapus
+                loadGuestbook(1);
+            } else {
+                targetList.innerHTML = '<div class="guestbook-item text-center empty-msg"><p style="color: #dc3545; font-size: 0.85rem; margin-bottom: 0;">Gagal memuat ucapan. Silakan periksa koneksi internet Anda.</p></div>';
+                targetList.style.opacity = '1';
+            }
+            if (btnPrevGb) btnPrevGb.disabled = (currentPage === 1);
+            if (btnNextGb) btnNextGb.disabled = false;
+        });
     }
 
     // --- Inisialisasi Buku Tamu Secara Cerdas (Lazy Loading untuk Best Practices 100%) ---
